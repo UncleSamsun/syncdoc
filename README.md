@@ -14,6 +14,10 @@ SDD 방식으로 작성한 명세와 GitHub 협업 현황을 연결하는 프로
 
 ## 문서
 
+- [MVP 기능과 인수 기준](docs/01-prd/mvp-scope.md)
+- [API 계약](docs/03-tech-spec/api-spec.md) · [데이터 모델](docs/03-tech-spec/data-model.md)
+- [구현 작업계획](docs/04-tasks/implementation-plan.md)
+
 - [새 MVP 요구](docs/01-prd/brief.md)
 - [공통 Spec 구성안](docs/01-prd/spec-standard-proposal.md)
 - [ID·메타데이터 검토안](docs/03-tech-spec/identity-proposal.md)
