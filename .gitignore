@@ -1,0 +1,11 @@
+.env
+과거_2026-09-08/
+.env.*
+!.env.example
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
