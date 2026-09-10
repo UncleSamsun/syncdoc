@@ -101,6 +101,18 @@ class C2RequiredItems(unittest.TestCase):
                  if f.file.endswith("screens.md") and "연결 요구" in f.message]
         self.assertTrue(found, [f.message for f in errors(report, "C2")])
 
+    def test_document_level_labels_pass_when_all_present(self):
+        report = run("ok")
+        self.assertEqual([f for f in errors(report, "C2")
+                          if f.file.endswith("overview.md")], [])
+
+    def test_missing_document_level_label_is_error(self):
+        report = run("bad-c2")
+        missing = {m for f in errors(report, "C2") if f.file.endswith("overview.md")
+                   for m in ("성공 판단", "제약", "용어") if m in f.message}
+        self.assertEqual(missing, {"성공 판단", "제약", "용어"},
+                         [str(f) for f in errors(report, "C2")])
+
     def test_document_with_no_check_unit_is_error(self):
         report = run("bad-c2")
         found = [f for f in errors(report, "C2")

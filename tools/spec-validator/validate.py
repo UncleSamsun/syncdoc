@@ -29,7 +29,10 @@ ALLOWED_TYPES = (
 )
 
 # rules/spec-writing.md 5절의 검사 라벨 표. 이 표를 고치면 그 문서도 함께 고친다.
+# 검사 단위 접두어가 None이면 문서 전체에서 라벨을 찾는다.
 REQUIRED_LABELS = {
+    "prd-overview": (None, ("문제", "대상 사용자", "목표", "성공 판단",
+                            "포함 범위", "제외 범위", "제약", "적용 Spec", "용어")),
     "prd-requirements": ("REQ", ("인수 기준",)),
     "ui-screens": ("UI", ("연결 요구", "검증")),
     "tasks": ("TASK", ("근거", "완료")),
@@ -236,6 +239,14 @@ def validate(docs_dir, settings_file):
         if spec is None:
             continue
         prefix, labels = spec
+        if prefix is None:
+            # 검사 단위가 문서 전체다
+            for label in labels:
+                if not has_label_with_content(doc.lines, label):
+                    report.findings.append(Finding(
+                        "error", "C2", doc.rel, 1,
+                        "'**%s:**' 항목이 없다" % label))
+            continue
         units = check_units(doc, prefix)
         if not units:
             report.findings.append(Finding(
