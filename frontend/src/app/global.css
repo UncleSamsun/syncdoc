@@ -1,0 +1,12 @@
+:root {
+  font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  padding: 24px;
+}
