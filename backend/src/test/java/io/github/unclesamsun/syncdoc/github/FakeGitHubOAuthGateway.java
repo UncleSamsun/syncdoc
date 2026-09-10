@@ -23,6 +23,11 @@ public class FakeGitHubOAuthGateway implements GitHubOAuthGateway {
     }
 
     @Override
+    public GitHubTokens refreshTokens(String refreshToken) {
+        return new GitHubTokens("gho_refreshed", refreshToken, Instant.now().plusSeconds(3600), null);
+    }
+
+    @Override
     public GitHubTokens exchangeCode(String code, String codeVerifier) {
         GitHubTokens tokens = codes.get(code);
         if (tokens == null) {

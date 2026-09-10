@@ -12,4 +12,9 @@ public class UnconfiguredGitHubOAuthGateway implements GitHubOAuthGateway {
     public GitHubTokens exchangeCode(String code, String codeVerifier) {
         throw new GitHubGatewayNotConfiguredException();
     }
+
+    @Override
+    public GitHubTokens refreshTokens(String refreshToken) {
+        throw new GitHubGatewayNotConfiguredException();
+    }
 }

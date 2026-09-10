@@ -19,6 +19,11 @@ syncdoc:
     cookie-secure: ${SYNCDOC_COOKIE_SECURE:true}
     csrf-key: ${SYNCDOC_CSRF_KEY:}
     uninvited-path: /uninvited
+  github:
+    client-id: ${SYNCDOC_GITHUB_CLIENT_ID:}
+    client-secret: ${SYNCDOC_GITHUB_CLIENT_SECRET:}
+    app-id: ${SYNCDOC_GITHUB_APP_ID:}
+    redirect-uri: ${SYNCDOC_GITHUB_REDIRECT_URI:http://localhost:5173/api/v1/auth/github/callback}
   crypto:
     token-key: ${SYNCDOC_TOKEN_KEY:}
     key-version: ${SYNCDOC_TOKEN_KEY_VERSION:1}
