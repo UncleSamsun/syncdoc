@@ -21,11 +21,12 @@
 | [공통 UI 규칙](../docs/02-ui-spec/ui-conventions.md) | 2026-09-10 | 활성 |
 | [화면 명세](../docs/02-ui-spec/ui-screens.md) | 2026-09-10 | 활성 |
 | [문서 작성 규칙](spec-writing.md) | 2026-09-10 | 활성 |
+| [포맷 정의](spec-format.json) | 2026-09-10 | 활성 (검사기와 SyncDoc이 읽는 기계 정본) |
 | [검증 규칙](validation.md) | 2026-09-10 | 활성 (검증기 [`tools/spec-validator/`](../tools/spec-validator/README.md) 구현) |
 
 버전은 해당 규칙이 확정된 날짜다. 규칙을 고치면 이 표의 날짜도 함께 올린다. 미작성 규칙을 활성으로 표시하지 않는다.
 
-산출물 목록과 산출물별 필수 내용의 정본은 [문서 작성 규칙](spec-writing.md) §3이다. [공통 Spec 구성안](../docs/01-prd/spec-standard-proposal.md)의 해당 절은 승격 후 링크만 남겼다.
+산출물 목록과 산출물별 필수 내용의 기계 정본은 [포맷 정의](spec-format.json)이고, 사람이 읽는 설명은 [문서 작성 규칙](spec-writing.md) §3·§5다. 검사기 C0이 둘의 일치를 확인한다. [공통 Spec 구성안](../docs/01-prd/spec-standard-proposal.md)의 해당 절은 승격 후 링크만 남겼다.
 
 ## 적용 Spec
 

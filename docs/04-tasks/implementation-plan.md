@@ -84,7 +84,7 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 
 **선행:** 규칙 파일과 독립 실행 검증기(`tools/spec-validator/`)는 선행이 없다. Java 실행 기반 없이 저장소 문서만으로 검사할 수 있다. `backend/document/SpecMetadataParser`와 산출물 체크리스트 API 구현만 TASK-001을 선행으로 둔다. 이 분리 덕에 TASK-001 이전에 착수할 수 있다.
 
-**산출물:** rules/spec-writing.md·validation.md, tools/spec-validator/, backend/document/SpecMetadataParser, 문서 fixture, 산출물 체크리스트의 계약·화면 명세.
+**산출물:** rules/spec-format.json·spec-writing.md·validation.md, tools/spec-validator/, backend/document/SpecMetadataParser, 문서 fixture, 산출물 체크리스트의 계약·화면 명세.
 
 **검증:** 검사 항목마다 정상 fixture와 실패 fixture를 두고, 오류가 재현되는 테스트를 먼저 만들어 통과시킨다. 같은 규칙을 두 개 샘플 프로젝트에 적용해 오류 파일·항목·위치가 제시되는지 확인한다. 규칙 파일이 없는 프로젝트에서 미검사로 보고되는지 확인한다.
 
