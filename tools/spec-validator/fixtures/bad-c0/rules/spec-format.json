@@ -1,0 +1,37 @@
+{
+  "types": [
+    {
+      "type": "prd-requirements",
+      "name": "기능·품질 요구",
+      "spec": true,
+      "condition": "모든 프로젝트",
+      "required": ["요구 ID", "예외", "인수 기준", "근거"],
+      "labels": ["예외", "인수 기준", "근거"],
+      "checks": [
+        { "unit": "section", "idPrefix": "REQ", "labels": ["예외", "인수 기준", "근거"] }
+      ]
+    },
+    {
+      "type": "ui-screens",
+      "name": "화면 명세",
+      "spec": true,
+      "condition": "사용자 화면이 있으면",
+      "required": ["화면 ID", "연결 요구", "검증"],
+      "labels": ["연결 요구", "검증"],
+      "checks": [
+        { "unit": "section", "idPrefix": "UI", "labels": ["연결 요구", "검증"] }
+      ]
+    },
+    {
+      "type": "tasks",
+      "name": "작업 정의",
+      "spec": true,
+      "condition": "구현 대상으로 정한 기능",
+      "required": ["작업 ID", "근거", "선행", "산출물", "검증", "완료"],
+      "labels": ["근거", "선행", "산출물", "검증", "완료"],
+      "checks": [
+        { "unit": "section", "idPrefix": "TASK", "labels": ["근거", "선행", "산출물", "검증", "완료"] }
+      ]
+    }
+  ]
+}

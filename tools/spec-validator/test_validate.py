@@ -288,6 +288,53 @@ class FormatDrivenChecks(unittest.TestCase):
                           if f.file.endswith("memo.md")], [])
 
 
+class C0RuleTables(unittest.TestCase):
+    """rules/spec-writing.md의 세 표와 정의 파일의 이름 집합이 같아야 한다."""
+
+    def test_matching_tables_pass(self):
+        report = run("ok")
+        self.assertEqual(errors(report, "C0"), [])
+
+    def test_missing_required_name_in_type_table_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "prd-requirements" in f.message and "필수 내용" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_type_absent_from_format_file_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0") if "'note'" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_extra_allowed_label_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "tasks" in f.message and "허용 라벨" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_missing_check_name_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "ui-screens" in f.message and "검사 이름" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_c0_points_at_the_table_row_line(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "prd-requirements" in f.message and "필수 내용" in f.message][0]
+        self.assertTrue(found.file.endswith("spec-writing.md"), found.file)
+        self.assertEqual(found.line, 9)
+
+    def test_c0_does_not_block_c1_and_c2(self):
+        report = run("bad-c0")
+        self.assertEqual([f for f in errors(report) if f.check != "C0"], [])
+        self.assertEqual(report.status, "오류")
+
+    def test_c0_is_skipped_when_spec_writing_is_absent(self):
+        report = run("bad-c1")
+        self.assertEqual(errors(report, "C0"), [])
+
+
 class OutOfScope(unittest.TestCase):
     """rules/validation.md 2절이 검사하지 않겠다고 정한 것."""
 

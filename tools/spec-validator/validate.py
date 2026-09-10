@@ -1,7 +1,8 @@
 """문서 검증기.
 
-rules/validation.md의 검사 두 가지만 확인한다.
+rules/validation.md의 검사 세 가지만 확인한다.
 
+  C0 정의 파일 — rules/spec-format.json의 구조와 rules/spec-writing.md 표와의 일치
   C1 필수 문서 존재 — 적용한다고 정한 문서 종류마다 그 종류의 문서가 있는지
   C2 필수 항목 존재 — 각 문서에 그 종류의 필수 항목이 있는지
 
@@ -23,7 +24,16 @@ APPLY_VALUES = ("적용", "보류", "미적용")
 # 저장소 루트 기준 고정 경로
 FORMAT_FILE = "rules/spec-format.json"
 SETTINGS_FILE = "rules/project-settings.md"
+SPEC_WRITING_FILE = "rules/spec-writing.md"
 DOCS_ROOT = "docs"
+
+# C0이 비교하는 rules/spec-writing.md의 표. 머리글 열 이름으로 찾는다.
+# (표 이름, 머리글 열, 비교하는 DocType 필드, 오류 문구에 쓰는 말)
+RULE_TABLES = (
+    ("문서 종류와 필수 내용", ("type", "문서 종류", "적용 조건", "필수 내용"), "required", "필수 내용"),
+    ("라벨 이름 공간", ("type", "허용하는 굵은 라벨"), "labels", "허용 라벨"),
+    ("검사 라벨", ("type", "검사 단위", "검사기가 요구하는 라벨"), "checks", "검사 이름"),
+)
 
 # 정의 파일 구조. rules/validation.md C0이 정본이다.
 TYPE_KEYS = frozenset(("type", "name", "spec", "condition", "required", "labels", "checks"))
@@ -357,6 +367,94 @@ def has_label_with_content(body, label):
     return False
 
 
+def _all_tables(lines):
+    """파일의 모든 표를 (머리글 줄번호, 열이름들, [(줄번호, 셀들)])로 낸다."""
+    i, n = 0, len(lines)
+    while i < n:
+        m = _TABLE_ROW.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        header_line = i + 1
+        columns = [c.strip() for c in m.group(1).split("|")]
+        rows = []
+        i += 1
+        while i < n:
+            m = _TABLE_ROW.match(lines[i])
+            if not m:
+                break
+            cells = [c.strip() for c in m.group(1).split("|")]
+            if not all(set(c) <= set("-: ") for c in cells):
+                rows.append((i + 1, cells))
+            i += 1
+        yield header_line, columns, rows
+
+
+def _find_table(lines, header):
+    """머리글이 header로 시작하는 첫 표를 돌려준다. 없으면 None."""
+    for header_line, columns, rows in _all_tables(lines):
+        if tuple(columns[:len(header)]) == tuple(header):
+            return header_line, columns, rows
+    return None
+
+
+def _comma_names(cell):
+    return {n.strip() for n in cell.split(",") if n.strip()}
+
+
+def _quoted_names(cell):
+    return set(re.findall(r"`([^`]+)`", cell))
+
+
+def _expected_names(doc_type, field_name):
+    if field_name == "required":
+        return set(doc_type.required)
+    if field_name == "labels":
+        return set(doc_type.labels)
+    return {name for check in doc_type.checks
+            for name in (*check.labels, *check.columns)}
+
+
+def check_rule_tables(fmt, lines, rel):
+    """C0. rules/spec-writing.md의 세 표와 정의 파일의 이름 집합이 같은지 본다.
+
+    순서, 검사 단위 열의 문장, 표 밖 산문은 보지 않는다.
+    """
+    findings = []
+
+    def err(line, message):
+        findings.append(Finding("error", "C0", rel, line, message))
+
+    for title, header, field_name, word in RULE_TABLES:
+        table = _find_table(lines, header)
+        if table is None:
+            err(1, "'%s' 표를 찾을 수 없다" % title)
+            continue
+        header_line, columns, rows = table
+        value_index = len(header) - 1
+        seen, row_line = {}, {}
+        for line, cells in rows:
+            name = cells[0].strip("`")
+            value = cells[value_index] if len(cells) > value_index else ""
+            names = _quoted_names(value) if field_name == "checks" else _comma_names(value)
+            if name not in fmt.types:
+                err(line, "정의 파일에 없는 type '%s'이 '%s' 표에 있다" % (name, title))
+                continue
+            seen.setdefault(name, set()).update(names)
+            row_line.setdefault(name, line)
+        for type_name, doc_type in fmt.types.items():
+            expected = _expected_names(doc_type, field_name)
+            if type_name not in seen:
+                if field_name == "required" or expected:
+                    err(header_line, "'%s' 표에 type '%s' 행이 없다" % (title, type_name))
+                continue
+            if seen[type_name] != expected:
+                err(row_line[type_name],
+                    "'%s'의 %s이 정의 파일과 다르다: 표 %s, 정의 파일 %s"
+                    % (type_name, word, sorted(seen[type_name]), sorted(expected)))
+    return findings
+
+
 def validate(root, docs_root=DOCS_ROOT):
     root = Path(root)
     docs_dir = root / docs_root
@@ -385,6 +483,12 @@ def validate(root, docs_root=DOCS_ROOT):
 
     docs = [parse_document(p, root) for p in paths]
     settings_rel = _relative(settings_file, root)
+
+    # C0 — 규칙 표와 정의 파일의 일치. 규칙 파일이 없으면 정의 파일이 정본이므로 건너뛴다.
+    spec_writing = root / SPEC_WRITING_FILE
+    if spec_writing.is_file():
+        report.findings.extend(check_rule_tables(
+            fmt, _read_lines(spec_writing), _relative(spec_writing, root)))
 
     # C1 — 문서 식별
     seen = {}
