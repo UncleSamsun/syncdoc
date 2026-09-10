@@ -20,12 +20,12 @@
 | [SDD 역할과 승인 범위](sdd-workflow.md) | 2026-09-09 | 활성 |
 | [공통 UI 규칙](../docs/02-ui-spec/ui-conventions.md) | 2026-09-10 | 활성 |
 | [화면 명세](../docs/02-ui-spec/ui-screens.md) | 2026-09-10 | 활성 |
-| 문서 작성 규칙 `rules/spec-writing.md` | — | **미작성** — TASK-004에서 생성 |
-| 검증 규칙 `rules/validation.md` | — | **미작성** — TASK-004에서 생성 |
+| [문서 작성 규칙](spec-writing.md) | 2026-09-10 | 활성 |
+| [검증 규칙](validation.md) | 2026-09-10 | 활성 (검증기 `tools/spec-validator/` 미구현) |
 
 버전은 해당 규칙이 확정된 날짜다. 규칙을 고치면 이 표의 날짜도 함께 올린다. 미작성 규칙을 활성으로 표시하지 않는다.
 
-산출물 목록과 산출물별 필수 내용의 정본은 승격 후 `rules/spec-writing.md`다. 그때까지 [공통 Spec 구성안](../docs/01-prd/spec-standard-proposal.md)의 표는 제안이며 활성 규칙이 아니다.
+산출물 목록과 산출물별 필수 내용의 정본은 [문서 작성 규칙](spec-writing.md) §3이다. [공통 Spec 구성안](../docs/01-prd/spec-standard-proposal.md)의 해당 절은 승격 후 링크만 남겼다.
 
 ## 현재 상태
 

@@ -12,7 +12,7 @@
 
 - 브랜치·Issue·Project·PR·리뷰·릴리스 작업 전에는 [GitHub 협업 규칙](rules/github-collaboration.md)을 읽는다.
 
-- 문서 작성·참조 추가·파일 이동 전에는 [ID와 문서 참조](rules/identity-and-references.md)를 읽는다.
+- 문서 작성·참조 추가·파일 이동 전에는 [문서 작성 규칙](rules/spec-writing.md), [ID와 문서 참조](rules/identity-and-references.md), [검증 규칙](rules/validation.md)을 읽는다.
 
 - 요구·설계·작업계획 작성, 구현, PR 준비와 완료 판단 전에는 [SDD 역할과 승인 범위](rules/sdd-workflow.md)를 읽는다.
 - `docs/`에 있는 검토 초안은 확정 규칙과 구분한다. 제안만 된 규약을 활성 규칙으로 간주하지 않는다.
