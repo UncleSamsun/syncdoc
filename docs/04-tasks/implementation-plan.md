@@ -10,6 +10,8 @@
 
 **설계:** [기능·인수 기준](../01-prd/mvp-scope.md), [API](../03-tech-spec/api-spec.md), [데이터](../03-tech-spec/data-model.md). 실행 시 이 문서와 연결 설계를 함께 읽는다. 실행 방식은 순차 작업을 기본으로 하며 승인된 계획을 executing-plans 절차로 수행한다. 작업 상태·담당자는 GitHub에서 관리하고 이 문서에 체크 상태를 복제하지 않는다.
 
+**실행 순서 (2026-09-10 사용자 확정).** TASK-004를 다음 작업으로 올린다. UI 명세가 확정되었고 기준의 정본 위치를 [REQ-008](../01-prd/mvp-scope.md)로 확정했으므로, 문서 규약을 활성 규칙으로 세우는 일이 나머지 구현보다 앞선다. 규약이 없는 상태로 수집·렌더·집계를 만들면 무엇을 검사할지가 구현 중에 암묵적으로 정해진다.
+
 ## 공통 제약과 파일 배치
 
 React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표 확장, Mermaid. 확정된 협업·참조 규칙은 rules를 따른다. 웹 편집·공개 가입·서비스 내부 Issue 발행 자동화는 제외한다. API·worker는 같은 코드베이스를 profile로 분리한다. 기본 세부 선택은 Gradle Kotlin DSL, Spring Security, Spring Data JPA, Flyway, Vitest/React Testing Library, 브라우저 E2E로 제안한다. 작업 큐 잠금은 SQL로 구현한다. 실제 dependency 버전은 TASK-001에서 공식 호환성 확인 후 lock/wrapper에 고정한다.
@@ -52,13 +54,22 @@ API: github/repositories, projects 목록/등록/조회/수정. 순서: 저장�
 
 완료: 관리 가능한 저장소를 연결하고 첫 동기화 대기를 목록에 표시한다. 다른 사용자 데이터로 권한 우회 불가.
 
-## TASK-004 문서 규약과 검증
+## TASK-004 문서 규약과 검증 — 다음 작업
 
-근거: REQ-008. 선행 TASK-001. 생성: rules/spec-writing.md·validation.md, tools/spec-validator/, backend/document/SpecMetadataParser, 문서 fixture.
+근거: REQ-008. 생성: rules/spec-writing.md·validation.md, tools/spec-validator/, backend/document/SpecMetadataParser, 문서 fixture, 산출물 체크리스트의 계약·화면 명세.
 
-순서: 현재 문서 메타데이터 제안에서 실제 최소 필드와 ID 발급 규칙을 명세화한다. 정상 문서, 중복 ID, 없는 파일, 없는 앵커, 코드 블록 안 가짜 링크, 이동 파일의 상대 이미지 경로 fixture를 만든다. 오류가 재현되는 테스트를 작성한 뒤 파서와 검증기를 구현한다.
+**선행 분리.** 규칙 파일과 독립 실행 검증기(`tools/spec-validator/`)는 TASK-001을 선행으로 두지 않는다. Java 실행 기반 없이 저장소 문서만으로 검사할 수 있다. `backend/document/SpecMetadataParser`와 산출물 체크리스트 API 구현만 TASK-001을 선행으로 둔다. 이 분리 덕에 TASK-001 이전에 착수할 수 있다.
 
-완료: 같은 규칙을 두 개 샘플 프로젝트에 적용하고 오류 파일·항목을 정확히 제시한다. 규약이 구현 중 암묵적으로 달라지지 않게 한다.
+순서:
+
+1. `spec-standard-proposal.md` §2의 산출물 목록과 유형별 필수 내용을 `rules/spec-writing.md`로 승격한다. 적용 조건, 적용하지 않는 유형의 사유 기록 방식, 최소 메타데이터 필드, ID 발급·유지 규칙을 확정한다. 승격 후 제안 문서에는 링크만 남기고 중복 본문을 두지 않는다.
+2. `rules/validation.md`에 검사 항목·실행 시점·실패 처리를 확정한다. 검사 대상은 필수 내용 누락, 중복 ID, 깨진 파일 링크, 없는 앵커, 코드 블록 안 가짜 링크, 이동 파일의 상대 이미지 경로다.
+3. 정상 문서와 위 오류별 fixture를 만들고 오류가 재현되는 테스트를 먼저 작성한다.
+4. `tools/spec-validator/`를 구현한다. 오류 파일·항목·위치를 제시한다.
+5. 적용 규칙 버전을 [프로젝트 설정](../../rules/project-settings.md) 한 곳에서 읽도록 연결한다.
+6. TASK-001 이후: `SpecMetadataParser`, 산출물 체크리스트 조회 계약을 [API 계약](../03-tech-spec/api-spec.md)에, 화면을 [화면 명세](../02-ui-spec/ui-screens.md)에 추가한다. 기준을 고치는 화면은 만들지 않는다.
+
+완료: 같은 규칙을 두 개 샘플 프로젝트에 적용하고 오류 파일·항목을 정확히 제시한다. 규약이 구현 중 암묵적으로 달라지지 않게 한다. 규칙 파일이 없는 프로젝트를 통과로 표시하지 않는다.
 
 ## TASK-005 수집·스냅샷·재시도
 

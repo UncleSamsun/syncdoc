@@ -9,6 +9,24 @@
 - 작업 브랜치: `dev`에서 파생, `<type>/<issue-number>-<short-description>`
 - 초기 저장소 등록은 현재 문서와 규칙을 main/dev에 동일하게 올린다. 후속 변경은 협업 규칙을 따른다.
 
+## 적용 규칙 버전
+
+[REQ-008](../docs/01-prd/mvp-scope.md)이 요구하는 "프로젝트가 기록하는 적용 규칙 버전"을 이 표 한 곳에서 관리한다. 문서마다 수동으로 복사하지 않는다. 검증기와 산출물 체크리스트는 이 값을 근거로 검사 대상을 정한다.
+
+| 규칙 | 버전 | 상태 |
+|---|---|---|
+| [GitHub 협업](github-collaboration.md) | 2026-09-09 | 활성 |
+| [ID와 문서 참조](identity-and-references.md) | 2026-09-09 | 활성 (ID 발급 형식·메타데이터 스키마 미확정) |
+| [SDD 역할과 승인 범위](sdd-workflow.md) | 2026-09-09 | 활성 |
+| [공통 UI 규칙](../docs/02-ui-spec/ui-conventions.md) | 2026-09-10 | 활성 |
+| [화면 명세](../docs/02-ui-spec/ui-screens.md) | 2026-09-10 | 활성 |
+| 문서 작성 규칙 `rules/spec-writing.md` | — | **미작성** — TASK-004에서 생성 |
+| 검증 규칙 `rules/validation.md` | — | **미작성** — TASK-004에서 생성 |
+
+버전은 해당 규칙이 확정된 날짜다. 규칙을 고치면 이 표의 날짜도 함께 올린다. 미작성 규칙을 활성으로 표시하지 않는다.
+
+산출물 목록과 산출물별 필수 내용의 정본은 승격 후 `rules/spec-writing.md`다. 그때까지 [공통 Spec 구성안](../docs/01-prd/spec-standard-proposal.md)의 표는 제안이며 활성 규칙이 아니다.
+
 ## 현재 상태
 
 ### 확정 기술 구성
