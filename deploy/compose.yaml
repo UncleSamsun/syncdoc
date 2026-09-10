@@ -1,0 +1,21 @@
+name: syncdoc
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${SYNCDOC_DB_NAME:-syncdoc}
+      POSTGRES_USER: ${SYNCDOC_DB_USER:-syncdoc}
+      POSTGRES_PASSWORD: ${SYNCDOC_DB_PASSWORD:-syncdoc}
+    ports:
+      - "${SYNCDOC_DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - syncdoc-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SYNCDOC_DB_USER:-syncdoc} -d ${SYNCDOC_DB_NAME:-syncdoc}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  syncdoc-postgres:
