@@ -13,8 +13,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def run(name):
-    root = FIXTURES / name
-    return validate.validate(root / "docs", root / "settings.md")
+    return validate.validate(FIXTURES / name)
 
 
 def errors(report, check=None):
@@ -230,7 +229,7 @@ class OutOfScope(unittest.TestCase):
         doc.write_text(original + "\n[없는 문서](./nowhere.md)\n",
                        encoding="utf-8")
         try:
-            report = validate.validate(root / "docs", root / "settings.md")
+            report = validate.validate(root)
             self.assertEqual(errors(report), [])
         finally:
             doc.write_text(original, encoding="utf-8")

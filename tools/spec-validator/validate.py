@@ -9,7 +9,7 @@ rules/validation.md의 검사 두 가지만 확인한다.
 검사 항목을 늘릴 때는 rules/validation.md를 먼저 고친다.
 
 사용법:
-    python tools/spec-validator/validate.py [DOCS_DIR] [SETTINGS_FILE]
+    python tools/spec-validator/validate.py [ROOT] [DOCS_ROOT]
 """
 
 import re
@@ -45,6 +45,10 @@ CONTRACT_COLUMNS = ("ID", "연결 요구")
 CONTRACT_ID = re.compile(r"\AAPI-\d{3}\Z")
 
 APPLY_VALUES = ("적용", "보류", "미적용")
+
+# 저장소 루트 기준 고정 경로
+SETTINGS_FILE = "rules/project-settings.md"
+DOCS_ROOT = "docs"
 
 # rules/spec-writing.md 6절의 문서 ID 형식
 DOC_ID = re.compile(r"\ADOC-\d{3}\Z")
@@ -131,8 +135,8 @@ def parse_applied_spec(settings_file):
     return table or None
 
 
-def parse_document(path, docs_dir):
-    rel = path.relative_to(docs_dir.parent).as_posix()
+def parse_document(path, root):
+    rel = path.relative_to(root).as_posix()
     text = path.read_text(encoding="utf-8")
     doc = Document(path=path, rel=rel, lines=text.splitlines())
     m = _FRONTMATTER.match(text)
@@ -239,9 +243,10 @@ def has_label_with_content(body, label):
     return False
 
 
-def validate(docs_dir, settings_file):
-    docs_dir = Path(docs_dir)
-    settings_file = Path(settings_file)
+def validate(root, docs_root=DOCS_ROOT):
+    root = Path(root)
+    docs_dir = root / docs_root
+    settings_file = root / SETTINGS_FILE
     report = Report()
 
     table = parse_applied_spec(settings_file)
@@ -254,8 +259,8 @@ def validate(docs_dir, settings_file):
         report.status = "미검사"
         return report
 
-    docs = [parse_document(p, docs_dir) for p in paths]
-    settings_rel = _relative(settings_file, docs_dir.parent)
+    docs = [parse_document(p, root) for p in paths]
+    settings_rel = _relative(settings_file, root)
 
     # C1 — 문서 식별
     seen = {}
@@ -347,9 +352,9 @@ def validate(docs_dir, settings_file):
 
 
 def main(argv):
-    docs_dir = Path(argv[0]) if len(argv) > 0 else Path("docs")
-    settings = Path(argv[1]) if len(argv) > 1 else Path("rules/project-settings.md")
-    report = validate(docs_dir, settings)
+    root = Path(argv[0]) if len(argv) > 0 else Path(".")
+    docs_root = argv[1] if len(argv) > 1 else DOCS_ROOT
+    report = validate(root, docs_root)
 
     for finding in report.findings:
         print(finding)
