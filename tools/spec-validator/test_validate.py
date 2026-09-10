@@ -37,7 +37,7 @@ class OkFixture(unittest.TestCase):
         report = run("ok")
         self.assertNotIn("tech-data", report.unwritten)
 
-    def test_note_type_skips_required_label_check(self):
+    def test_guide_type_skips_required_label_check(self):
         report = run("ok")
         self.assertEqual([f for f in errors(report, "C2")
                           if f.file.endswith("memo.md")], [])
@@ -59,6 +59,12 @@ class C1RequiredDocuments(unittest.TestCase):
         report = run("bad-c1")
         files = [f.file for f in errors(report, "C1")]
         self.assertTrue(any(f.endswith("nofm.md") for f in files), files)
+
+    def test_retired_note_type_is_error(self):
+        report = run("bad-c1")
+        found = [f for f in errors(report, "C1")
+                 if f.file.endswith("oldtype.md")]
+        self.assertTrue(found, [str(f) for f in errors(report, "C1")])
 
     def test_type_absent_from_settings_table_is_error(self):
         report = run("bad-c1")

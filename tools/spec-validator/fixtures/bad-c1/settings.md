@@ -7,4 +7,4 @@
 | prd-requirements | 적용 | |
 | ui-screens | 적용 | |
 | tech-ops | 보류 | |
-| note | 적용 | |
+| guide | 적용 | |

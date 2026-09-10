@@ -19,10 +19,13 @@ from pathlib import Path
 
 # rules/spec-writing.md 3절의 type 허용 값
 ALLOWED_TYPES = (
+    # 명세 문서 — 구현 기준이 될 수 있다
     "prd-overview", "prd-requirements",
     "ui-conventions", "ui-screens",
     "tech-overview", "tech-interface", "tech-data", "tech-ops",
-    "tasks", "note",
+    "tasks",
+    # 명세가 아닌 문서 — status와 무관하게 구현 기준이 아니다
+    "proposal", "record", "guide",
 )
 
 # rules/spec-writing.md 5절의 검사 라벨 표. 이 표를 고치면 그 문서도 함께 고친다.

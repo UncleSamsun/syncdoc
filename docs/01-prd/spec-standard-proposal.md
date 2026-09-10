@@ -1,6 +1,6 @@
 ---
 id: DOC-003
-type: note
+type: proposal
 status: 검토
 ---
 

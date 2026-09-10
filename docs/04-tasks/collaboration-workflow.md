@@ -1,6 +1,6 @@
 ---
 id: DOC-015
-type: note
+type: proposal
 status: 검토
 ---
 

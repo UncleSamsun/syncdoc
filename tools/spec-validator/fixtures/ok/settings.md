@@ -9,4 +9,5 @@
 | tasks | 적용 | |
 | tech-ops | 보류 | 나중에 작성한다 |
 | tech-data | 미적용 | 영속 데이터가 없다 |
-| note | 적용 | |
+| guide | 적용 | |
+| record | 미적용 | 기록할 결정이 아직 없다 |

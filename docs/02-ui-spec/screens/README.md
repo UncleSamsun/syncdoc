@@ -1,6 +1,6 @@
 ---
 id: DOC-008
-type: note
+type: guide
 status: 검토
 ---
 

@@ -1,7 +1,7 @@
 ---
 id: DOC-007
-type: note
-status: 검토
+type: record
+status: 확정
 ---
 
 # UI 방향 검토 기록
