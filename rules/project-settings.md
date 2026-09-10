@@ -42,7 +42,9 @@
 | tech-data | 적용 | |
 | tech-ops | 보류 | 실행·운영 설계는 TASK-008에서 작성한다 |
 | tasks | 적용 | |
-| note | 적용 | |
+| proposal | 적용 | |
+| record | 적용 | |
+| guide | 적용 | |
 
 ## 현재 상태
 

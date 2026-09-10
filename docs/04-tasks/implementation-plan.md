@@ -8,11 +8,17 @@ status: 확정
 
 사용자가 현재 계획으로 확정하고 커밋·푸시 후 Claude에서 UI 작업을 이어가기로 했다. UI 인수인계는 [시작 안내](../02-ui-spec/ui-handoff.md)를 따른다. 아래 기본값은 첫 구현 기준으로 채택하며 실계정 연결·버전 호환성은 여전히 실제 검증이 필요하다.
 
-**목표:** 초대 사용자가 GitHub 저장소를 연결하고 현황·문서·표·다이어그램을 권한 범위에서 읽는다.
+### 목표
 
-**구조:** React/TypeScript 웹, Spring Boot4/Java25 API와 worker, PostgreSQL. commonmark-java가 본문·표를 변환하고 Mermaid가 브라우저에서 다이어그램을 렌더한다.
+초대 사용자가 GitHub 저장소를 연결하고 현황·문서·표·다이어그램을 권한 범위에서 읽는다.
 
-**설계:** [기능·인수 기준](../01-prd/mvp-scope.md), [API](../03-tech-spec/api-spec.md), [데이터](../03-tech-spec/data-model.md). 실행 시 이 문서와 연결 설계를 함께 읽는다. 실행 방식은 순차 작업을 기본으로 하며 승인된 계획을 executing-plans 절차로 수행한다. 작업 상태·담당자는 GitHub에서 관리하고 이 문서에 체크 상태를 복제하지 않는다.
+### 구조
+
+React/TypeScript 웹, Spring Boot4/Java25 API와 worker, PostgreSQL. commonmark-java가 본문·표를 변환하고 Mermaid가 브라우저에서 다이어그램을 렌더한다.
+
+### 설계
+
+[기능·인수 기준](../01-prd/mvp-scope.md), [API](../03-tech-spec/api-spec.md), [데이터](../03-tech-spec/data-model.md). 실행 시 이 문서와 연결 설계를 함께 읽는다. 실행 방식은 순차 작업을 기본으로 하며 승인된 계획을 executing-plans 절차로 수행한다. 작업 상태·담당자는 GitHub에서 관리하고 이 문서에 체크 상태를 복제하지 않는다.
 
 **실행 순서 (2026-09-10 사용자 확정).** TASK-004를 다음 작업으로 올린다. UI 명세가 확정되었고 기준의 정본 위치를 [REQ-008](../01-prd/mvp-scope.md)로 확정했으므로, 문서 규약을 활성 규칙으로 세우는 일이 나머지 구현보다 앞선다. 규약이 없는 상태로 수집·렌더·집계를 만들면 무엇을 검사할지가 구현 중에 암묵적으로 정해진다.
 
