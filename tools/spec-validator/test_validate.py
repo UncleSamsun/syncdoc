@@ -4,6 +4,7 @@
 두 가지만 확인하고 그 밖의 내용은 검사하지 않는다.
 """
 
+import json
 import unittest
 from pathlib import Path
 
@@ -13,8 +14,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def run(name):
-    root = FIXTURES / name
-    return validate.validate(root / "docs", root / "settings.md")
+    return validate.validate(FIXTURES / name)
 
 
 def errors(report, check=None):
@@ -216,6 +216,125 @@ class MissingSettings(unittest.TestCase):
         self.assertEqual(errors(report), [])
 
 
+class MissingFormat(unittest.TestCase):
+    def test_reports_unchecked_when_format_file_is_absent(self):
+        report = run("no-format")
+        self.assertEqual(report.status, "미검사")
+
+    def test_does_not_report_errors_when_format_file_is_absent(self):
+        report = run("no-format")
+        self.assertEqual(errors(report), [])
+
+
+class BrokenFormat(unittest.TestCase):
+    """정의 파일이 있으나 잘못 쓴 경우는 미검사가 아니라 오류다."""
+
+    def test_invalid_json_is_c0_error(self):
+        report = run("bad-format-syntax")
+        self.assertEqual(report.status, "오류")
+        found = [f for f in errors(report, "C0")
+                 if f.file.endswith("spec-format.json")]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_unknown_check_unit_is_c0_error(self):
+        report = run("bad-format-unit")
+        found = [f for f in errors(report, "C0") if "paragraph" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_duplicate_type_is_c0_error(self):
+        report = run("bad-format-duplicate")
+        found = [f for f in errors(report, "C0")
+                 if "guide" in f.message and "중복" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_broken_format_stops_before_c1_and_c2(self):
+        report = run("bad-format-syntax")
+        self.assertEqual([f for f in errors(report) if f.check != "C0"], [])
+
+    def test_format_errors_report_a_relative_path(self):
+        absolute = [f.file for f in run("bad-format-unit").findings
+                    if Path(f.file).is_absolute()]
+        self.assertEqual(absolute, [])
+
+
+class FormatDrivenChecks(unittest.TestCase):
+    """C2는 코드 상수가 아니라 정의 파일의 checks가 결정한다."""
+
+    def _with_guide_check(self, fn):
+        root = FIXTURES / "ok"
+        path = root / "rules" / "spec-format.json"
+        original = path.read_text(encoding="utf-8")
+        data = json.loads(original)
+        for entry in data["types"]:
+            if entry["type"] == "guide":
+                entry["checks"] = [{"unit": "document", "labels": ["대상"]}]
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                        encoding="utf-8")
+        try:
+            return fn(validate.validate(root))
+        finally:
+            path.write_text(original, encoding="utf-8")
+
+    def test_adding_a_check_to_the_format_file_makes_the_validator_apply_it(self):
+        def assert_memo_flagged(report):
+            found = [f for f in errors(report, "C2")
+                     if f.file.endswith("memo.md") and "대상" in f.message]
+            self.assertTrue(found, [str(f) for f in report.findings])
+        self._with_guide_check(assert_memo_flagged)
+
+    def test_type_without_checks_is_not_checked(self):
+        report = run("ok")
+        self.assertEqual([f for f in errors(report, "C2")
+                          if f.file.endswith("memo.md")], [])
+
+
+class C0RuleTables(unittest.TestCase):
+    """rules/spec-writing.md의 세 표와 정의 파일의 이름 집합이 같아야 한다."""
+
+    def test_matching_tables_pass(self):
+        report = run("ok")
+        self.assertEqual(errors(report, "C0"), [])
+
+    def test_missing_required_name_in_type_table_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "prd-requirements" in f.message and "필수 내용" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_type_absent_from_format_file_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0") if "'note'" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_extra_allowed_label_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "tasks" in f.message and "허용 라벨" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_missing_check_name_is_error(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "ui-screens" in f.message and "검사 이름" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_c0_points_at_the_table_row_line(self):
+        report = run("bad-c0")
+        found = [f for f in errors(report, "C0")
+                 if "prd-requirements" in f.message and "필수 내용" in f.message][0]
+        self.assertTrue(found.file.endswith("spec-writing.md"), found.file)
+        self.assertEqual(found.line, 9)
+
+    def test_c0_does_not_block_c1_and_c2(self):
+        report = run("bad-c0")
+        self.assertEqual([f for f in errors(report) if f.check != "C0"], [])
+        self.assertEqual(report.status, "오류")
+
+    def test_c0_is_skipped_when_spec_writing_is_absent(self):
+        report = run("bad-c1")
+        self.assertEqual(errors(report, "C0"), [])
+
+
 class OutOfScope(unittest.TestCase):
     """rules/validation.md 2절이 검사하지 않겠다고 정한 것."""
 
@@ -230,7 +349,7 @@ class OutOfScope(unittest.TestCase):
         doc.write_text(original + "\n[없는 문서](./nowhere.md)\n",
                        encoding="utf-8")
         try:
-            report = validate.validate(root / "docs", root / "settings.md")
+            report = validate.validate(root)
             self.assertEqual(errors(report), [])
         finally:
             doc.write_text(original, encoding="utf-8")

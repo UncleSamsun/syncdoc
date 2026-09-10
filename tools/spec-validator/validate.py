@@ -1,7 +1,8 @@
 """문서 검증기.
 
-rules/validation.md의 검사 두 가지만 확인한다.
+rules/validation.md의 검사 세 가지만 확인한다.
 
+  C0 정의 파일 — rules/spec-format.json의 구조와 rules/spec-writing.md 표와의 일치
   C1 필수 문서 존재 — 적용한다고 정한 문서 종류마다 그 종류의 문서가 있는지
   C2 필수 항목 존재 — 각 문서에 그 종류의 필수 항목이 있는지
 
@@ -9,42 +10,38 @@ rules/validation.md의 검사 두 가지만 확인한다.
 검사 항목을 늘릴 때는 rules/validation.md를 먼저 고친다.
 
 사용법:
-    python tools/spec-validator/validate.py [DOCS_DIR] [SETTINGS_FILE]
+    python tools/spec-validator/validate.py [ROOT] [DOCS_ROOT]
 """
 
+import json
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# rules/spec-writing.md 3절의 type 허용 값
-ALLOWED_TYPES = (
-    # 명세 문서 — 구현 기준이 될 수 있다
-    "prd-overview", "prd-requirements",
-    "ui-conventions", "ui-screens",
-    "tech-overview", "tech-interface", "tech-data", "tech-ops",
-    "tasks",
-    # 명세가 아닌 문서 — status와 무관하게 구현 기준이 아니다
-    "proposal", "record", "guide",
+APPLY_VALUES = ("적용", "보류", "미적용")
+
+# 저장소 루트 기준 고정 경로
+FORMAT_FILE = "rules/spec-format.json"
+SETTINGS_FILE = "rules/project-settings.md"
+SPEC_WRITING_FILE = "rules/spec-writing.md"
+DOCS_ROOT = "docs"
+
+# C0이 비교하는 rules/spec-writing.md의 표. 머리글 열 이름으로 찾는다.
+# (표 이름, 머리글 열, 비교하는 DocType 필드, 오류 문구에 쓰는 말)
+RULE_TABLES = (
+    ("문서 종류와 필수 내용", ("type", "문서 종류", "적용 조건", "필수 내용"), "required", "필수 내용"),
+    ("라벨 이름 공간", ("type", "허용하는 굵은 라벨"), "labels", "허용 라벨"),
+    ("검사 라벨", ("type", "검사 단위", "검사기가 요구하는 라벨"), "checks", "검사 이름"),
 )
 
-# rules/spec-writing.md 5절의 검사 라벨 표. 이 표를 고치면 그 문서도 함께 고친다.
-# 검사 단위 접두어가 None이면 문서 전체에서 라벨을 찾는다.
-REQUIRED_LABELS = {
-    "prd-overview": (None, ("문제", "대상 사용자", "목표", "성공 판단",
-                            "포함 범위", "제외 범위", "제약", "적용 Spec", "용어")),
-    "prd-requirements": ("REQ", ("예외", "인수 기준", "근거")),
-    "ui-screens": ("UI", ("연결 요구", "검증")),
-    "tasks": ("TASK", ("근거", "선행", "산출물", "검증", "완료")),
-    "tech-interface": (None, ("접근 조건", "부작용", "재시도")),
+# 정의 파일 구조. rules/validation.md C0이 정본이다.
+TYPE_KEYS = frozenset(("type", "name", "spec", "condition", "required", "labels", "checks"))
+CHECK_KEYS = {
+    "document": frozenset(("unit", "labels")),
+    "section": frozenset(("unit", "idPrefix", "labels")),
+    "table": frozenset(("unit", "heading", "columns", "idPrefix")),
 }
-
-# rules/spec-writing.md 5절 — tech-interface는 계약 일람 표의 행이 검사 단위다.
-CONTRACT_TABLE_HEADING = "계약 일람"
-CONTRACT_COLUMNS = ("ID", "연결 요구")
-CONTRACT_ID = re.compile(r"\AAPI-\d{3}\Z")
-
-APPLY_VALUES = ("적용", "보류", "미적용")
 
 # rules/spec-writing.md 6절의 문서 ID 형식
 DOC_ID = re.compile(r"\ADOC-\d{3}\Z")
@@ -56,7 +53,7 @@ _TABLE_ROW = re.compile(r"^\|(.+)\|\s*$")
 @dataclass(frozen=True)
 class Finding:
     kind: str      # "error"
-    check: str     # "C1" | "C2"
+    check: str     # "C0" | "C1" | "C2"
     file: str
     line: int
     message: str
@@ -83,6 +80,113 @@ class Document:
     lines: list
     type: str = None
     id: str = None
+
+
+@dataclass(frozen=True)
+class Check:
+    unit: str                 # "document" | "section" | "table"
+    labels: tuple = ()        # document·section: 요구 라벨
+    id_prefix: str = None     # section: 섹션 ID 접두어, table: ID 열 접두어
+    heading: str = None       # table: `## 제목`
+    columns: tuple = ()       # table: 채워져야 하는 열
+
+
+@dataclass(frozen=True)
+class DocType:
+    type: str
+    name: str
+    spec: bool
+    condition: str
+    required: tuple
+    labels: tuple
+    checks: tuple
+
+
+@dataclass
+class Format:
+    types: dict  # type -> DocType
+
+
+def load_format(path, rel):
+    """정의 파일을 읽어 (Format, findings)를 돌려준다.
+
+    구조 오류가 하나라도 있으면 Format은 None이다. JSON에는 항목별 줄번호가
+    없으므로 구문 오류 외에는 1줄로 보고한다.
+    """
+    findings = []
+
+    def err(line, message):
+        findings.append(Finding("error", "C0", rel, line, message))
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        err(e.lineno, "JSON이 아니다: %s" % e.msg)
+        return None, findings
+    if not isinstance(data, dict) or not isinstance(data.get("types"), list):
+        err(1, "최상위에 'types' 배열이 없다")
+        return None, findings
+
+    types = {}
+    for index, entry in enumerate(data["types"]):
+        where = "types[%d]" % index
+        if not isinstance(entry, dict):
+            err(1, "%s이 객체가 아니다" % where)
+            continue
+        keys = set(entry)
+        missing = sorted(TYPE_KEYS - keys)
+        extra = sorted(keys - TYPE_KEYS)
+        if missing:
+            err(1, "%s에 필드 %s가 없다" % (where, ", ".join(missing)))
+        if extra:
+            err(1, "%s에 모르는 필드 %s가 있다" % (where, ", ".join(extra)))
+        if missing or extra:
+            continue
+        name = entry["type"]
+        if not isinstance(name, str) or not name:
+            err(1, "%s의 type이 비어 있다" % where)
+            continue
+        if name in types:
+            err(1, "type '%s'이 중복된다" % name)
+            continue
+        checks = []
+        valid = True
+        for k, raw in enumerate(entry["checks"]):
+            cwhere = "%s(%s).checks[%d]" % (where, name, k)
+            unit = raw.get("unit") if isinstance(raw, dict) else None
+            if unit not in CHECK_KEYS:
+                err(1, "%s의 unit '%s'은 document·section·table 중 하나가 아니다"
+                    % (cwhere, unit))
+                valid = False
+                continue
+            need = CHECK_KEYS[unit]
+            cmissing = sorted(need - set(raw))
+            cextra = sorted(set(raw) - need)
+            if cmissing:
+                err(1, "%s에 필드 %s가 없다" % (cwhere, ", ".join(cmissing)))
+            if cextra:
+                err(1, "%s에 모르는 필드 %s가 있다" % (cwhere, ", ".join(cextra)))
+            if cmissing or cextra:
+                valid = False
+                continue
+            checks.append(Check(
+                unit=unit,
+                labels=tuple(raw.get("labels", ())),
+                id_prefix=raw.get("idPrefix"),
+                heading=raw.get("heading"),
+                columns=tuple(raw.get("columns", ())),
+            ))
+        if not valid:
+            continue
+        types[name] = DocType(
+            type=name, name=entry["name"], spec=bool(entry["spec"]),
+            condition=entry["condition"], required=tuple(entry["required"]),
+            labels=tuple(entry["labels"]), checks=tuple(checks),
+        )
+
+    if findings:
+        return None, findings
+    return Format(types=types), findings
 
 
 def _read_lines(path):
@@ -131,8 +235,8 @@ def parse_applied_spec(settings_file):
     return table or None
 
 
-def parse_document(path, docs_dir):
-    rel = path.relative_to(docs_dir.parent).as_posix()
+def parse_document(path, root):
+    rel = path.relative_to(root).as_posix()
     text = path.read_text(encoding="utf-8")
     doc = Document(path=path, rel=rel, lines=text.splitlines())
     m = _FRONTMATTER.match(text)
@@ -160,14 +264,14 @@ def check_units(doc, prefix):
     return units
 
 
-def parse_contract_table(doc):
-    """`## 계약 일람` 표를 (머리글 줄번호, 열이름들, [(줄번호, {열: 값})])로 돌려준다.
+def parse_table_under_heading(doc, heading):
+    """`## heading` 절의 첫 표를 (머리글 줄번호, 열이름들, [(줄번호, {열: 값})])로 돌려준다.
 
     절이나 표가 없으면 None.
     """
     start = None
     for i, line in enumerate(doc.lines):
-        if line.strip().startswith("## ") and CONTRACT_TABLE_HEADING in line:
+        if line.strip().startswith("## ") and heading in line:
             start = i
             break
     if start is None:
@@ -195,39 +299,63 @@ def parse_contract_table(doc):
     return header_line, columns, rows
 
 
-def check_contract_table(doc):
-    """계약 일람 표의 요구 열이 채워졌는지 본다. Finding 목록을 돌려준다."""
+def check_table(doc, check):
+    """표 단위 검사. 요구 열이 채워졌고 ID 열이 `접두어-NNN`인지 본다."""
     findings = []
-    table = parse_contract_table(doc)
+    table = parse_table_under_heading(doc, check.heading)
     if table is None:
         return [Finding("error", "C2", doc.rel, 1,
-                        "'## %s' 표가 없어 계약을 셀 수 없다" % CONTRACT_TABLE_HEADING)]
+                        "'## %s' 표가 없어 행을 셀 수 없다" % check.heading)]
 
     header_line, columns, rows = table
-    absent = [c for c in CONTRACT_COLUMNS if c not in columns]
+    absent = [c for c in check.columns if c not in columns]
     if absent:
         return [Finding("error", "C2", doc.rel, header_line,
-                        "계약 일람 표에 '%s' 열이 없다" % c) for c in absent]
+                        "'%s' 표에 '%s' 열이 없다" % (check.heading, c)) for c in absent]
     if not rows:
         return [Finding("error", "C2", doc.rel, header_line,
-                        "계약 일람 표에 계약이 하나도 없다")]
+                        "'%s' 표에 행이 하나도 없다" % check.heading)]
 
+    has_id = "ID" in check.columns
+    id_pattern = re.compile(r"\A%s-\d{3}\Z" % re.escape(check.id_prefix or ""))
     for line, cells in rows:
-        contract_id = cells.get("ID", "")
-        if not contract_id:
-            findings.append(Finding("error", "C2", doc.rel, line,
-                                    "계약 일람 표의 행에 ID가 없다"))
-        elif not CONTRACT_ID.match(contract_id):
-            findings.append(Finding("error", "C2", doc.rel, line,
-                                    "ID '%s'은 API-NNN 형식이 아니다" % contract_id))
-        name = contract_id or "ID 없는 행"
-        for column in CONTRACT_COLUMNS:
+        row_id = cells.get("ID", "") if has_id else ""
+        if has_id:
+            if not row_id:
+                findings.append(Finding("error", "C2", doc.rel, line,
+                                        "'%s' 표의 행에 ID가 없다" % check.heading))
+            elif not id_pattern.match(row_id):
+                findings.append(Finding("error", "C2", doc.rel, line,
+                                        "ID '%s'은 %s-NNN 형식이 아니다"
+                                        % (row_id, check.id_prefix)))
+        name = row_id or "ID 없는 행"
+        for column in check.columns:
             if column == "ID":
                 continue
             if not cells.get(column, "").strip():
                 findings.append(Finding("error", "C2", doc.rel, line,
                                         "%s의 '%s' 칸이 비어 있다" % (name, column)))
     return findings
+
+
+def check_document_labels(doc, labels):
+    """문서 단위 검사. 문서 전체에서 각 라벨을 찾는다."""
+    return [Finding("error", "C2", doc.rel, 1, "'**%s:**' 항목이 없다" % label)
+            for label in labels
+            if not has_label_with_content(doc.lines, label)]
+
+
+def check_section_labels(doc, id_prefix, labels):
+    """섹션 단위 검사. `## 접두어-NNN` 섹션마다 각 라벨을 찾는다."""
+    units = check_units(doc, id_prefix)
+    if not units:
+        return [Finding("error", "C2", doc.rel, 1,
+                        "검사 단위 '## %s-NNN' 섹션이 하나도 없다" % id_prefix)]
+    return [Finding("error", "C2", doc.rel, line,
+                    "%s에 '**%s:**' 항목이 없다" % (name, label))
+            for line, name, body in units
+            for label in labels
+            if not has_label_with_content(body, label)]
 
 
 def has_label_with_content(body, label):
@@ -239,10 +367,109 @@ def has_label_with_content(body, label):
     return False
 
 
-def validate(docs_dir, settings_file):
-    docs_dir = Path(docs_dir)
-    settings_file = Path(settings_file)
+def _all_tables(lines):
+    """파일의 모든 표를 (머리글 줄번호, 열이름들, [(줄번호, 셀들)])로 낸다."""
+    i, n = 0, len(lines)
+    while i < n:
+        m = _TABLE_ROW.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        header_line = i + 1
+        columns = [c.strip() for c in m.group(1).split("|")]
+        rows = []
+        i += 1
+        while i < n:
+            m = _TABLE_ROW.match(lines[i])
+            if not m:
+                break
+            cells = [c.strip() for c in m.group(1).split("|")]
+            if not all(set(c) <= set("-: ") for c in cells):
+                rows.append((i + 1, cells))
+            i += 1
+        yield header_line, columns, rows
+
+
+def _find_table(lines, header):
+    """머리글이 header로 시작하는 첫 표를 돌려준다. 없으면 None."""
+    for header_line, columns, rows in _all_tables(lines):
+        if tuple(columns[:len(header)]) == tuple(header):
+            return header_line, columns, rows
+    return None
+
+
+def _comma_names(cell):
+    return {n.strip() for n in cell.split(",") if n.strip()}
+
+
+def _quoted_names(cell):
+    return set(re.findall(r"`([^`]+)`", cell))
+
+
+def _expected_names(doc_type, field_name):
+    if field_name == "required":
+        return set(doc_type.required)
+    if field_name == "labels":
+        return set(doc_type.labels)
+    return {name for check in doc_type.checks
+            for name in (*check.labels, *check.columns)}
+
+
+def check_rule_tables(fmt, lines, rel):
+    """C0. rules/spec-writing.md의 세 표와 정의 파일의 이름 집합이 같은지 본다.
+
+    순서, 검사 단위 열의 문장, 표 밖 산문은 보지 않는다.
+    """
+    findings = []
+
+    def err(line, message):
+        findings.append(Finding("error", "C0", rel, line, message))
+
+    for title, header, field_name, word in RULE_TABLES:
+        table = _find_table(lines, header)
+        if table is None:
+            err(1, "'%s' 표를 찾을 수 없다" % title)
+            continue
+        header_line, columns, rows = table
+        value_index = len(header) - 1
+        seen, row_line = {}, {}
+        for line, cells in rows:
+            name = cells[0].strip("`")
+            value = cells[value_index] if len(cells) > value_index else ""
+            names = _quoted_names(value) if field_name == "checks" else _comma_names(value)
+            if name not in fmt.types:
+                err(line, "정의 파일에 없는 type '%s'이 '%s' 표에 있다" % (name, title))
+                continue
+            seen.setdefault(name, set()).update(names)
+            row_line.setdefault(name, line)
+        for type_name, doc_type in fmt.types.items():
+            expected = _expected_names(doc_type, field_name)
+            if type_name not in seen:
+                if field_name == "required" or expected:
+                    err(header_line, "'%s' 표에 type '%s' 행이 없다" % (title, type_name))
+                continue
+            if seen[type_name] != expected:
+                err(row_line[type_name],
+                    "'%s'의 %s이 정의 파일과 다르다: 표 %s, 정의 파일 %s"
+                    % (type_name, word, sorted(seen[type_name]), sorted(expected)))
+    return findings
+
+
+def validate(root, docs_root=DOCS_ROOT):
+    root = Path(root)
+    docs_dir = root / docs_root
+    settings_file = root / SETTINGS_FILE
+    format_file = root / FORMAT_FILE
     report = Report()
+
+    if not format_file.is_file():
+        report.status = "미검사"
+        return report
+    fmt, findings = load_format(format_file, _relative(format_file, root))
+    if findings:
+        report.findings.extend(findings)
+        report.status = "오류"
+        return report
 
     table = parse_applied_spec(settings_file)
     if table is None:
@@ -254,8 +481,14 @@ def validate(docs_dir, settings_file):
         report.status = "미검사"
         return report
 
-    docs = [parse_document(p, docs_dir) for p in paths]
-    settings_rel = _relative(settings_file, docs_dir.parent)
+    docs = [parse_document(p, root) for p in paths]
+    settings_rel = _relative(settings_file, root)
+
+    # C0 — 규칙 표와 정의 파일의 일치. 규칙 파일이 없으면 정의 파일이 정본이므로 건너뛴다.
+    spec_writing = root / SPEC_WRITING_FILE
+    if spec_writing.is_file():
+        report.findings.extend(check_rule_tables(
+            fmt, _read_lines(spec_writing), _relative(spec_writing, root)))
 
     # C1 — 문서 식별
     seen = {}
@@ -281,7 +514,7 @@ def validate(docs_dir, settings_file):
             report.findings.append(Finding(
                 "error", "C1", doc.rel, 1,
                 "frontmatter의 type이 없어 문서를 분류할 수 없다"))
-        elif doc.type not in ALLOWED_TYPES:
+        elif doc.type not in fmt.types:
             report.findings.append(Finding(
                 "error", "C1", doc.rel, 1,
                 "type '%s'은 허용 값이 아니다" % doc.type))
@@ -309,37 +542,19 @@ def validate(docs_dir, settings_file):
         elif apply_value == "보류" and name not in present:
             report.unwritten.append(name)
 
-    # C2 — 계약 일람 표
+    # C2 — 필수 항목 존재. 정의 파일의 checks가 무엇을 볼지 정한다.
     for doc in docs:
-        if doc.type == "tech-interface":
-            report.findings.extend(check_contract_table(doc))
-
-    # C2 — 필수 항목 존재
-    for doc in docs:
-        spec = REQUIRED_LABELS.get(doc.type)
-        if spec is None:
+        doc_type = fmt.types.get(doc.type)
+        if doc_type is None:
             continue
-        prefix, labels = spec
-        if prefix is None:
-            # 검사 단위가 문서 전체다
-            for label in labels:
-                if not has_label_with_content(doc.lines, label):
-                    report.findings.append(Finding(
-                        "error", "C2", doc.rel, 1,
-                        "'**%s:**' 항목이 없다" % label))
-            continue
-        units = check_units(doc, prefix)
-        if not units:
-            report.findings.append(Finding(
-                "error", "C2", doc.rel, 1,
-                "검사 단위 '## %s-NNN' 섹션이 하나도 없다" % prefix))
-            continue
-        for line, name, body in units:
-            for label in labels:
-                if not has_label_with_content(body, label):
-                    report.findings.append(Finding(
-                        "error", "C2", doc.rel, line,
-                        "%s에 '**%s:**' 항목이 없다" % (name, label)))
+        for check in doc_type.checks:
+            if check.unit == "document":
+                report.findings.extend(check_document_labels(doc, check.labels))
+            elif check.unit == "section":
+                report.findings.extend(
+                    check_section_labels(doc, check.id_prefix, check.labels))
+            else:
+                report.findings.extend(check_table(doc, check))
 
     if report.errors:
         report.status = "오류"
@@ -347,9 +562,9 @@ def validate(docs_dir, settings_file):
 
 
 def main(argv):
-    docs_dir = Path(argv[0]) if len(argv) > 0 else Path("docs")
-    settings = Path(argv[1]) if len(argv) > 1 else Path("rules/project-settings.md")
-    report = validate(docs_dir, settings)
+    root = Path(argv[0]) if len(argv) > 0 else Path(".")
+    docs_root = argv[1] if len(argv) > 1 else DOCS_ROOT
+    report = validate(root, docs_root)
 
     for finding in report.findings:
         print(finding)

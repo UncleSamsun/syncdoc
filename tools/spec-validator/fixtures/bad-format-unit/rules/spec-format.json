@@ -1,0 +1,15 @@
+{
+  "types": [
+    {
+      "type": "guide",
+      "name": "안내",
+      "spec": false,
+      "condition": "읽는 방법을 알릴 때",
+      "required": ["대상"],
+      "labels": [],
+      "checks": [
+        { "unit": "paragraph", "labels": ["대상"] }
+      ]
+    }
+  ]
+}
