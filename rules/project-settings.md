@@ -56,7 +56,21 @@
 | JDK 25 | `C:\Program Files\Microsoft\jdk-25.0.4.101-hotspot` (Microsoft OpenJDK 25.0.4.1 LTS, 2026-09-10 설치) |
 | 문서 검증기 | `python tools/spec-validator/validate.py` (Python 3.11, 표준 라이브러리만) |
 
-셸의 기본 `java`는 아직 Temurin 17이다. Gradle toolchain에서 JDK 25를 명시해 쓰고 PATH 순서에 의존하지 않는다. 이 확인은 TASK-001의 검증 항목이다.
+셸의 기본 `java`는 Temurin 17이다. Gradle toolchain이 JDK 25를 요구하므로 `JAVA_HOME`을 JDK 25로 두고 실행한다. TASK-001에서 확인했다.
+
+이 PC의 Windows Application Control 정책이 서명·평판이 없는 네이티브 Node 모듈의 로드를 차단한다. `frontend/package.json`은 `overrides`로 `rolldown`을 1.2.6에 고정한다. 1.2.8 바인딩은 차단되어 Vite와 Vitest가 시작하지 못한다. 다른 PC에서 이 고정이 필요 없다면 그때 조정한다.
+
+### 고정한 버전 (TASK-001, 2026-09-10)
+
+| 구성 | 버전 | 고정 위치 |
+|---|---|---|
+| Spring Boot | 4.1.1 | `backend/build.gradle.kts` |
+| Gradle | 9.7.1 | `backend/gradle/wrapper/gradle-wrapper.properties` |
+| Java toolchain | 25 | `backend/build.gradle.kts` |
+| PostgreSQL | 17 | `deploy/compose.yaml`, 테스트 컨테이너 |
+| React·Vite·Vitest·rolldown | `frontend/package-lock.json` | lock 파일과 `overrides` |
+
+실제 실행·검증 명령은 [README](../README.md)의 로컬 실행 절에 있다.
 
 ### 확정 기술 구성
 
@@ -64,13 +78,12 @@
 
 화면 흐름은 프로젝트 선택 → 현황·문서 목록 → 문서 선택 시 React 문서 화면으로 유지한다. VitePress 비교 화면은 읽기 스타일 참고이며 제품 기능으로 그대로 이식하지 않는다. 추가 목업은 요청하지 않았다.
 
-문서·협업 규칙을 정의하는 단계다. 애플리케이션, 실행 가능한 빌드·테스트·링크 검증기, GitHub Project, 보호 규칙, 배포 파이프라인은 아직 구성하지 않았다. 검증 명령을 임의로 만들거나 검증 통과로 표시하지 않는다.
+빌드·테스트가 도는 실행 골격까지 만든 단계다. GitHub App 연동, GitHub Project, 보호 규칙, 배포 파이프라인은 아직 구성하지 않았다. 검증 명령을 임의로 만들거나 검증 통과로 표시하지 않는다.
 
 ## 추가로 정할 설정
 
 - 로그인·초대·저장소 접근 방식
 - 기준 GitHub Project와 담당 영역
-- 의존성 세부 버전·ORM 및 실제 빌드·검증 명령
 - 검증기 CI 연결 (`tools/spec-validator/` 실행 워크플로)
 - 클라우드/사내 서버 배포 환경과 릴리스 절차
 

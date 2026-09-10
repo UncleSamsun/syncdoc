@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: syncdoc
+  datasource:
+    url: ${SYNCDOC_DB_URL:jdbc:postgresql://localhost:5433/syncdoc}
+    username: ${SYNCDOC_DB_USER:syncdoc}
+    password: ${SYNCDOC_DB_PASSWORD:syncdoc}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+server:
+  port: ${SYNCDOC_PORT:8080}
