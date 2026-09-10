@@ -24,9 +24,9 @@ cd tools/spec-validator && python -m unittest test_validate -v
 
 | fixture | 확인하는 것 |
 |---|---|
-| `ok/` | 통과, 보류 종류의 미작성 보고, 미적용 종류 무시, `note`의 라벨 검사 생략 |
+| `ok/` | 통과, 보류 종류의 미작성 보고, 미적용 종류 무시, `guide`의 라벨 검사 생략, 계약 일람 표의 채워진 행과 여분 열 |
 | `bad-c1/` | 적용 문서 없음, 보류 사유 없음, frontmatter 없음, 표에 없는 type |
-| `bad-c2/` | 필수 라벨 없음, 빈 라벨, 검사 단위 0개 |
+| `bad-c2/` | 필수 라벨 없음, 빈 라벨, 검사 단위 0개, 계약 일람 표의 빈 칸·잘못된 `API-NNN`·표 자체 없음 |
 | `no-settings/` | 적용 Spec 표가 없을 때 미검사 보고 |
 
 ## 제약
@@ -34,4 +34,4 @@ cd tools/spec-validator && python -m unittest test_validate -v
 - Python 표준 라이브러리만 쓴다. 외부 의존성을 추가하지 않는다.
 - 문서를 고치지 않는다. 읽고 보고만 한다.
 - 검사 항목을 늘릴 때 [검증 규칙](../../rules/validation.md)을 먼저 고친다. 문서에 없는 검사를 코드에만 넣지 않는다.
-- `validate.py`의 `ALLOWED_TYPES`와 `REQUIRED_LABELS`는 [문서 작성 규칙](../../rules/spec-writing.md) §3·§5의 표를 따른다. 표를 고치면 함께 고친다.
+- `validate.py`의 `ALLOWED_TYPES`·`REQUIRED_LABELS`·`CONTRACT_COLUMNS`는 [문서 작성 규칙](../../rules/spec-writing.md) §3·§5의 표를 따른다. 표를 고치면 함께 고친다.

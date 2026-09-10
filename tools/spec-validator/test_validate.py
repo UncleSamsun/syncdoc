@@ -126,6 +126,51 @@ class C2RequiredItems(unittest.TestCase):
         self.assertEqual(found.line, 9)
 
 
+class C2ContractTable(unittest.TestCase):
+    """`tech-interface`는 계약 일람 표의 행이 검사 단위다."""
+
+    def test_filled_contract_rows_pass(self):
+        report = run("ok")
+        self.assertEqual([f for f in errors(report, "C2")
+                          if f.file.endswith("api.md")], [])
+
+    def test_empty_required_cell_is_error(self):
+        report = run("bad-c2")
+        found = [f for f in errors(report, "C2")
+                 if f.file.endswith("api.md") and "API-001" in f.message
+                 and "연결 요구" in f.message]
+        self.assertTrue(found, [str(f) for f in errors(report, "C2")])
+
+    def test_malformed_contract_id_is_error(self):
+        report = run("bad-c2")
+        found = [f for f in errors(report, "C2")
+                 if f.file.endswith("api.md") and "API-2" in f.message]
+        self.assertTrue(found, [str(f) for f in errors(report, "C2")])
+
+    def test_error_points_at_the_contract_row_line(self):
+        report = run("bad-c2")
+        found = [f for f in errors(report, "C2")
+                 if f.file.endswith("api.md") and "API-001" in f.message][0]
+        self.assertEqual(found.line, 13)
+
+    def test_missing_contract_table_is_error(self):
+        report = run("bad-c2")
+        found = [f for f in errors(report, "C2")
+                 if f.file.endswith("api-notable.md")]
+        self.assertTrue(found, [str(f) for f in errors(report, "C2")])
+
+    def test_missing_document_level_common_label_is_error(self):
+        report = run("bad-c2")
+        missing = {m for f in errors(report, "C2") if f.file.endswith("api.md")
+                   for m in ("접근 조건", "부작용", "재시도") if m in f.message}
+        self.assertEqual(missing, {"접근 조건", "부작용", "재시도"},
+                         [str(f) for f in errors(report, "C2")])
+
+    def test_extra_columns_are_not_checked(self):
+        report = run("ok")
+        self.assertEqual(errors(report), [])
+
+
 class OutputFormat(unittest.TestCase):
     def test_no_finding_reports_an_absolute_path(self):
         absolute = [f.file for f in run("bad-c1").findings
