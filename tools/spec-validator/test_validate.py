@@ -60,6 +60,22 @@ class C1RequiredDocuments(unittest.TestCase):
         files = [f.file for f in errors(report, "C1")]
         self.assertTrue(any(f.endswith("nofm.md") for f in files), files)
 
+    def test_document_without_id_is_error(self):
+        report = run("bad-c1")
+        files = [f.file for f in errors(report, "C1")]
+        self.assertTrue(any(f.endswith("noid.md") for f in files), files)
+
+    def test_malformed_document_id_is_error(self):
+        report = run("bad-c1")
+        found = [f for f in errors(report, "C1")
+                 if f.file.endswith("badid.md") and "DOC-1" in f.message]
+        self.assertTrue(found, [str(f) for f in errors(report, "C1")])
+
+    def test_duplicate_document_id_is_error(self):
+        report = run("bad-c1")
+        found = [f for f in errors(report, "C1") if "DOC-100" in f.message]
+        self.assertTrue(found, [str(f) for f in errors(report, "C1")])
+
     def test_retired_note_type_is_error(self):
         report = run("bad-c1")
         found = [f for f in errors(report, "C1")
@@ -96,6 +112,13 @@ class C2RequiredItems(unittest.TestCase):
         found = [f for f in errors(report, "C2")
                  if f.file.endswith("req.md")][0]
         self.assertEqual(found.line, 9)
+
+
+class OutputFormat(unittest.TestCase):
+    def test_no_finding_reports_an_absolute_path(self):
+        absolute = [f.file for f in run("bad-c1").findings
+                    if Path(f.file).is_absolute()]
+        self.assertEqual(absolute, [])
 
 
 class MissingSettings(unittest.TestCase):
