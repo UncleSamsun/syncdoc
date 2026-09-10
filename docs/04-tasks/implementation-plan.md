@@ -1,6 +1,10 @@
-# SyncDoc MVP 구현 계획
+---
+id: DOC-014
+type: tasks
+status: 확정
+---
 
-상태: 사용자 확정 · 2026-09-09 · 구현 전
+# SyncDoc MVP 구현 계획
 
 사용자가 현재 계획으로 확정하고 커밋·푸시 후 Claude에서 UI 작업을 이어가기로 했다. UI 인수인계는 [시작 안내](../02-ui-spec/ui-handoff.md)를 따른다. 아래 기본값은 첫 구현 기준으로 채택하며 실계정 연결·버전 호환성은 여전히 실제 검증이 필요하다.
 
@@ -32,31 +36,33 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 
 ## TASK-001 실행 기반과 연결 가능성 확인
 
-근거: REQ-001/002. 선행 없음. 생성: 위 backend 빌드, frontend/package.json·src/app, deploy/compose.yaml, backend의 auth/GitHub gateway와 테스트 fake.
+**근거:** REQ-001/002. 선행 없음. 생성: 위 backend 빌드, frontend/package.json·src/app, deploy/compose.yaml, backend의 auth/GitHub gateway와 테스트 fake.
 
 검증 순서: Java25/Boot4 부팅·PostgreSQL 연결과 /health/ready 응답 테스트를 작성한다. GitHub 인증 포트를 fake로 두고 미인증 /me=401을 재현한다. 실제 승인된 App/테스트 계정을 사용할 수 있을 때 사용자 접근·설치 접근·개인/조직 Project 조회·scope 부족을 read-only 연결 실험으로 확인한다. 외부 App 등록은 설정과 필요한 권한을 구체화한 후 수행한다.
 
 산출물: 로컬 실행 골격, 실제 실행/검증 명령, 잠긴 버전, GitHub 지원 매트릭스. 자격증명이 없으면 로컬 골격은 진행 가능하지만 실제 로그인/Project 통합 준비 완료로 표시하지 않는다.
 
+**완료:** Java 25와 PostgreSQL로 부팅하고 `/health/ready`가 응답하며 미인증 `/me`가 401을 돌려준다. 실제 자격증명이 없는 동안 GitHub 통합 준비 완료로 표시하지 않는다.
+
 ## TASK-002 초대와 세션
 
-근거: REQ-001/007. 선행 TASK-001. 생성: auth/{AuthController,InvitationController,SessionService,GitHubIdentityGateway}, migration V1__identity.sql, auth/AccessBoundaryTest, frontend/features/auth/.
+**근거:** REQ-001/007. 선행 TASK-001. 생성: auth/{AuthController,InvitationController,SessionService,GitHubIdentityGateway}, migration V1__identity.sql, auth/AccessBoundaryTest, frontend/features/auth/.
 
 API: auth/start·callback, me, logout, invitations. 순서: 미초대 거절, state 재사용/만료 거절, 초대 취소 후 기존 쿠키 거절, 계정명 변경 유지 테스트를 작성하고 구현한다. OAuth 토큰은 암호화 저장하고 세션 회전/CSRF를 검증한다.
 
-완료: 초대한 계정만 진입하며 로그아웃·초대 회수 효과를 검증한다. 관리자 권한은 GitHub 저장소 열람 권한을 대체하지 않는다.
+**완료:** 초대한 계정만 진입하며 로그아웃·초대 회수 효과를 검증한다. 관리자 권한은 GitHub 저장소 열람 권한을 대체하지 않는다.
 
 ## TASK-003 저장소 연결과 목록
 
-근거: REQ-002/007. 선행 TASK-002. 생성: project/{ProjectController,ProjectService}, github/RepositoryAccessGateway, migration V2__projects.sql, project/ProjectConnectionTest, frontend/features/projects/.
+**근거:** REQ-002/007. 선행 TASK-002. 생성: project/{ProjectController,ProjectService}, github/RepositoryAccessGateway, migration V2__projects.sql, project/ProjectConnectionTest, frontend/features/projects/.
 
 API: github/repositories, projects 목록/등록/조회/수정. 순서: 저장소 중복 동시 요청, 사용자만/앱만 접근 가능한 경우, 잘못된 branch/docsRoot, 타인 연결 수정 거절 테스트를 작성한다. 서버가 GitHub ID에서 저장소를 해소하고 경로·권한을 검증하게 구현한다.
 
-완료: 관리 가능한 저장소를 연결하고 첫 동기화 대기를 목록에 표시한다. 다른 사용자 데이터로 권한 우회 불가.
+**완료:** 관리 가능한 저장소를 연결하고 첫 동기화 대기를 목록에 표시한다. 다른 사용자 데이터로 권한 우회 불가.
 
 ## TASK-004 문서 규약과 검증 — 다음 작업
 
-근거: REQ-008. 생성: rules/spec-writing.md·validation.md, tools/spec-validator/, backend/document/SpecMetadataParser, 문서 fixture, 산출물 체크리스트의 계약·화면 명세.
+**근거:** REQ-008. 생성: rules/spec-writing.md·validation.md, tools/spec-validator/, backend/document/SpecMetadataParser, 문서 fixture, 산출물 체크리스트의 계약·화면 명세.
 
 **선행 분리.** 규칙 파일과 독립 실행 검증기(`tools/spec-validator/`)는 TASK-001을 선행으로 두지 않는다. Java 실행 기반 없이 저장소 문서만으로 검사할 수 있다. `backend/document/SpecMetadataParser`와 산출물 체크리스트 API 구현만 TASK-001을 선행으로 둔다. 이 분리 덕에 TASK-001 이전에 착수할 수 있다.
 
@@ -69,39 +75,39 @@ API: github/repositories, projects 목록/등록/조회/수정. 순서: 저장�
 5. 적용 규칙 버전을 [프로젝트 설정](../../rules/project-settings.md) 한 곳에서 읽도록 연결한다.
 6. TASK-001 이후: `SpecMetadataParser`, 산출물 체크리스트 조회 계약을 [API 계약](../03-tech-spec/api-spec.md)에, 화면을 [화면 명세](../02-ui-spec/ui-screens.md)에 추가한다. 기준을 고치는 화면은 만들지 않는다.
 
-완료: 같은 규칙을 두 개 샘플 프로젝트에 적용하고 오류 파일·항목을 정확히 제시한다. 규약이 구현 중 암묵적으로 달라지지 않게 한다. 규칙 파일이 없는 프로젝트를 통과로 표시하지 않는다.
+**완료:** 같은 규칙을 두 개 샘플 프로젝트에 적용하고 오류 파일·항목을 정확히 제시한다. 규약이 구현 중 암묵적으로 달라지지 않게 한다. 규칙 파일이 없는 프로젝트를 통과로 표시하지 않는다.
 
 ## TASK-005 수집·스냅샷·재시도
 
-근거: REQ-006. 선행 TASK-003/004. 생성: sync/{SyncWorker,SyncJobRepository,GitHubWebhookController}, migration V3__sync_and_snapshots.sql, sync/SyncRecoveryTest.
+**근거:** REQ-006. 선행 TASK-003/004. 생성: sync/{SyncWorker,SyncJobRepository,GitHubWebhookController}, migration V3__sync_and_snapshots.sql, sync/SyncRecoveryTest.
 
 API: sync 요청/상태, webhook. 순서: 중복 delivery, 수집 중 새 push, 두 worker 동시 claim, lease 만료 뒤 오래된 worker 완료, GitHub429/5xx·페이지 중간 실패·삭제된 문서 fixture를 테스트한다. source revision 고정 수집, 원자적 게시, 임대 token과 backoff를 구현한다.
 
-완료: 재시작 후 재개하며 실패/부분 갱신이 기존 정상 snapshot을 덮어쓰지 않는다. 진단 오류에 토큰이 포함되지 않는다.
+**완료:** 재시작 후 재개하며 실패/부분 갱신이 기존 정상 snapshot을 덮어쓰지 않는다. 진단 오류에 토큰이 포함되지 않는다.
 
 ## TASK-006 문서·표·다이어그램
 
-근거: REQ-004/005/007. 선행 TASK-004/005. 생성: document/{DocumentController,MarkdownRenderService,HtmlPolicy,AssetService}, document/DocumentRenderingTest, frontend/features/documents/{DocumentPage,DiagramView}, 관련 테스트.
+**근거:** REQ-004/005/007. 선행 TASK-004/005. 생성: document/{DocumentController,MarkdownRenderService,HtmlPolicy,AssetService}, document/DocumentRenderingTest, frontend/features/documents/{DocumentPage,DiagramView}, 관련 테스트.
 
 API: documents·document detail·assets. 순서: 표/한글/명시 앵커/상대 링크/접기 fixture와 script·event attribute·위험 URL fixture를 만든다. commonmark-java 표 확장과 HTML 정화를 구현한다. Mermaid 원문은 별도 응답으로 보내고 React에서 strict 설정·크기 제한·격리된 렌더 실패 처리를 구현한다.
 
-완료: 다섯 Mermaid 유형, 잘못된 문법, 시간 제한·너무 큰 입력, 권한 없는 이미지/과거 snapshot 직접 요청을 검증한다. 문서 작성 시점의 원문이 임의로 실행되지 않는다.
+**완료:** 다섯 Mermaid 유형, 잘못된 문법, 시간 제한·너무 큰 입력, 권한 없는 이미지/과거 snapshot 직접 요청을 검증한다. 문서 작성 시점의 원문이 임의로 실행되지 않는다.
 
 ## TASK-007 현황·검색·작업 매핑
 
-근거: REQ-003/004/007. 선행 TASK-003/005/006. 생성: dashboard/{OverviewController,TaskMappingService,ProgressCalculator}, document/SearchService, dashboard/VisibilityAndProgressTest, frontend/features/dashboard/.
+**근거:** REQ-003/004/007. 선행 TASK-003/005/006. 생성: dashboard/{OverviewController,TaskMappingService,ProgressCalculator}, document/SearchService, dashboard/VisibilityAndProgressTest, frontend/features/dashboard/.
 
 API: overview·tasks·search. 순서: TASK와 Issue 일대일/중복 주장, 미등록 작업, 취소/재개, 여러 PR, 분모0, Project 권한 없음, 숨겨진 다른 저장소 항목, 불완전 pagination을 테스트한다. 사용자별 Project 조회와 범위가 명시된 집계를 구현한다.
 
-완료: 프로젝트 선택 후 현황·문서 목록이 보이고 문서를 바로 열 수 있다. 커밋 수나 PR 수를 작업 완료율로 사용하지 않는다. 검색에서 다른 프로젝트 데이터가 나오지 않는다.
+**완료:** 프로젝트 선택 후 현황·문서 목록이 보이고 문서를 바로 열 수 있다. 커밋 수나 PR 수를 작업 완료율로 사용하지 않는다. 검색에서 다른 프로젝트 데이터가 나오지 않는다.
 
 ## TASK-008 실제 흐름·호스팅 검증
 
-근거: 전체 REQ. 선행 TASK-001~007. 생성: frontend/tests/mvp.spec.ts, deploy Dockerfiles/compose/운영 안내, 필요한 CI workflow.
+**근거:** 전체 REQ. 선행 TASK-001~007. 생성: frontend/tests/mvp.spec.ts, deploy Dockerfiles/compose/운영 안내, 필요한 CI workflow.
 
 순서: 서로 다른 GitHub 접근 권한의 초대 계정2개와 미초대1개를 준비하고 실험 저장소에서 연결→수집→문서/표/다이어그램→Issue 상태 변경→현황 갱신→권한 회수 흐름을 확인한다. DB/worker 재시작, GitHub 중단, 백업 복원, 원문 파서 공격 fixture를 검증한다. 타인 자료를 사용하지 않는다.
 
-완료: 컨테이너 구성으로 재현 가능하고 실제 검증 결과·남은 제한을 기록한다. 외부 서버를 선택하지 않았다면 로컬 컨테이너 검증으로 명확히 구분한다. 운영 배포·main 릴리스는 담당자 판단 이후다.
+**완료:** 컨테이너 구성으로 재현 가능하고 실제 검증 결과·남은 제한을 기록한다. 외부 서버를 선택하지 않았다면 로컬 컨테이너 검증으로 명확히 구분한다. 운영 배포·main 릴리스는 담당자 판단 이후다.
 
 ## 실행 준비 판정
 

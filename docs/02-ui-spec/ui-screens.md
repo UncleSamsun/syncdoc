@@ -1,6 +1,10 @@
-# 화면 명세
+---
+id: DOC-006
+type: ui-screens
+status: 확정
+---
 
-상태: 사용자 확정 · 2026-09-09 · 구현 기준
+# 화면 명세
 
 색·서체·간격·컴포넌트·접근성은 [공통 UI 규칙](ui-conventions.md)을 따르고 여기서 반복하지 않는다. 근거 요구는 [MVP 기능과 인수 기준](../01-prd/mvp-scope.md), 응답 구조는 [MVP API 계약](../03-tech-spec/api-spec.md)이다. 요구 ID는 REQ-001 ~ REQ-008, 작업 ID는 TASK-001 ~ TASK-008로 두 문서에서 읽는다.
 
