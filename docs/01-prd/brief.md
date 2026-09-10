@@ -1,7 +1,10 @@
-# SyncDoc — 새 MVP 요구 정리
+---
+id: DOC-001
+type: prd-overview
+status: 검토
+---
 
-작성일: 2026-09-09
-상태: 사용자 요구 수집 / 설계 미확정
+# SyncDoc — 새 MVP 요구 정리
 
 ## 출발점
 

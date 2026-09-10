@@ -1,6 +1,10 @@
-# 공통 UI 규칙
+---
+id: DOC-005
+type: ui-conventions
+status: 확정
+---
 
-상태: 사용자 확정 · 2026-09-09 · 구현 기준
+# 공통 UI 규칙
 
 근거 요구는 [MVP 기능과 인수 기준](../01-prd/mvp-scope.md)의 REQ-001·REQ-003·REQ-004·REQ-005·REQ-006·REQ-007, 데이터 출처는 [MVP API 계약](../03-tech-spec/api-spec.md)이다. 화면별 정의는 [화면 명세](ui-screens.md)에 있다.
 

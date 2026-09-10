@@ -1,6 +1,12 @@
+---
+id: DOC-010
+type: tech-interface
+status: 확정
+---
+
 # MVP API 계약
 
-상태: 사용자 확정 · 2026-09-09 · 아직 서버 없음
+아직 서버가 없다. 이 계약은 구현 대상이며 동작하는 엔드포인트가 아니다.
 
 근거: [MVP 기능](../01-prd/mvp-scope.md). 경로 접두어는 `/api/v1`. 공개 객체 식별자는 UUID, GitHub ID는 별도 보존한다. 숫자 GitHub ID는 JSON에서 문자열로 전달한다. 시간은 UTC ISO 8601, 목록 기본 20/최대100, cursor는 서버가 발급한 불투명 문자열이다.
 

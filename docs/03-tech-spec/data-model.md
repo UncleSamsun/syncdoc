@@ -1,6 +1,12 @@
+---
+id: DOC-011
+type: tech-data
+status: 확정
+---
+
 # MVP 데이터 모델
 
-상태: 사용자 확정 · 2026-09-09 · SQL migration 미구현
+SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스키마다.
 
 근거: [API 계약](api-spec.md), [MVP 요구](../01-prd/mvp-scope.md). PostgreSQL 사용. ID는 UUID PK, 외부 GitHub ID는 text unique, 시각은 timestamptz. 아래 필드는 `?`만 NULL 허용하며 나머지는 NOT NULL이다. enum 값은 애플리케이션과 DB CHECK를 맞춘다.
 
