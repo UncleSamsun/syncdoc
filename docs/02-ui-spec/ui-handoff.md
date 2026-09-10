@@ -7,6 +7,8 @@
 - [공통 UI 규칙](ui-conventions.md) — 색·서체·간격·컴포넌트·탐색·접근성 토큰
 - [화면 명세](ui-screens.md) — UI-000 ~ UI-012의 레이아웃·문구·검증
 
+레이아웃을 눈으로 확인할 때는 [화면 정의 페이지](screens/README.md)를 연다.
+
 방향 결정 경과는 [UI 방향 검토 기록](ui-direction-review.md)에 남겼다. 그 기록은 확정 규칙이 아니다.
 
 ## 먼저 읽을 문서
