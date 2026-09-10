@@ -33,9 +33,9 @@ ALLOWED_TYPES = (
 REQUIRED_LABELS = {
     "prd-overview": (None, ("문제", "대상 사용자", "목표", "성공 판단",
                             "포함 범위", "제외 범위", "제약", "적용 Spec", "용어")),
-    "prd-requirements": ("REQ", ("인수 기준",)),
+    "prd-requirements": ("REQ", ("예외", "인수 기준", "근거")),
     "ui-screens": ("UI", ("연결 요구", "검증")),
-    "tasks": ("TASK", ("근거", "완료")),
+    "tasks": ("TASK", ("근거", "선행", "산출물", "검증", "완료")),
     "tech-interface": (None, ("접근 조건", "부작용", "재시도")),
 }
 

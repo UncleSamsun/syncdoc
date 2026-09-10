@@ -126,6 +126,34 @@ class C2RequiredItems(unittest.TestCase):
         self.assertEqual(found.line, 9)
 
 
+class C2ExpandedLabels(unittest.TestCase):
+    """spec-writing §5에서 늘린 검사 라벨."""
+
+    def test_requirement_without_exception_label_is_error(self):
+        report = run("bad-c2")
+        found = [f for f in errors(report, "C2")
+                 if f.file.endswith("req.md") and "예외" in f.message]
+        self.assertTrue(found, [str(f) for f in errors(report, "C2")])
+
+    def test_requirement_without_rationale_label_is_error(self):
+        report = run("bad-c2")
+        found = [f for f in errors(report, "C2")
+                 if f.file.endswith("req.md") and "근거" in f.message]
+        self.assertTrue(found, [str(f) for f in errors(report, "C2")])
+
+    def test_task_without_prerequisite_deliverable_verification_is_error(self):
+        report = run("bad-c2")
+        missing = {m for f in errors(report, "C2") if f.file.endswith("task2.md")
+                   for m in ("선행", "산출물", "검증") if m in f.message}
+        self.assertEqual(missing, {"선행", "산출물", "검증"},
+                         [str(f) for f in errors(report, "C2")])
+
+    def test_fully_labelled_requirement_and_task_pass(self):
+        report = run("ok")
+        self.assertEqual([f for f in errors(report, "C2")
+                          if f.file.endswith(("req.md", "tasks.md"))], [])
+
+
 class C2ContractTable(unittest.TestCase):
     """`tech-interface`는 계약 일람 표의 행이 검사 단위다."""
 

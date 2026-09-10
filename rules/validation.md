@@ -72,11 +72,12 @@
 - 검사 단위가 하나도 없는 문서는 **오류**다. `prd-requirements`인데 `## REQ-NNN` 섹션이 없는 경우가 여기 해당한다.
 - 검사 단위가 **문서 전체**인 `type`은 문서 안에서 요구 라벨을 찾는다. `prd-overview`가 여기 해당하며 아홉 항목이 그 문서의 완료 체크리스트다.
 - 검사 단위가 **표의 행**인 `type`은 그 표를 읽어 요구 열이 채워졌는지 본다. `tech-interface`가 여기 해당한다. `## 계약 일람` 표가 없거나, 표에 `ID`·`연결 요구` 열이 없거나, 어느 행의 그 칸이 비어 있거나, `ID`가 `API-NNN` 형식이 아니면 **오류**다. 계약이 표 밖 산문에만 적혀 있으면 검사기가 볼 수 없으므로 모든 계약을 표에 둔다.
-- 검사 라벨이 정의되지 않은 `type`은 C2를 적용하지 않는다. `note`가 여기 해당한다.
+- 항목이 없을 때는 라벨을 비우지 않고 없다는 사실과 이유를 적는다. 빈 라벨은 오류이므로, 없다고 적지 않으면 빠뜨린 것과 구분되지 않는다.
+- 검사 라벨이 정의되지 않은 `type`은 C2를 적용하지 않는다. `ui-conventions`·`tech-overview`·`tech-data`·`tech-ops`와 명세가 아닌 세 종류가 여기 해당한다.
 
 ## 5. 실행
 
-검사기는 [`tools/spec-validator/`](../tools/spec-validator/README.md)에 구현되어 있다. 테스트 30개로 검사 항목별 정상·실패 fixture를 확인한다.
+검사기는 [`tools/spec-validator/`](../tools/spec-validator/README.md)에 구현되어 있다. 테스트 34개로 검사 항목별 정상·실패 fixture를 확인한다.
 
 ```bash
 python tools/spec-validator/validate.py
