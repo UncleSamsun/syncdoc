@@ -8,3 +8,4 @@
 | prd-requirements | 적용 | |
 | ui-screens | 적용 | |
 | tasks | 적용 | |
+| tech-interface | 적용 | |

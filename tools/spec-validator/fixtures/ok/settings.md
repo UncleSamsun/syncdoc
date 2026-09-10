@@ -8,6 +8,7 @@
 | prd-requirements | 적용 | |
 | ui-screens | 적용 | |
 | tasks | 적용 | |
+| tech-interface | 적용 | |
 | tech-ops | 보류 | 나중에 작성한다 |
 | tech-data | 미적용 | 영속 데이터가 없다 |
 | guide | 적용 | |

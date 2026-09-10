@@ -36,7 +36,13 @@ REQUIRED_LABELS = {
     "prd-requirements": ("REQ", ("인수 기준",)),
     "ui-screens": ("UI", ("연결 요구", "검증")),
     "tasks": ("TASK", ("근거", "완료")),
+    "tech-interface": (None, ("접근 조건", "부작용", "재시도")),
 }
+
+# rules/spec-writing.md 5절 — tech-interface는 계약 일람 표의 행이 검사 단위다.
+CONTRACT_TABLE_HEADING = "계약 일람"
+CONTRACT_COLUMNS = ("ID", "연결 요구")
+CONTRACT_ID = re.compile(r"\AAPI-\d{3}\Z")
 
 APPLY_VALUES = ("적용", "보류", "미적용")
 
@@ -154,6 +160,76 @@ def check_units(doc, prefix):
     return units
 
 
+def parse_contract_table(doc):
+    """`## 계약 일람` 표를 (머리글 줄번호, 열이름들, [(줄번호, {열: 값})])로 돌려준다.
+
+    절이나 표가 없으면 None.
+    """
+    start = None
+    for i, line in enumerate(doc.lines):
+        if line.strip().startswith("## ") and CONTRACT_TABLE_HEADING in line:
+            start = i
+            break
+    if start is None:
+        return None
+
+    columns = None
+    header_line = None
+    rows = []
+    for i in range(start + 1, len(doc.lines)):
+        line = doc.lines[i]
+        if line.strip().startswith("## "):
+            break
+        m = _TABLE_ROW.match(line)
+        if not m:
+            continue
+        cells = [c.strip() for c in m.group(1).split("|")]
+        if all(set(c) <= set("-: ") for c in cells):
+            continue
+        if columns is None:
+            columns, header_line = cells, i + 1
+            continue
+        rows.append((i + 1, dict(zip(columns, cells))))
+    if columns is None:
+        return None
+    return header_line, columns, rows
+
+
+def check_contract_table(doc):
+    """계약 일람 표의 요구 열이 채워졌는지 본다. Finding 목록을 돌려준다."""
+    findings = []
+    table = parse_contract_table(doc)
+    if table is None:
+        return [Finding("error", "C2", doc.rel, 1,
+                        "'## %s' 표가 없어 계약을 셀 수 없다" % CONTRACT_TABLE_HEADING)]
+
+    header_line, columns, rows = table
+    absent = [c for c in CONTRACT_COLUMNS if c not in columns]
+    if absent:
+        return [Finding("error", "C2", doc.rel, header_line,
+                        "계약 일람 표에 '%s' 열이 없다" % c) for c in absent]
+    if not rows:
+        return [Finding("error", "C2", doc.rel, header_line,
+                        "계약 일람 표에 계약이 하나도 없다")]
+
+    for line, cells in rows:
+        contract_id = cells.get("ID", "")
+        if not contract_id:
+            findings.append(Finding("error", "C2", doc.rel, line,
+                                    "계약 일람 표의 행에 ID가 없다"))
+        elif not CONTRACT_ID.match(contract_id):
+            findings.append(Finding("error", "C2", doc.rel, line,
+                                    "ID '%s'은 API-NNN 형식이 아니다" % contract_id))
+        name = contract_id or "ID 없는 행"
+        for column in CONTRACT_COLUMNS:
+            if column == "ID":
+                continue
+            if not cells.get(column, "").strip():
+                findings.append(Finding("error", "C2", doc.rel, line,
+                                        "%s의 '%s' 칸이 비어 있다" % (name, column)))
+    return findings
+
+
 def has_label_with_content(body, label):
     pattern = re.compile(r"\*\*%s\s*:\*\*\s*(\S.*)?$" % re.escape(label))
     for line in body:
@@ -232,6 +308,11 @@ def validate(docs_dir, settings_file):
                 "'%s' 문서가 없다" % name))
         elif apply_value == "보류" and name not in present:
             report.unwritten.append(name)
+
+    # C2 — 계약 일람 표
+    for doc in docs:
+        if doc.type == "tech-interface":
+            report.findings.extend(check_contract_table(doc))
 
     # C2 — 필수 항목 존재
     for doc in docs:

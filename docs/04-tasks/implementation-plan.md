@@ -18,7 +18,7 @@ React/TypeScript 웹, Spring Boot4/Java25 API와 worker, PostgreSQL. commonmark-
 
 ### 설계
 
-[프로젝트 개요](../01-prd/overview.md), [기능·인수 기준](../01-prd/mvp-scope.md), [API](../03-tech-spec/api-spec.md), [데이터](../03-tech-spec/data-model.md). 실행 시 이 문서와 연결 설계를 함께 읽는다. 실행 방식은 순차 작업을 기본으로 하며 승인된 계획을 executing-plans 절차로 수행한다. 작업 상태·담당자는 GitHub에서 관리하고 이 문서에 체크 상태를 복제하지 않는다.
+[프로젝트 개요](../01-prd/overview.md), [기능·인수 기준](../01-prd/mvp-scope.md), [API](../03-tech-spec/api-spec.md), [데이터](../03-tech-spec/data-model.md). 요구는 `REQ-NNN`, 화면은 `UI-NNN`, 계약은 `API-NNN`으로 가리킨다. 실행 시 이 문서와 연결 설계를 함께 읽는다. 실행 방식은 순차 작업을 기본으로 하며 승인된 계획을 executing-plans 절차로 수행한다. 작업 상태·담당자는 GitHub에서 관리하고 이 문서에 체크 상태를 복제하지 않는다.
 
 **실행 순서 (2026-09-10 사용자 확정).** TASK-004를 다음 작업으로 올린다. UI 명세가 확정되었고 기준의 정본 위치를 [REQ-008](../01-prd/mvp-scope.md)로 확정했으므로, 문서 규약을 활성 규칙으로 세우는 일이 나머지 구현보다 앞선다. 규약이 없는 상태로 수집·렌더·집계를 만들면 무엇을 검사할지가 구현 중에 암묵적으로 정해진다.
 
@@ -44,11 +44,11 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 
 **근거:** REQ-001/002. 선행 없음. 생성: 위 backend 빌드, frontend/package.json·src/app, deploy/compose.yaml, backend의 auth/GitHub gateway와 테스트 fake.
 
-검증 순서: Java25/Boot4 부팅·PostgreSQL 연결과 /health/ready 응답 테스트를 작성한다. GitHub 인증 포트를 fake로 두고 미인증 /me=401을 재현한다. 실제 승인된 App/테스트 계정을 사용할 수 있을 때 사용자 접근·설치 접근·개인/조직 Project 조회·scope 부족을 read-only 연결 실험으로 확인한다. 외부 App 등록은 설정과 필요한 권한을 구체화한 후 수행한다.
+검증 순서: Java25/Boot4 부팅·PostgreSQL 연결과 API-023 응답 테스트를 작성한다. GitHub 인증 포트를 fake로 두고 미인증 API-003이 401을 돌려주는 것을 재현한다. 실제 승인된 App/테스트 계정을 사용할 수 있을 때 사용자 접근·설치 접근·개인/조직 Project 조회·scope 부족을 read-only 연결 실험으로 확인한다. 외부 App 등록은 설정과 필요한 권한을 구체화한 후 수행한다.
 
 산출물: 로컬 실행 골격, 실제 실행/검증 명령, 잠긴 버전, GitHub 지원 매트릭스. 자격증명이 없으면 로컬 골격은 진행 가능하지만 실제 로그인/Project 통합 준비 완료로 표시하지 않는다.
 
-**완료:** Java 25와 PostgreSQL로 부팅하고 `/health/ready`가 응답하며 미인증 `/me`가 401을 돌려준다. 실제 자격증명이 없는 동안 GitHub 통합 준비 완료로 표시하지 않는다.
+**완료:** Java 25와 PostgreSQL로 부팅하고 API-023이 응답하며 미인증 API-003이 401을 돌려준다. 실제 자격증명이 없는 동안 GitHub 통합 준비 완료로 표시하지 않는다.
 
 ## TASK-002 초대와 세션
 
@@ -79,7 +79,7 @@ API: github/repositories, projects 목록/등록/조회/수정. 순서: 저장�
 3. 정상 문서와 위 오류별 fixture를 만들고 오류가 재현되는 테스트를 먼저 작성한다.
 4. `tools/spec-validator/`를 구현한다. 오류 파일·항목·위치를 제시한다.
 5. 적용 규칙 버전을 [프로젝트 설정](../../rules/project-settings.md) 한 곳에서 읽도록 연결한다.
-6. TASK-001 이후: `SpecMetadataParser`, 산출물 체크리스트 조회 계약을 [API 계약](../03-tech-spec/api-spec.md)에, 화면을 [화면 명세](../02-ui-spec/ui-screens.md)에 추가한다. 기준을 고치는 화면은 만들지 않는다.
+6. TASK-001 이후: `SpecMetadataParser`, 산출물 체크리스트 조회 계약을 [API 계약](../03-tech-spec/api-spec.md)의 계약 일람에 새 `API-NNN`으로, 화면을 [화면 명세](../02-ui-spec/ui-screens.md)에 추가한다. 기준을 고치는 화면은 만들지 않는다.
 
 **완료:** 같은 규칙을 두 개 샘플 프로젝트에 적용하고 오류 파일·항목을 정확히 제시한다. 규약이 구현 중 암묵적으로 달라지지 않게 한다. 규칙 파일이 없는 프로젝트를 통과로 표시하지 않는다.
 
