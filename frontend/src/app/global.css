@@ -10,3 +10,21 @@ body {
 main {
   padding: 24px;
 }
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 15vh;
+  text-align: center;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #1f2328;
+  color: #fff;
+  text-decoration: none;
+}

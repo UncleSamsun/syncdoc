@@ -7,4 +7,9 @@ public class UnconfiguredGitHubIdentityGateway implements GitHubIdentityGateway 
     public GitHubUser fetchAuthenticatedUser(String userAccessToken) {
         throw new GitHubGatewayNotConfiguredException();
     }
+
+    @Override
+    public GitHubUser fetchUserByLogin(String login) {
+        throw new GitHubGatewayNotConfiguredException();
+    }
 }
