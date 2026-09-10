@@ -37,3 +37,26 @@ main은 릴리스 기준, dev는 개발 통합 브랜치다. 작업 브랜치는
 확정 규칙은 rules/, 검토 중 명세는 docs/에 둔다. UI 읽기 방식, 기술 스택, GitHub Project, 인증과 배포 환경은 후속 설계 대상이다. 실행 가능한 빌드·테스트 명령은 아직 없다.
 
 2026-09-08 전면 재시작 후 작성한 자료만 Git으로 관리한다. 이전 작업 보관본은 게시 대상에서 제외한다.
+
+## 로컬 실행
+
+버전은 2026-09-10에 고정했다: Java 25, Spring Boot 4.1.1, Gradle 9.7.1, PostgreSQL 17, React 19, Vite 8.
+
+```bash
+# 1. PostgreSQL
+cp deploy/.env.example deploy/.env   # 필요하면 값 수정
+docker compose -f deploy/compose.yaml --env-file deploy/.env up -d --wait
+
+# 2. 백엔드 (JAVA_HOME이 JDK 25를 가리켜야 한다)
+cd backend && ./gradlew bootRun
+
+# 3. 프론트엔드 (다른 터미널)
+cd frontend && npm install && npm run dev
+```
+
+- API: http://localhost:8080/api/v1/health/ready
+- 웹: http://localhost:5173 (개발 서버가 `/api`를 8080으로 프록시한다)
+- 테스트: `cd backend && ./gradlew test` (Docker가 켜져 있어야 한다), `cd frontend && npm run test -- --run`
+- 문서 검사: `python tools/spec-validator/validate.py`
+
+GitHub App 자격증명이 없으면 로그인과 저장소 연결은 동작하지 않는다. 상태 확인과 미인증 401까지가 TASK-001 범위다.
