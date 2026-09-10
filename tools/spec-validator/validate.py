@@ -18,22 +18,6 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# rules/spec-writing.md 5절의 검사 라벨 표. 이 표를 고치면 그 문서도 함께 고친다.
-# 검사 단위 접두어가 None이면 문서 전체에서 라벨을 찾는다.
-REQUIRED_LABELS = {
-    "prd-overview": (None, ("문제", "대상 사용자", "목표", "성공 판단",
-                            "포함 범위", "제외 범위", "제약", "적용 Spec", "용어")),
-    "prd-requirements": ("REQ", ("예외", "인수 기준", "근거")),
-    "ui-screens": ("UI", ("연결 요구", "검증")),
-    "tasks": ("TASK", ("근거", "선행", "산출물", "검증", "완료")),
-    "tech-interface": (None, ("접근 조건", "부작용", "재시도")),
-}
-
-# rules/spec-writing.md 5절 — tech-interface는 계약 일람 표의 행이 검사 단위다.
-CONTRACT_TABLE_HEADING = "계약 일람"
-CONTRACT_COLUMNS = ("ID", "연결 요구")
-CONTRACT_ID = re.compile(r"\AAPI-\d{3}\Z")
-
 APPLY_VALUES = ("적용", "보류", "미적용")
 
 # 저장소 루트 기준 고정 경로
@@ -270,14 +254,14 @@ def check_units(doc, prefix):
     return units
 
 
-def parse_contract_table(doc):
-    """`## 계약 일람` 표를 (머리글 줄번호, 열이름들, [(줄번호, {열: 값})])로 돌려준다.
+def parse_table_under_heading(doc, heading):
+    """`## heading` 절의 첫 표를 (머리글 줄번호, 열이름들, [(줄번호, {열: 값})])로 돌려준다.
 
     절이나 표가 없으면 None.
     """
     start = None
     for i, line in enumerate(doc.lines):
-        if line.strip().startswith("## ") and CONTRACT_TABLE_HEADING in line:
+        if line.strip().startswith("## ") and heading in line:
             start = i
             break
     if start is None:
@@ -305,39 +289,63 @@ def parse_contract_table(doc):
     return header_line, columns, rows
 
 
-def check_contract_table(doc):
-    """계약 일람 표의 요구 열이 채워졌는지 본다. Finding 목록을 돌려준다."""
+def check_table(doc, check):
+    """표 단위 검사. 요구 열이 채워졌고 ID 열이 `접두어-NNN`인지 본다."""
     findings = []
-    table = parse_contract_table(doc)
+    table = parse_table_under_heading(doc, check.heading)
     if table is None:
         return [Finding("error", "C2", doc.rel, 1,
-                        "'## %s' 표가 없어 계약을 셀 수 없다" % CONTRACT_TABLE_HEADING)]
+                        "'## %s' 표가 없어 행을 셀 수 없다" % check.heading)]
 
     header_line, columns, rows = table
-    absent = [c for c in CONTRACT_COLUMNS if c not in columns]
+    absent = [c for c in check.columns if c not in columns]
     if absent:
         return [Finding("error", "C2", doc.rel, header_line,
-                        "계약 일람 표에 '%s' 열이 없다" % c) for c in absent]
+                        "'%s' 표에 '%s' 열이 없다" % (check.heading, c)) for c in absent]
     if not rows:
         return [Finding("error", "C2", doc.rel, header_line,
-                        "계약 일람 표에 계약이 하나도 없다")]
+                        "'%s' 표에 행이 하나도 없다" % check.heading)]
 
+    has_id = "ID" in check.columns
+    id_pattern = re.compile(r"\A%s-\d{3}\Z" % re.escape(check.id_prefix or ""))
     for line, cells in rows:
-        contract_id = cells.get("ID", "")
-        if not contract_id:
-            findings.append(Finding("error", "C2", doc.rel, line,
-                                    "계약 일람 표의 행에 ID가 없다"))
-        elif not CONTRACT_ID.match(contract_id):
-            findings.append(Finding("error", "C2", doc.rel, line,
-                                    "ID '%s'은 API-NNN 형식이 아니다" % contract_id))
-        name = contract_id or "ID 없는 행"
-        for column in CONTRACT_COLUMNS:
+        row_id = cells.get("ID", "") if has_id else ""
+        if has_id:
+            if not row_id:
+                findings.append(Finding("error", "C2", doc.rel, line,
+                                        "'%s' 표의 행에 ID가 없다" % check.heading))
+            elif not id_pattern.match(row_id):
+                findings.append(Finding("error", "C2", doc.rel, line,
+                                        "ID '%s'은 %s-NNN 형식이 아니다"
+                                        % (row_id, check.id_prefix)))
+        name = row_id or "ID 없는 행"
+        for column in check.columns:
             if column == "ID":
                 continue
             if not cells.get(column, "").strip():
                 findings.append(Finding("error", "C2", doc.rel, line,
                                         "%s의 '%s' 칸이 비어 있다" % (name, column)))
     return findings
+
+
+def check_document_labels(doc, labels):
+    """문서 단위 검사. 문서 전체에서 각 라벨을 찾는다."""
+    return [Finding("error", "C2", doc.rel, 1, "'**%s:**' 항목이 없다" % label)
+            for label in labels
+            if not has_label_with_content(doc.lines, label)]
+
+
+def check_section_labels(doc, id_prefix, labels):
+    """섹션 단위 검사. `## 접두어-NNN` 섹션마다 각 라벨을 찾는다."""
+    units = check_units(doc, id_prefix)
+    if not units:
+        return [Finding("error", "C2", doc.rel, 1,
+                        "검사 단위 '## %s-NNN' 섹션이 하나도 없다" % id_prefix)]
+    return [Finding("error", "C2", doc.rel, line,
+                    "%s에 '**%s:**' 항목이 없다" % (name, label))
+            for line, name, body in units
+            for label in labels
+            if not has_label_with_content(body, label)]
 
 
 def has_label_with_content(body, label):
@@ -430,37 +438,19 @@ def validate(root, docs_root=DOCS_ROOT):
         elif apply_value == "보류" and name not in present:
             report.unwritten.append(name)
 
-    # C2 — 계약 일람 표
+    # C2 — 필수 항목 존재. 정의 파일의 checks가 무엇을 볼지 정한다.
     for doc in docs:
-        if doc.type == "tech-interface":
-            report.findings.extend(check_contract_table(doc))
-
-    # C2 — 필수 항목 존재
-    for doc in docs:
-        spec = REQUIRED_LABELS.get(doc.type)
-        if spec is None:
+        doc_type = fmt.types.get(doc.type)
+        if doc_type is None:
             continue
-        prefix, labels = spec
-        if prefix is None:
-            # 검사 단위가 문서 전체다
-            for label in labels:
-                if not has_label_with_content(doc.lines, label):
-                    report.findings.append(Finding(
-                        "error", "C2", doc.rel, 1,
-                        "'**%s:**' 항목이 없다" % label))
-            continue
-        units = check_units(doc, prefix)
-        if not units:
-            report.findings.append(Finding(
-                "error", "C2", doc.rel, 1,
-                "검사 단위 '## %s-NNN' 섹션이 하나도 없다" % prefix))
-            continue
-        for line, name, body in units:
-            for label in labels:
-                if not has_label_with_content(body, label):
-                    report.findings.append(Finding(
-                        "error", "C2", doc.rel, line,
-                        "%s에 '**%s:**' 항목이 없다" % (name, label)))
+        for check in doc_type.checks:
+            if check.unit == "document":
+                report.findings.extend(check_document_labels(doc, check.labels))
+            elif check.unit == "section":
+                report.findings.extend(
+                    check_section_labels(doc, check.id_prefix, check.labels))
+            else:
+                report.findings.extend(check_table(doc, check))
 
     if report.errors:
         report.status = "오류"

@@ -4,6 +4,7 @@
 두 가지만 확인하고 그 밖의 내용은 검사하지 않는다.
 """
 
+import json
 import unittest
 from pathlib import Path
 
@@ -254,6 +255,37 @@ class BrokenFormat(unittest.TestCase):
         absolute = [f.file for f in run("bad-format-unit").findings
                     if Path(f.file).is_absolute()]
         self.assertEqual(absolute, [])
+
+
+class FormatDrivenChecks(unittest.TestCase):
+    """C2는 코드 상수가 아니라 정의 파일의 checks가 결정한다."""
+
+    def _with_guide_check(self, fn):
+        root = FIXTURES / "ok"
+        path = root / "rules" / "spec-format.json"
+        original = path.read_text(encoding="utf-8")
+        data = json.loads(original)
+        for entry in data["types"]:
+            if entry["type"] == "guide":
+                entry["checks"] = [{"unit": "document", "labels": ["대상"]}]
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2),
+                        encoding="utf-8")
+        try:
+            return fn(validate.validate(root))
+        finally:
+            path.write_text(original, encoding="utf-8")
+
+    def test_adding_a_check_to_the_format_file_makes_the_validator_apply_it(self):
+        def assert_memo_flagged(report):
+            found = [f for f in errors(report, "C2")
+                     if f.file.endswith("memo.md") and "대상" in f.message]
+            self.assertTrue(found, [str(f) for f in report.findings])
+        self._with_guide_check(assert_memo_flagged)
+
+    def test_type_without_checks_is_not_checked(self):
+        report = run("ok")
+        self.assertEqual([f for f in errors(report, "C2")
+                          if f.file.endswith("memo.md")], [])
 
 
 class OutOfScope(unittest.TestCase):
