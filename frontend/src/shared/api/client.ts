@@ -38,3 +38,37 @@ export async function apiGet<T>(path: string): Promise<T> {
   };
   throw error;
 }
+
+/** 상태를 바꾸는 요청. API-003이 준 CSRF 토큰을 헤더로 함께 보낸다. 204는 본문 없이 성공이다. */
+export async function apiPost<T>(path: string, body: unknown, csrfToken: string): Promise<T | null> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken,
+    },
+    body: JSON.stringify(body),
+  });
+  if (response.status === 204) {
+    return null;
+  }
+  if (response.ok) {
+    return (await response.json()) as T;
+  }
+  let parsed: Partial<ApiErrorBody> = {};
+  try {
+    parsed = (await response.json()) as ApiErrorBody;
+  } catch {
+    parsed = {};
+  }
+  const error: ApiError = {
+    status: response.status,
+    code: parsed.code ?? "UNKNOWN",
+    message: parsed.message ?? response.statusText,
+    requestId: parsed.requestId ?? "",
+    details: parsed.details ?? {},
+  };
+  throw error;
+}
