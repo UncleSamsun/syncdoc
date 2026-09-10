@@ -37,6 +37,9 @@ REQUIRED_LABELS = {
 
 APPLY_VALUES = ("적용", "보류", "미적용")
 
+# rules/spec-writing.md 6절의 문서 ID 형식
+DOC_ID = re.compile(r"\ADOC-\d{3}\Z")
+
 _FRONTMATTER = re.compile(r"\A---\r?\n(.*?)\r?\n---\r?\n", re.S)
 _TABLE_ROW = re.compile(r"^\|(.+)\|\s*$")
 
@@ -70,10 +73,19 @@ class Document:
     rel: str
     lines: list
     type: str = None
+    id: str = None
 
 
 def _read_lines(path):
     return path.read_text(encoding="utf-8").splitlines()
+
+
+def _relative(path, base):
+    """보고용 경로. 절대경로를 출력하지 않는다."""
+    try:
+        return path.resolve().relative_to(base.resolve()).as_posix()
+    except ValueError:
+        return path.name
 
 
 def parse_applied_spec(settings_file):
@@ -118,8 +130,12 @@ def parse_document(path, docs_dir):
     if m:
         for row in m.group(1).splitlines():
             key, sep, value = row.partition(":")
-            if sep and key.strip() == "type":
+            if not sep:
+                continue
+            if key.strip() == "type":
                 doc.type = value.strip()
+            elif key.strip() == "id":
+                doc.id = value.strip()
     return doc
 
 
@@ -160,7 +176,25 @@ def validate(docs_dir, settings_file):
         return report
 
     docs = [parse_document(p, docs_dir) for p in paths]
-    settings_rel = settings_file.as_posix()
+    settings_rel = _relative(settings_file, docs_dir.parent)
+
+    # C1 — 문서 식별
+    seen = {}
+    for doc in docs:
+        if doc.id is None:
+            report.findings.append(Finding(
+                "error", "C1", doc.rel, 1,
+                "frontmatter의 id가 없어 문서를 참조할 수 없다"))
+        elif not DOC_ID.match(doc.id):
+            report.findings.append(Finding(
+                "error", "C1", doc.rel, 1,
+                "id '%s'은 DOC-NNN 형식이 아니다" % doc.id))
+        elif doc.id in seen:
+            report.findings.append(Finding(
+                "error", "C1", doc.rel, 1,
+                "id '%s'이 %s와 중복된다" % (doc.id, seen[doc.id])))
+        else:
+            seen[doc.id] = doc.rel
 
     # C1 — 문서 분류
     for doc in docs:
