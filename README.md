@@ -59,4 +59,15 @@ cd frontend && npm install && npm run dev
 - 테스트: `cd backend && ./gradlew test` (Docker가 켜져 있어야 한다), `cd frontend && npm run test -- --run`
 - 문서 검사: `python tools/spec-validator/validate.py`
 
-GitHub App 자격증명이 없으면 로그인과 저장소 연결은 동작하지 않는다. 상태 확인과 미인증 401까지가 TASK-001 범위다.
+### 로그인 설정
+
+로그인을 켜려면 아래 값이 필요하다. `SYNCDOC_ADMIN_GITHUB_USER_ID`에 넣은 GitHub 사용자 ID가 최초 관리자이며, 그 계정은 초대 없이 로그인할 수 있다.
+
+```bash
+python -c "import base64,os;print('SYNCDOC_TOKEN_KEY='+base64.b64encode(os.urandom(32)).decode())"
+python -c "import secrets;print('SYNCDOC_CSRF_KEY='+secrets.token_urlsafe(32))"
+```
+
+평문 http로 로컬 개발할 때는 `SYNCDOC_COOKIE_SECURE=false`로 둔다. 실제 배포에서는 켠다.
+
+GitHub App 자격증명이 없으면 실제 로그인과 저장소 연결은 동작하지 않는다. 상태 확인, 미인증 401, 초대·세션 경계까지가 지금 범위다.

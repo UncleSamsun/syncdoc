@@ -25,11 +25,18 @@ public class SecurityConfig {
             ApiPaths.BASE + "/webhooks/github",
     };
 
+    /**
+     * 처리되지 않은 예외는 서블릿이 `/error`로 포워딩한다. 이 경로가 막혀 있으면
+     * 공개 경로에서 난 500이 401로 바뀌어 원인을 가린다.
+     */
+    private static final String ERROR_PATH = "/error";
+
     @Bean
     SecurityFilterChain apiSecurity(HttpSecurity http, SessionService sessions) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers(ERROR_PATH).permitAll()
                         .requestMatchers(ApiPaths.BASE + "/invitations", ApiPaths.BASE + "/invitations/**")
                         .hasRole("ADMIN")
                         .anyRequest().authenticated())
