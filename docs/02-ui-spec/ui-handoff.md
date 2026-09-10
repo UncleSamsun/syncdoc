@@ -2,13 +2,21 @@
 
 2026-09-09 사용자 인수인계. 작업계획은 확정되었고 사용자는 Claude에서 UI 구현을 이어갈 예정이다. 이번 커밋에는 제품 코드가 없으며 실행되는 React 앱도 아직 없다.
 
+2026-09-10 UI 명세가 확정되었다. 화면 구현의 기준은 아래 두 문서다. 이 인수인계 문서는 착수 배경이며 두 문서와 어긋나면 두 문서가 정본이다.
+
+- [공통 UI 규칙](ui-conventions.md) — 색·서체·간격·컴포넌트·탐색·접근성 토큰
+- [화면 명세](ui-screens.md) — UI-000 ~ UI-012의 레이아웃·문구·검증
+
+방향 결정 경과는 [UI 방향 검토 기록](ui-direction-review.md)에 남겼다. 그 기록은 확정 규칙이 아니다.
+
 ## 먼저 읽을 문서
 
 1. [에이전트 진입점](../../AGENTS.md)과 연결된 작업 규칙
 2. [확정 기능과 인수 기준](../01-prd/mvp-scope.md)
-3. [API 계약](../03-tech-spec/api-spec.md)
-4. [구현계획](../04-tasks/implementation-plan.md)
-5. [현재 기술 구성](../03-tech-spec/architecture-proposal.md)
+3. [공통 UI 규칙](ui-conventions.md)과 [화면 명세](ui-screens.md)
+4. [API 계약](../03-tech-spec/api-spec.md)
+5. [구현계획](../04-tasks/implementation-plan.md)
+6. [현재 기술 구성](../03-tech-spec/architecture-proposal.md)
 
 ## 화면과 기술
 
