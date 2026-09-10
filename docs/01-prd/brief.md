@@ -1,10 +1,12 @@
 ---
 id: DOC-001
-type: prd-overview
+type: proposal
 status: 검토
 ---
 
 # SyncDoc — 새 MVP 요구 정리
+
+요구를 수집한 기록이다. 최상위 문서는 [프로젝트 개요](overview.md)이며 목표·범위·제약은 그 문서가 정본이다. 이 문서는 확정 규칙이나 구현 기준이 아니다.
 
 ## 출발점
 
