@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found]){display:none!important}</style>
+</head>
+<body>
+<title>SyncDoc 화면 정의</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Pretendard v1.3.9 (SIL OFL) — 가변 woff2 내장(100~900). 외부 요청 없음. */
+@font-face{
+  font-family:'Pretendard';
+  font-style:normal;
+  font-weight:100 900;
+  font-display:swap;
+  src:url('fonts/PretendardVariable.woff2') format('woff2');
+}
+/* ════════════════════════════════════════════════
+   페이지 크롬 — 뷰어 테마를 따른다.
+   제품 목업(.mk)은 밝은 테마 고정(사용자 결정).
+   ════════════════════════════════════════════════ */
+:root{
+  --p-bg:#F6F6F4; --p-surf:#FFFFFF; --p-sunk:#EDEDEA;
+  --p-ink:#111110; --p-ink2:#54544F; --p-ink3:#87877F;
+  --p-line:#E2E2DE; --p-line2:#CFCFC9;
+  --p-mark:#2F6FAA; --p-mark-soft:#EAF1F8;
+  --p-warn:#8A5208; --p-warn-soft:#FBF3E3;
+  --f-ui:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --p-bg:#101010; --p-surf:#171716; --p-sunk:#1E1E1C;
+  --p-ink:#EDEDEA; --p-ink2:#A8A8A1; --p-ink3:#79796F;
+  --p-line:#282825; --p-line2:#383834;
+  --p-mark:#7EB0DC; --p-mark-soft:#17232E;
+  --p-warn:#DCAA5C; --p-warn-soft:#2A2113;
+}}
+:root[data-theme="dark"]{
+  --p-bg:#101010; --p-surf:#171716; --p-sunk:#1E1E1C;
+  --p-ink:#EDEDEA; --p-ink2:#A8A8A1; --p-ink3:#79796F;
+  --p-line:#282825; --p-line2:#383834;
+  --p-mark:#7EB0DC; --p-mark-soft:#17232E;
+  --p-warn:#DCAA5C; --p-warn-soft:#2A2113;
+}
+*{box-sizing:border-box}
+body{background:var(--p-bg); color:var(--p-ink); font-family:var(--f-ui); font-size:15px; line-height:1.65; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1220px; margin:0 auto; padding:34px 24px 80px}
+h1,h2,h3,h4{margin:0; line-height:1.28; text-wrap:balance; letter-spacing:-0.016em}
+p{margin:0}
+a{color:var(--p-mark)}
+:focus-visible{outline:2px solid var(--p-mark); outline-offset:2px}
+.mono{font-family:var(--f-mono); font-size:0.86em; font-variant-numeric:tabular-nums}
+
+/* 마스트헤드 */
+.mast{display:flex; flex-direction:column; gap:16px; padding-bottom:22px; border-bottom:1px solid var(--p-line2)}
+.eyebrow{font-family:var(--f-mono); font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--p-ink3)}
+.mast h1{font-size:clamp(27px,3.6vw,37px); font-weight:600}
+.mast .lede{font-size:16.5px; color:var(--p-ink2); max-width:64ch}
+.decided{display:flex; flex-wrap:wrap; gap:8px}
+.decided span{font-size:12.5px; border:1px solid var(--p-line2); background:var(--p-surf); padding:3px 10px; border-radius:999px; color:var(--p-ink2)}
+.decided span b{color:var(--p-ink); font-weight:600}
+.caveat{display:flex; gap:10px; background:var(--p-warn-soft); border-left:3px solid var(--p-warn); color:var(--p-warn); padding:10px 14px; font-size:13.5px; max-width:82ch}
+
+section{margin-top:56px}
+.sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:18px; flex-wrap:wrap}
+.sec-head h2{font-size:21px; font-weight:600}
+.sec-n{font-family:var(--f-mono); font-size:12px; color:var(--p-ink3); letter-spacing:0.1em}
+.sec-head p{font-size:13.5px; color:var(--p-ink2); flex:1 1 24ch; min-width:20ch}
+
+/* 토큰 */
+.tok-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(126px,1fr)); gap:10px}
+.tok{border:1px solid var(--p-line); background:var(--p-surf); border-radius:8px; overflow:hidden}
+.tok .patch{height:46px; display:grid; place-items:center; font-family:var(--f-mono); font-size:10px}
+.tok .m{padding:7px 9px; border-top:1px solid var(--p-line)}
+.tok .m b{display:block; font-size:12px; font-weight:600}
+.tok .m span{font-family:var(--f-mono); font-size:9.5px; color:var(--p-ink3)}
+.tbl{width:100%; border-collapse:collapse; font-size:13px; background:var(--p-surf); border:1px solid var(--p-line); border-radius:8px; overflow:hidden; margin-top:14px}
+.tbl caption{text-align:left; font-family:var(--f-mono); font-size:11.5px; color:var(--p-ink3); padding-bottom:7px}
+.tbl th{text-align:left; font-family:var(--f-mono); font-size:10px; letter-spacing:0.07em; text-transform:uppercase; color:var(--p-ink3); font-weight:500; padding:8px 12px; background:var(--p-sunk); border-bottom:1px solid var(--p-line2)}
+.tbl td{padding:7px 12px; border-bottom:1px solid var(--p-line); color:var(--p-ink2); vertical-align:top}
+.tbl td:first-child{color:var(--p-ink); font-family:var(--f-mono); font-size:11.5px; white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.num{font-variant-numeric:tabular-nums}
+
+/* 프레임 */
+.frame{margin:0; border:1px solid var(--p-line2); border-radius:10px; background:var(--p-surf); overflow:hidden}
+.frame-bar{display:flex; align-items:center; gap:9px; padding:7px 12px; background:var(--p-sunk); border-bottom:1px solid var(--p-line)}
+.frame-bar .uid{font-family:var(--f-mono); font-size:10px; font-weight:500; color:var(--p-ink); background:var(--p-surf); border:1px solid var(--p-line2); padding:1px 6px; border-radius:4px}
+.frame-bar .path{font-family:var(--f-mono); font-size:10.5px; color:var(--p-ink3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.frame-bar .badge{margin-left:auto; font-family:var(--f-mono); font-size:9.5px; letter-spacing:0.08em; color:var(--p-warn); background:var(--p-warn-soft); border:1px solid currentColor; padding:1px 6px; border-radius:3px; white-space:nowrap}
+.frame figcaption{padding:11px 15px; border-top:1px solid var(--p-line); font-size:13px; color:var(--p-ink2)}
+.frame figcaption b{color:var(--p-ink); font-weight:600}
+.frame figcaption .api{display:block; margin-top:5px; font-family:var(--f-mono); font-size:11px; color:var(--p-ink3)}
+.mkbox{overflow-x:auto}
+.frames2{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px}
+@media (max-width:1040px){.frames2{grid-template-columns:1fr}}
+
+/* ════════════════════════════════════════════════
+   제품 목업 토큰 — 밝은 테마 고정 (Codex 계열)
+   ════════════════════════════════════════════════ */
+.mk{
+  --bg:#FFFFFF; --sunk:#F7F7F5; --hover:#F1F1EE; --line:#E7E7E4; --line2:#D5D5D0;
+  --ink:#0D0D0D; --ink2:#5B5B57; --ink3:#8C8C86;
+  --act:#0D0D0D; --on-act:#FFFFFF; --ring:#2F6FAA;
+  --st-todo:#9AA1A8; --st-prog:#1176CE; --st-rev:#E8AE2A; --st-done:#14803D;
+  --st-todo-ink:#5F656B; --st-prog-ink:#0A64AC; --st-rev-ink:#8A5D04; --st-done-ink:#127036;
+  --st-todo-bg:#EDEEEF; --st-prog-bg:#E1F0FC; --st-rev-bg:#FBF0CE; --st-done-bg:#DEF3E5;
+  --warn:#B85408; --warn-ink:#B85408; --st-fail:#D0392A; --fail-ink:#D0392A;
+  --sf-rev:#FFF6EF; --sf-fail:#FFF4F3; --sf-done:#DEF3E5; --sf-ok:#F0FAF4; --sf-info:#F2F4F5;
+  background:var(--bg); color:var(--ink);
+  font-size:13px; line-height:1.5;
+}
+.ui{min-width:700px}
+.ui--sm{min-width:440px}
+
+/* 셸 */
+.sh-top{display:flex; align-items:center; gap:10px; height:44px; padding:0 12px; border-bottom:1px solid var(--line); background:var(--bg)}
+.sh-mark{display:flex; align-items:center; gap:7px; font-size:13px; font-weight:600; letter-spacing:-0.01em;
+  color:var(--ink); text-decoration:none}
+.logo{display:block; height:auto; color:var(--act)}
+.logo--lg{width:96px}
+.logo--md{width:46px}
+.logo--sm{width:30px}
+.sh-mark .logo{flex:0 0 auto}
+.sw{display:inline-flex; align-items:center; gap:7px; height:26px; padding:0 9px; border:1px solid var(--line2); border-radius:6px; font-size:12px; color:var(--ink); background:var(--bg); cursor:pointer}
+.sw .repo{font-family:var(--f-mono); font-size:11px}
+.sw .cv{color:var(--ink3); font-size:9px}
+.sw--br{gap:6px}
+.sw--br svg{width:13px; height:13px; color:var(--ink3); flex:0 0 auto}
+.sw[aria-disabled="true"]{border-style:dashed; color:var(--ink2); cursor:default}
+.sw[aria-disabled="true"] .cv{display:none}
+.rootpath{font-family:var(--f-mono); font-size:10.5px; color:var(--ink3)}
+.sh-right{margin-left:auto; display:flex; align-items:center; gap:9px}
+.syncpill{display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 9px; border-radius:999px; font-size:11.5px;
+  border:1px solid var(--st-done-ink); color:var(--st-done-ink); background:var(--sf-ok)}
+.syncpill.stale{border-color:var(--st-fail); background:var(--sf-fail); color:var(--fail-ink)}
+.syncpill .t{font-family:var(--f-mono); font-size:10.5px}
+.av{width:24px; height:24px; border-radius:999px; background:var(--sunk); border:1px solid var(--line2); display:grid; place-items:center; font-size:10px; font-weight:600; color:var(--ink2)}
+.dot{width:6px; height:6px; border-radius:999px; display:inline-block; flex:0 0 auto}
+.dot--done{background:var(--st-done-ink)} .dot--prog{background:var(--st-prog-ink)}
+.dot--rev{background:var(--st-rev-ink)} .dot--todo{background:var(--st-todo-ink)}
+.dot--fail{background:var(--st-fail)} .dot--off{background:var(--line2)}
+
+.sh-body{display:grid; grid-template-columns:212px minmax(0,1fr)}
+.sh-side{border-right:1px solid var(--line); background:var(--sunk); padding:10px 8px; display:flex; flex-direction:column; gap:2px; min-height:452px}
+.nav-a{display:flex; align-items:center; gap:9px; height:30px; padding:0 7px 0 9px; border-radius:6px; font-size:12.5px; color:var(--ink2); text-decoration:none}
+.nav-a svg{width:15px; height:15px; flex:0 0 auto; color:var(--ink3)}
+.nav-a .cnt{margin-left:auto; font-family:var(--f-mono); font-size:10px; color:var(--ink3); font-variant-numeric:tabular-nums}
+.nav-a[aria-current]{background:var(--bg); color:var(--ink); font-weight:500; box-shadow:0 1px 2px rgba(0,0,0,.04); border:1px solid var(--line)}
+.nav-a[aria-current] svg{color:var(--ink)}
+.nav-grp{font-family:var(--f-mono); font-size:9.5px; letter-spacing:0.09em; text-transform:uppercase; color:var(--ink3); padding:14px 9px 5px}
+.nav-grp--act{display:flex; align-items:center; gap:4px; padding:14px 7px 1px 9px; font-size:11px}
+.nav-grp--act > span:first-child{flex:1; min-width:0}
+.nav-grp--act .n{flex:0 0 auto; font-size:9.5px; color:var(--ink3); font-variant-numeric:tabular-nums}
+.ibtn{width:22px; height:22px; padding:0; display:grid; place-items:center; border:1px solid transparent; border-radius:5px;
+  background:transparent; color:var(--ink3); cursor:pointer}
+.ibtn svg{width:14px; height:14px}
+.ibtn:hover{background:var(--bg); border-color:var(--line); color:var(--ink)}
+.sh-main{padding:16px; display:flex; flex-direction:column; gap:12px; background:var(--bg)}
+
+/* 페이지 헤더 */
+.ph{display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap}
+.ph h3{font-size:18px; font-weight:600}
+.ph .meta{font-family:var(--f-mono); font-size:10.5px; color:var(--ink3)}
+.ph .r{margin-left:auto; display:flex; gap:7px}
+.btn{display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px; border-radius:6px; font-size:12px; font-weight:500;
+  border:1px solid var(--line2); background:var(--bg); color:var(--ink); cursor:pointer; white-space:nowrap}
+.btn--pri{background:var(--act); border-color:var(--act); color:var(--on-act)}
+.btn--sm{height:24px; padding:0 8px; font-size:11.5px}
+
+/* 카드 그리드 */
+.g12{display:grid; grid-template-columns:repeat(12,1fr); gap:12px}
+.card{border:1px solid var(--line); border-radius:8px; padding:13px 15px; display:flex; flex-direction:column; gap:5px; background:var(--bg); min-width:0}
+.card .k{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink3); letter-spacing:0.02em}
+.card .v{font-size:23px; font-weight:600; letter-spacing:-0.025em; font-variant-numeric:tabular-nums; line-height:1.15}
+.card .v small{font-size:12px; font-weight:400; color:var(--ink3); letter-spacing:0}
+.card .v.na{font-size:14px; font-weight:600; color:var(--ink3); letter-spacing:-0.01em}
+.card .d{font-size:11.5px; color:var(--ink2); margin-top:auto; line-height:1.5}
+.card .d .mono{font-size:10.5px; color:var(--ink3)}
+.card--alert{border-color:var(--st-fail); background:var(--sf-fail)}
+.card--alert .d{color:var(--fail-ink)}
+.card--na{border-style:dashed; border-color:var(--line2)}
+
+/* 상태 칩 · 스택바 */
+.chip{display:inline-flex; align-items:center; gap:5px; height:20px; padding:0 8px; border-radius:999px; font-size:11px; font-weight:500; white-space:nowrap;
+  border:1px solid var(--line2); background:var(--bg); color:var(--ink2)}
+.chip--none{border-style:dashed; color:var(--ink3)}
+.chip--cancel{color:var(--st-todo-ink); background-color:var(--st-todo-bg); background-image:repeating-linear-gradient(45deg,var(--line2) 0 2px,transparent 2px 5px)}
+.chip--partial{border-color:var(--warn); background:var(--sf-rev); color:var(--warn-ink)}
+.sbar{display:flex; gap:3px; height:10px; align-items:stretch}
+.sbar span{border-radius:999px; min-width:7px; font-size:0}
+.s-todo{background:var(--st-todo)}
+.s-prog{background:var(--st-prog)}
+.s-rev{background:var(--st-rev)}
+.s-done{background:var(--st-done)}
+.s-none{border:1px dashed var(--line2)}
+.s-cancel{border:1px solid var(--line2); background-image:repeating-linear-gradient(45deg,var(--line2) 0 1.5px,transparent 1.5px 4px)}
+.slg{display:flex; flex-wrap:wrap; gap:5px 14px; margin-top:10px; font-size:11px; color:var(--ink2)}
+.slg i{width:8px; height:8px; border-radius:999px; display:inline-block; margin-right:6px; vertical-align:-1px}
+.slg b{font-weight:500; font-variant-numeric:tabular-nums; color:var(--ink)}
+.sw-todo{background:var(--st-todo)} .sw-prog{background:var(--st-prog)}
+.sw-rev{background:var(--st-rev)} .sw-done{background:var(--st-done)}
+.sw-none{border:1px dashed var(--line2)}
+.sw-cancel{border:1px solid var(--line2); background-image:repeating-linear-gradient(45deg,var(--line2) 0 1.5px,transparent 1.5px 4px)}
+
+/* 데이터 표 */
+.dt-wrap{border:1px solid var(--line); border-radius:8px; overflow:hidden}
+.dt-hd{display:flex; align-items:center; gap:9px; padding:9px 14px; border-bottom:1px solid var(--line); background:var(--bg)}
+.dt-hd b{font-size:13px; font-weight:600}
+.dt-hd .n{font-family:var(--f-mono); font-size:10.5px; color:var(--ink3)}
+.dt-hd .r{margin-left:auto; font-size:11px; color:var(--ink3)}
+.dt{width:100%; border-collapse:collapse; font-size:12px}
+.dt th{text-align:left; font-size:10.5px; font-weight:500; color:var(--ink3); padding:0 14px; height:28px; background:var(--sunk); border-bottom:1px solid var(--line)}
+.dt td{padding:0 14px; height:36px; border-bottom:1px solid var(--line); color:var(--ink2)}
+.dt tbody tr:last-child td{border-bottom:0}
+.dt td.id{font-family:var(--f-mono); font-size:11px; color:var(--ink); font-weight:500}
+.dt td.lk{font-family:var(--f-mono); font-size:11px; color:var(--st-prog)}
+.dt td.lk.na{color:var(--ink3)}
+.dt td.t{color:var(--ink)}
+.dt td.ts{font-family:var(--f-mono); font-size:10.5px; color:var(--ink3); font-variant-numeric:tabular-nums; text-align:right}
+.dt tr.excluded td{color:var(--ink3)}
+.dt tr.excluded td.t{text-decoration:line-through; text-decoration-color:var(--line2)}
+.st-cell{display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--ink)}
+.st-cell:has(.dot--todo){color:var(--st-todo-ink)}
+.st-cell:has(.dot--prog){color:var(--st-prog-ink)}
+.st-cell:has(.dot--rev){color:var(--st-rev-ink)}
+.st-cell:has(.dot--done){color:var(--st-done-ink)}
+
+/* 문서 화면 */
+.doc-shell{display:grid; grid-template-columns:minmax(0,1fr) 168px; gap:0; min-height:452px}
+.doc{padding:26px 34px 34px; border-right:1px solid var(--line); min-width:0}
+.doc h1{font-size:25px; font-weight:600; letter-spacing:-0.028em}
+.doc .dmeta{display:flex; align-items:center; gap:8px; margin-top:9px; padding-bottom:16px; border-bottom:1px solid var(--line);
+  font-family:var(--f-mono); font-size:10.5px; color:var(--ink3); flex-wrap:wrap}
+.doc h2{font-size:16px; font-weight:600; margin:26px 0 0}
+.doc p{font-size:14.5px; line-height:1.78; color:var(--ink); max-width:68ch; margin-top:11px}
+.doc .lead{color:var(--ink2)}
+.doc code{font-family:var(--f-mono); font-size:12px; background:var(--sunk); border:1px solid var(--line); border-radius:4px; padding:0 4px}
+.mdtbl{width:100%; border-collapse:collapse; font-size:12.5px; margin-top:16px; border:1px solid var(--line); border-radius:6px; overflow:hidden}
+.mdtbl th{text-align:left; font-size:11px; font-weight:600; color:var(--ink2); background:var(--sunk); padding:7px 11px; border-bottom:1px solid var(--line2)}
+.mdtbl td{padding:7px 11px; border-bottom:1px solid var(--line); color:var(--ink2)}
+.mdtbl tr:last-child td{border-bottom:0}
+.mdtbl td:last-child{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink)}
+.dgm{margin:18px 0 0; border:1px solid var(--line); border-radius:8px; overflow:hidden}
+.dgm .bar{display:flex; align-items:center; gap:8px; padding:6px 11px; background:var(--sunk); border-bottom:1px solid var(--line); font-family:var(--f-mono); font-size:10px; color:var(--ink3)}
+.dgm .bar .r{margin-left:auto; color:var(--ink); border:1px solid var(--line2); background:var(--bg); border-radius:4px; padding:1px 7px; font-size:10px}
+.dgm svg{display:block; width:100%; height:auto; padding:14px 12px}
+.dgm-err{margin-top:14px; border:1px solid var(--st-fail); border-radius:8px; overflow:hidden}
+.dgm-err .bar{display:flex; gap:8px; align-items:center; padding:6px 11px; background:var(--sf-fail); border-bottom:1px solid var(--st-fail); font-family:var(--f-mono); font-size:10px; color:var(--fail-ink)}
+.dgm-err .bd{padding:11px; font-size:12px; color:var(--ink2)}
+.dgm-err .bd b{display:block; color:var(--ink); font-size:12.5px; font-weight:600; margin-bottom:3px}
+.toc{padding:26px 14px; display:flex; flex-direction:column; gap:1px; position:sticky; top:0; align-self:start}
+.toc .h{font-size:10.5px; font-family:var(--f-mono); letter-spacing:0.08em; text-transform:uppercase; color:var(--ink3); margin-bottom:8px}
+.toc a{font-size:11.5px; color:var(--ink2); text-decoration:none; padding:3px 0 3px 10px; border-left:1px solid var(--line); line-height:1.4}
+.toc a[aria-current]{color:var(--ink); font-weight:500; border-left-color:var(--act)}
+.toc .wz{margin-top:18px; padding-top:13px; border-top:1px solid var(--line)}
+.toc .wz p{font-size:11px; color:var(--warn-ink); display:flex; gap:6px; margin-top:5px; line-height:1.45}
+.tree{display:flex; flex-direction:column; margin-top:0}
+.fold-h{display:flex; align-items:center; gap:6px; height:27px; padding:0 7px; cursor:pointer; list-style:none;
+  font-family:var(--f-mono); font-size:10px; letter-spacing:0.07em; text-transform:uppercase; color:var(--ink2)}
+.fold-h::-webkit-details-marker{display:none}
+.fold-h:hover{color:var(--ink)}
+.fold-h .chev{width:9px; height:9px; color:var(--ink3); flex:0 0 auto; transition:transform .12s ease}
+.fold[open] > .fold-h .chev{transform:rotate(90deg)}
+.fold-h .fico{width:13px; height:13px; color:var(--ink3); flex:0 0 auto}
+.fold--cur > .fold-h .fico{color:var(--ink)}
+.fold-h .fname{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.fold-h .n{font-size:9.5px; color:var(--ink3); font-variant-numeric:tabular-nums}
+.fold--cur > .fold-h{color:var(--ink)}
+.fold--cur > .fold-h .chev{color:var(--ink)}
+.fold-b{display:flex; flex-direction:column; gap:1px; margin:1px 0 7px 13px; padding-left:8px; border-left:1px solid var(--line)}
+.fold-b a{display:block; padding:4px 8px; border-radius:5px; font-size:12px; color:var(--ink2); text-decoration:none;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.fold-b a:hover{background:var(--hover); color:var(--ink)}
+.fold-b a[aria-current]{background:var(--bg); color:var(--ink); font-weight:500; border:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){.fold-h .chev{transition:none}}
+
+/* 검색 */
+.sr{padding:16px; display:flex; flex-direction:column; gap:14px; min-height:340px; background:var(--bg)}
+.sfield{display:flex; align-items:center; gap:9px; height:34px; padding:0 12px; border:1px solid var(--act); border-radius:7px; font-size:13px}
+.sfield .q{font-weight:500}
+.sfield .sc{margin-left:auto; font-size:11px; color:var(--ink3)}
+.hit{display:flex; flex-direction:column; gap:4px; padding-bottom:13px; border-bottom:1px solid var(--line)}
+.hit .t{font-size:13.5px; font-weight:600}
+.hit .p{font-family:var(--f-mono); font-size:10px; color:var(--ink3)}
+.hit .x{font-size:12.5px; color:var(--ink2); line-height:1.65}
+.hit .x mark{background:#F1EBD9; color:var(--ink); padding:0 2px; border-radius:2px}
+
+/* 프로젝트 선택 */
+.pl{padding:20px; display:flex; flex-direction:column; gap:14px; min-height:392px; background:var(--bg)}
+.pl-t{display:flex; align-items:center; gap:12px}
+.pl-t h3{flex:1; font-size:19px; font-weight:600}
+.pl-h p{font-size:13px; color:var(--ink2); margin-top:6px; max-width:58ch}
+.pcard{display:flex; align-items:center; gap:12px; border:1px solid var(--line); border-radius:8px; padding:12px 14px}
+.pcard .nm{display:flex; flex-direction:column; gap:3px; min-width:0}
+.pcard .nm b{font-size:13.5px; font-weight:600; font-family:var(--f-mono)}
+.pcard .nm span{font-family:var(--f-mono); font-size:10.5px; color:var(--ink3)}
+.pcard .rr{margin-left:auto; display:flex; align-items:center; gap:10px}
+.form{border:1px solid var(--line); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:11px}
+.form .fh{font-size:13px; font-weight:600}
+.frow{display:grid; grid-template-columns:104px minmax(0,1fr); gap:11px; align-items:center}
+.frow label{font-size:12px; color:var(--ink2)}
+.frow .inp{height:28px; border:1px solid var(--line2); border-radius:6px; padding:0 9px; display:flex; align-items:center;
+  font-family:var(--f-mono); font-size:11.5px; color:var(--ink); background:var(--bg)}
+.frow .inp.sel{justify-content:space-between}
+.frow .inp .cv{color:var(--ink3); font-size:9px}
+.frow .help{font-size:11px; color:var(--ink3); grid-column:2}
+.frow .inp.err{border-color:var(--st-fail)}
+.frow .errmsg{grid-column:2; font-size:11px; color:var(--st-fail)}
+
+/* 상태 화면 */
+.states{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px}
+.stc{border:1px solid var(--p-line2); border-radius:10px; background:var(--p-surf); overflow:hidden; display:flex; flex-direction:column}
+.stc .h{display:flex; align-items:baseline; gap:9px; padding:9px 13px; background:var(--p-sunk); border-bottom:1px solid var(--p-line)}
+.stc .h b{font-size:12.5px; font-weight:600}
+.stc .h .uid{font-family:var(--f-mono); font-size:9.5px; color:var(--p-ink3); margin-left:auto}
+.stc .rule{padding:9px 13px; border-top:1px solid var(--p-line); font-size:12px; color:var(--p-ink2); margin-top:auto}
+.stc .rule em{font-style:normal; color:var(--p-warn); font-weight:500}
+.stv{padding:18px 16px; min-height:150px; display:flex; flex-direction:column; gap:9px; align-items:flex-start; justify-content:center}
+.stv .big{font-size:15px; font-weight:600}
+.stv .sm{font-size:12.5px; color:var(--ink2); line-height:1.6; max-width:42ch}
+.stv .cd{font-family:var(--f-mono); font-size:10.5px; color:var(--ink3)}
+.stv .banner{display:flex; align-items:center; gap:9px; width:100%; padding:8px 11px; border-radius:7px; font-size:12px}
+.stv .banner .t{margin-left:auto; font-family:var(--f-mono); font-size:10.5px}
+.stv .banner--rev{background:var(--sf-fail); border:1px solid var(--st-fail); color:var(--fail-ink)}
+.stv .banner--fail{background:var(--sf-fail); border:1px solid var(--st-fail); color:var(--fail-ink)}
+.stv .banner--info{background:var(--sf-info); border:1px solid var(--line2); color:var(--ink2)}
+.stv .skel{width:100%; height:10px; border-radius:3px; background:var(--sunk); border:1px solid var(--line)}
+.stv .skel.w7{width:70%} .stv .skel.w45{width:45%}
+.stv .naBox{display:flex; align-items:center; gap:10px; width:100%; border:1px dashed var(--line2); border-radius:7px; padding:9px 11px}
+.stv .naBox .v{font-size:14px; font-weight:600; color:var(--ink3)}
+.stv .naBox .k{margin-left:auto; font-family:var(--f-mono); font-size:10px; color:var(--ink3)}
+.stv .row{display:flex; align-items:center; gap:9px; width:100%; font-size:12px; padding:6px 0; border-bottom:1px solid var(--line)}
+
+/* 컴포넌트 인벤토리 */
+.inv{display:grid; grid-template-columns:repeat(auto-fill,minmax(238px,1fr)); gap:14px}
+.invc{border:1px solid var(--p-line); border-radius:9px; background:var(--p-surf); overflow:hidden}
+.invc .demo{padding:15px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:74px; border-bottom:1px solid var(--p-line)}
+.invc .m{padding:9px 12px}
+.invc .m b{display:block; font-size:12.5px; font-weight:600}
+.invc .m span{font-size:11.5px; color:var(--p-ink2); line-height:1.5}
+
+/* 결정 필요 */
+.asks{display:flex; flex-direction:column; gap:1px; background:var(--p-line); border:1px solid var(--p-line); border-radius:9px; overflow:hidden}
+.ask{background:var(--p-surf); padding:12px 16px; display:grid; grid-template-columns:24px 1fr; gap:12px}
+.ask .n{font-family:var(--f-mono); font-size:12px; color:var(--p-ink3); padding-top:2px}
+.ask b{display:block; font-size:13.5px; font-weight:600; margin-bottom:3px}
+.ask p{font-size:12.5px; color:var(--p-ink2)}
+.foot{margin-top:48px; padding-top:18px; border-top:1px solid var(--p-line2); font-size:12.5px; color:var(--p-ink3); display:flex; flex-direction:column; gap:7px}
+.foot b{color:var(--p-warn); font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <div>
+      <p class="eyebrow">SyncDoc · docs/02-ui-spec · 2026-09-09</p>
+      <h1>SyncDoc 화면 정의</h1>
+    </div>
+    <p class="lede">B안(운영 콘솔) 골격을 Codex 계열 밝은 테마로 다시 그린 구현 기준입니다. 이 페이지의 레이아웃·토큰·상태 문구가 명세의 근거이며, 여기 없는 화면은 MVP 범위가 아닙니다.</p>
+    <div class="decided">
+      <span><b>골격</b> B안 · 운영 콘솔</span>
+      <span><b>서체</b> Pretendard</span>
+      <span><b>결</b> Codex 계열 · 단색 우선</span>
+      <span><b>테마</b> 밝은 테마 단일</span>
+    </div>
+    <div class="caveat">
+      <div>글자는 라틴·숫자·한글 모두 <b>Pretendard</b>를 씁니다. SIL OFL이며 같은 폴더의 <span class="mono">fonts/PretendardVariable.woff2</span>를 참조하므로 외부 요청 없이 어느 환경에서 열어도 같은 글자로 보입니다. 이 페이지는 명세의 시각 참조이고 <span class="mono">ui-conventions.md</span>·<span class="mono">ui-screens.md</span>가 정본입니다.</div>
+    </div>
+  </header>
+
+  <!-- ═══════════ 01 토큰 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">01</span><h2>토큰</h2>
+      <p>단색이 기본이고 색은 상태에만 씁니다. 화면에서 색이 보이면 그것은 항상 상태입니다.</p>
+    </div>
+
+    <div class="tok-grid">
+      <div class="tok"><div class="patch" style="background:#FFFFFF;color:#0D0D0D;box-shadow:inset 0 0 0 1px #E7E7E4">#FFFFFF</div>
+        <div class="m"><b>본문 바탕</b><span>--bg</span></div></div>
+      <div class="tok"><div class="patch" style="background:#F7F7F5;color:#0D0D0D">#F7F7F5</div>
+        <div class="m"><b>가라앉은 면</b><span>--sunk</span></div></div>
+      <div class="tok"><div class="patch" style="background:#E7E7E4;color:#0D0D0D">#E7E7E4</div>
+        <div class="m"><b>경계선</b><span>--line</span></div></div>
+      <div class="tok"><div class="patch" style="background:#D5D5D0;color:#0D0D0D">#D5D5D0</div>
+        <div class="m"><b>강한 경계선</b><span>--line2</span></div></div>
+      <div class="tok"><div class="patch" style="background:#0D0D0D;color:#FFF">#0D0D0D</div>
+        <div class="m"><b>본문 글자 · 주 동작</b><span>--ink / --act</span></div></div>
+      <div class="tok"><div class="patch" style="background:#5B5B57;color:#FFF">#5B5B57</div>
+        <div class="m"><b>보조 글자</b><span>--ink2</span></div></div>
+      <div class="tok"><div class="patch" style="background:#8C8C86;color:#FFF">#8C8C86</div>
+        <div class="m"><b>흐린 글자</b><span>--ink3</span></div></div>
+      <div class="tok"><div class="patch" style="background:#EDEEEF;color:#5F656B;font-weight:600">미착수</div>
+        <div class="m"><b>미착수</b><span>채움 #9AA1A8<br>글자 #5F656B<br>틴트 #EDEEEF</span></div></div>
+      <div class="tok"><div class="patch" style="background:#E1F0FC;color:#0A64AC;font-weight:600">진행</div>
+        <div class="m"><b>진행</b><span>채움 #1176CE<br>글자 #0A64AC<br>틴트 #E1F0FC</span></div></div>
+      <div class="tok"><div class="patch" style="background:#FBF0CE;color:#8A5D04;font-weight:600">리뷰</div>
+        <div class="m"><b>리뷰</b><span>채움 #E8AE2A<br>글자 #8A5D04<br>틴트 #FBF0CE</span></div></div>
+      <div class="tok"><div class="patch" style="background:#DEF3E5;color:#127036;font-weight:600">완료</div>
+        <div class="m"><b>완료</b><span>채움 #14803D<br>글자 #127036<br>틴트 #DEF3E5</span></div></div>
+      <div class="tok"><div class="patch" style="background:#FFF6EF;color:#B85408;font-weight:600">주의</div>
+        <div class="m"><b>주의 · 집계 미확정</b><span>--warn #B85408<br>틴트 #FFF6EF</span></div></div>
+      <div class="tok"><div class="patch" style="background:#FFF4F3;color:#D0392A;font-weight:600">실패</div>
+        <div class="m"><b>실패 · 동기화 실패</b><span>--st-fail #D0392A<br>틴트 #FFF4F3</span></div></div>
+    </div>
+
+    <table class="tbl">
+      <caption>글자 · 간격 · 형태</caption>
+      <thead><tr><th>토큰</th><th>값</th><th>쓰는 곳</th></tr></thead>
+      <tbody>
+        <tr><td>--f-ui</td><td>Pretendard v1.3.9 가변(100~900) SIL OFL self-host · 대체 system-ui → Apple SD Gothic Neo → Malgun Gothic</td><td>모든 UI와 문서 본문</td></tr>
+        <tr><td>--f-mono</td><td>JetBrains Mono → ui-monospace → Consolas</td><td>식별자만 — snapshot, revision, 경로, TASK·Issue 번호, 시각, 코드</td></tr>
+        <tr><td>글자 크기</td><td class="num">11 · 12 · 13 · 14.5 · 16 · 18 · 23 · 25</td><td>UI 기본 13, 문서 본문 14.5, 지표 숫자 23</td></tr>
+        <tr><td>굵기</td><td class="num">400 · 500 · 600</td><td>700 이상은 쓰지 않는다</td></tr>
+        <tr><td>행간</td><td class="num">1.5 (UI) · 1.78 (문서 본문)</td><td>본문 폭은 68자에서 끊는다</td></tr>
+        <tr><td>간격</td><td class="num">4 · 8 · 12 · 16 · 20 · 26 · 34</td><td>카드 안 13/15, 카드 사이 12</td></tr>
+        <tr><td>모서리</td><td class="num">4 · 6 · 8 · 999</td><td>입력·버튼 6, 카드·표 8, 칩 999</td></tr>
+        <tr><td>줄 높이</td><td class="num">표 36 · 목록 30 · 상단바 44 · 사이드바 212</td><td>B안 밀도 유지</td></tr>
+        <tr><td>그림자</td><td>없음. 떠 있는 요소만 <span class="mono">0 1px 2px rgba(0,0,0,.04)</span></td><td>카드는 선으로만 구분한다</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:12px; font-size:13px; color:var(--p-ink2); max-width:74ch">중성색은 약하게 따뜻한 쪽(#F7F7F5 / #E7E7E4)으로 잡고 글자는 순수한 근검정을 씁니다. 유일한 유채색인 상태색이 차가운 쪽이라 이 대비가 상태를 더 도드라지게 합니다. 상태마다 <b>의미색 + 연한 틴트</b>를 짝지어 씁니다. 색은 세 단계로 나뉘는데, 막대와 범례에는 채움 단계, 흰 바탕의 점과 글자에는 한 단 짙은 글자 단계, 칩·카드·배너 바탕에는 틴트 단계를 씁니다. 글자 단계는 자기 틴트 위에서 4.59~5.32:1로 AA를 넘기고, 막대 채움 단계는 인접 세그먼트가 색약 조건에서 구분됩니다(최악 인접 진행↔미착수 ΔE 17.4 protan). 미착수 무채색과 리뷰 노랑은 흰 바탕 대비가 3:1 미만이라 반드시 글자 라벨·범례 숫자와 함께 둡니다. 예약색은 의미로 갈라 씁니다 — <b>동기화가 실패한 상태는 실패 빨강</b>, 아직 수집 중이라 값이 확정되지 않은 상태만 주의 주황입니다. 어느 화면에서도 색 하나만으로 상태를 전달하지 않습니다.</p>
+  </section>
+
+  <!-- ═══════════ 02 셸 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">02</span><h2>공통 셸</h2>
+      <p>상단바 44 + 사이드바 212 + 본문. 모든 화면이 이 셸 안에 들어갑니다.</p>
+    </div>
+    <figure class="frame">
+      <div class="frame-bar"><span class="uid">UI-000</span><span class="path">셸 · 상단바 · 사이드바</span><span class="badge">MOCK · FIXTURE</span></div>
+      <div class="mkbox mk">
+        <div class="ui">
+          <div class="sh-top">
+            <a class="sh-mark" href="#" title="프로젝트 홈으로"><svg class="logo logo--sm" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>SyncDoc</a>
+            <button class="sw" type="button" title="프로젝트 전환"><span class="repo">UncleSamsun/syncdoc</span><span class="cv">▾</span></button>
+            <button class="sw sw--br" type="button" title="문서 기준 브랜치 변경">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="4.5" cy="3.6" r="1.7"/><circle cx="4.5" cy="12.4" r="1.7"/><circle cx="11.5" cy="6" r="1.7"/><path d="M4.5 5.3v5.4M11.5 7.7c0 2.3-2.4 2.8-4.4 3.2"/></svg>
+              <span class="repo">main</span><span class="cv">▾</span>
+            </button>
+            <span class="rootpath">docs</span>
+            <div class="sh-right">
+              <span class="syncpill"><span class="dot dot--done"></span>동기화 <span class="t">14:22 UTC</span></span>
+              <button class="ibtn" type="button" aria-label="연결 설정" title="연결 설정">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="4.6"/><circle cx="8" cy="8" r="1.8"/><path d="M12.6 8h1.8M3.4 8H1.6M8 12.6v1.8M8 3.4V1.6M11.25 11.25l1.28 1.28M4.75 4.75 3.47 3.47M4.75 11.25 3.47 12.53M11.25 4.75l1.28-1.28"/></svg>
+              </button>
+              <span class="av">MJ</span>
+            </div>
+          </div>
+          <div class="sh-body">
+            <nav class="sh-side">
+              <a class="nav-a" aria-current="page" href="#">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+                현황</a>
+              <a class="nav-a" href="#">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 4h8M6 8h8M6 12h8"/><path d="M2.5 4h1M2.5 8h1M2.5 12h1"/></svg>
+                작업 <span class="cnt">8</span></a>
+              <a class="nav-a" href="#">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+                검색</a>
+              <div class="nav-grp nav-grp--act"><span>문서</span><span class="n">14</span></div>
+              <div class="tree">
+                <details class="fold" open>
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">01 prd</span><span class="n">3</span></summary>
+                  <div class="fold-b"><a href="#">brief</a><a href="#">mvp-scope</a><a href="#">spec-standard-proposal</a></div>
+                </details>
+                <details class="fold" open>
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">02 ui-spec</span><span class="n">4</span></summary>
+                  <div class="fold-b"><a href="#">ui-conventions</a><a href="#">ui-direction-review</a><a href="#">ui-handoff</a><a href="#">ui-screens</a></div>
+                </details>
+                <details class="fold">
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">03 tech-spec</span><span class="n">5</span></summary>
+                  <div class="fold-b"><a href="#">access-proposal</a><a href="#">api-spec</a><a href="#">architecture-proposal</a><a href="#">data-model</a><a href="#">identity-proposal</a></div>
+                </details>
+                <details class="fold">
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">04 tasks</span><span class="n">2</span></summary>
+                  <div class="fold-b"><a href="#">collaboration-workflow</a><a href="#">implementation-plan</a></div>
+                </details>
+              </div>
+            </nav>
+            <div class="sh-main" style="min-height:180px; justify-content:center; align-items:flex-start; gap:8px">
+              <p style="font-size:13px; color:var(--ink2); max-width:52ch">본문 영역. 12열 격자, 열 간격 12. 화면별 정의는 아래 UI-001 ~ UI-004를 따른다.</p>
+              <p style="font-family:var(--f-mono); font-size:11px; color:var(--ink3)">사이드바는 1040px 이하에서 아이콘 48px로 접히고, 720px 이하에서는 상단 드로어로 바뀐다.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>셸.</b> 사이드바는 이동 항목 셋(현황·작업·검색) 아래에 <b>문서</b> 섹션과 문서 트리를 상주시킵니다 — 어느 화면에 있어도 문서로 바로 들어갈 수 있습니다. 프로젝트는 화면이 아니라 상단바에서 바꾸고, 프로젝트를 고르고 연결하는 일은 <span class="mono">UI-001 프로젝트 홈</span>이 전담합니다. 연결 설정은 상단바 우측 톱니바퀴입니다. 프로젝트 스위처와 브랜치 스위처를 상단바에 나란히 두어 전용 목록 페이지 없이 1단계를 처리합니다. 브랜치 기본값은 <span class="mono">main</span>이고 여기서 바꿉니다 — 바꾸면 새 수집이 예약되고 완료까지 이전 snapshot을 계속 보여줍니다. 연결자·관리자가 아니면 이 스위처는 현재 브랜치를 보여주는 읽기 전용(점선)입니다. 동기화 칩은 항상 상단 우측에 상주하고 실패하면 이 칩이 먼저 변합니다.
+        <span class="api">GET /me · GET /projects · GET /projects/{id} · PATCH /projects/{id} · GET /projects/{id}/sync</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══════════ 03 UI-001 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">03</span><h2>UI-001 프로젝트 홈</h2>
+      <p>프로젝트를 고르고 들어가는 화면입니다. 저장소 연결도 여기서만 합니다. 제품 표식을 누르면 언제든 돌아옵니다.</p>
+    </div>
+    <figure class="frame">
+      <div class="frame-bar"><span class="uid">UI-001</span><span class="path">/projects</span><span class="badge">MOCK · FIXTURE</span></div>
+      <div class="mkbox mk">
+        <div class="ui">
+          <div class="sh-top">
+            <a class="sh-mark" href="#" title="프로젝트 홈으로"><svg class="logo logo--sm" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>SyncDoc</a>
+            <div class="sh-right"><span class="av">MJ</span></div>
+          </div>
+          <div class="pl">
+            <div class="pl-h">
+              <div class="pl-t">
+                <h3>프로젝트 홈</h3>
+                <button class="btn btn--pri" type="button"><svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 3.4v9.2M3.4 8h9.2"/></svg>저장소 연결</button>
+              </div>
+              <p>앱과 내 계정이 모두 접근할 수 있는 저장소만 연결할 수 있습니다. 저장소 하나가 프로젝트 하나입니다. 프로젝트에 들어간 뒤에도 상단바에서 다른 프로젝트로 바꿀 수 있고, 제품 표식을 누르면 이 화면으로 돌아옵니다.</p>
+            </div>
+            <div class="pcard">
+              <span class="dot dot--done"></span>
+              <span class="nm"><b>UncleSamsun/syncdoc</b><span>main · docs · snap_8f2c1a · 14:22 UTC</span></span>
+              <span class="rr"><span class="chip"><span class="dot dot--done"></span>문서 14</span><button class="btn btn--sm" type="button">열기</button></span>
+            </div>
+            <div class="pcard">
+              <span class="dot dot--todo"></span>
+              <span class="nm"><b>UncleSamsun/devknowledge</b><span>main · docs · 첫 수집 대기</span></span>
+              <span class="rr"><span class="chip chip--none">queued</span><button class="btn btn--sm" type="button">열기</button></span>
+            </div>
+            <div class="form">
+              <span class="fh">저장소 연결</span>
+              <div class="frow">
+                <label for="f-repo">저장소</label>
+                <span class="inp sel" id="f-repo">UncleSamsun/syncdoc-samples<span class="cv">▾</span></span>
+                <span class="help">읽기 가능한 후보만 나열합니다. 임의 URL·로컬 경로는 입력할 수 없습니다.</span>
+              </div>
+              <div class="frow">
+                <label for="f-br">기준 브랜치</label>
+                <span class="inp sel" id="f-br">main<span class="cv">▾</span></span>
+                <span class="help">기본값은 <span class="mono">main</span>이다. 다른 브랜치의 문서를 보려면 연결 후 상단바에서 바꾼다.</span>
+              </div>
+              <div class="frow">
+                <label for="f-root">문서 경로</label>
+                <span class="inp err" id="f-root">docs</span>
+                <span class="errmsg">이 브랜치에 <span class="mono">docs</span> 경로가 없습니다. 실제 경로를 선택하세요.</span>
+              </div>
+              <div class="frow">
+                <label for="f-proj">GitHub Project</label>
+                <span class="inp sel" id="f-proj">연결하지 않음<span class="cv">▾</span></span>
+                <span class="help">선택 사항입니다. 연결하지 않으면 문서와 Issue·PR 현황만 제공합니다.</span>
+              </div>
+              <div style="display:flex; gap:8px; justify-content:flex-end">
+                <button class="btn" type="button">취소</button>
+                <button class="btn btn--pri" type="button">연결</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>UI-001.</b> 오류는 필드 바로 아래에 붙습니다. 기본값 <span class="mono">main</span>·<span class="mono">docs</span>를 미리 채우되 실제로 없으면 통과시키지 않습니다. 중복 연결은 409를 받아 "이미 연결됨 · 열기"로 바꿉니다.
+        <span class="api">GET /github/repositories · POST /projects · GET /projects</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══════════ 04 UI-002 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">04</span><h2>UI-002 현황</h2>
+      <p>B안의 본체입니다. 동기화 상태·집계·작업 매핑이 한 화면에 상주합니다.</p>
+    </div>
+    <figure class="frame">
+      <div class="frame-bar"><span class="uid">UI-002</span><span class="path">/projects/syncdoc/overview</span><span class="badge">MOCK · FIXTURE</span></div>
+      <div class="mkbox mk">
+        <div class="ui">
+          <div class="sh-top">
+            <a class="sh-mark" href="#" title="프로젝트 홈으로"><svg class="logo logo--sm" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>SyncDoc</a>
+            <button class="sw" type="button" title="프로젝트 전환"><span class="repo">UncleSamsun/syncdoc</span><span class="cv">▾</span></button>
+            <button class="sw sw--br" type="button" title="문서 기준 브랜치 변경">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="4.5" cy="3.6" r="1.7"/><circle cx="4.5" cy="12.4" r="1.7"/><circle cx="11.5" cy="6" r="1.7"/><path d="M4.5 5.3v5.4M11.5 7.7c0 2.3-2.4 2.8-4.4 3.2"/></svg>
+              <span class="repo">main</span><span class="cv">▾</span>
+            </button>
+            <span class="rootpath">docs</span>
+            <div class="sh-right">
+              <span class="syncpill stale"><span class="dot dot--fail"></span>갱신 실패 · 재시도 <span class="t">14:41</span></span>
+              <button class="ibtn" type="button" aria-label="연결 설정" title="연결 설정">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="4.6"/><circle cx="8" cy="8" r="1.8"/><path d="M12.6 8h1.8M3.4 8H1.6M8 12.6v1.8M8 3.4V1.6M11.25 11.25l1.28 1.28M4.75 4.75 3.47 3.47M4.75 11.25 3.47 12.53M11.25 4.75l1.28-1.28"/></svg>
+              </button>
+              <span class="av">MJ</span>
+            </div>
+          </div>
+          <div class="sh-body">
+            <nav class="sh-side">
+              <a class="nav-a" aria-current="page" href="#"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>현황</a>
+              <a class="nav-a" href="#"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 4h8M6 8h8M6 12h8"/><path d="M2.5 4h1M2.5 8h1M2.5 12h1"/></svg>작업 <span class="cnt">8</span></a>
+              <a class="nav-a" href="#"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>검색</a>
+              <div class="nav-grp nav-grp--act"><span>문서</span><span class="n">14</span></div>
+              <div class="tree">
+                <details class="fold" open>
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">01 prd</span><span class="n">3</span></summary>
+                  <div class="fold-b"><a href="#">brief</a><a href="#">mvp-scope</a><a href="#">spec-standard-proposal</a></div>
+                </details>
+                <details class="fold" open>
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">02 ui-spec</span><span class="n">4</span></summary>
+                  <div class="fold-b"><a href="#">ui-conventions</a><a href="#">ui-direction-review</a><a href="#">ui-handoff</a><a href="#">ui-screens</a></div>
+                </details>
+                <details class="fold">
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">03 tech-spec</span><span class="n">5</span></summary>
+                  <div class="fold-b"><a href="#">access-proposal</a><a href="#">api-spec</a><a href="#">architecture-proposal</a><a href="#">data-model</a><a href="#">identity-proposal</a></div>
+                </details>
+                <details class="fold">
+                  <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">04 tasks</span><span class="n">2</span></summary>
+                  <div class="fold-b"><a href="#">collaboration-workflow</a><a href="#">implementation-plan</a></div>
+                </details>
+              </div>
+            </nav>
+            <div class="sh-main">
+              <div class="ph">
+                <h3>현황</h3>
+                <span class="meta">snap_8f2c1a · rev 1549821</span>
+                <span class="r"><button class="btn btn--sm" type="button">지금 동기화</button></span>
+              </div>
+
+              <div class="g12">
+                <div class="card card--alert" style="grid-column:span 3">
+                  <span class="k"><span class="dot dot--rev"></span>동기화</span>
+                  <span class="v na">오래된 정보</span>
+                  <span class="d">마지막 성공 14:22 · 실패 14:36<br><span class="mono">GITHUB_UNAVAILABLE</span></span>
+                </div>
+                <div class="card" style="grid-column:span 3">
+                  <span class="k">작업 완료</span>
+                  <span class="v">2<small> / 6</small></span>
+                  <span class="d">상태 명시 6건 기준 · 취소 1건 제외</span>
+                </div>
+                <div class="card card--na" style="grid-column:span 3">
+                  <span class="k">Project 완료율</span>
+                  <span class="v na">조회 불가</span>
+                  <span class="d"><span class="mono">projectAccess: unavailable</span><br>추정하지 않습니다</span>
+                </div>
+                <div class="card" style="grid-column:span 3">
+                  <span class="k">문서</span>
+                  <span class="v">14</span>
+                  <span class="d">마지막 정상 snapshot 기준</span>
+                </div>
+
+                <div class="card" style="grid-column:span 12">
+                  <span class="k">상태별 건수 <span class="chip chip--partial">수집 중 · 확정 아님</span></span>
+                  <div class="sbar" role="img" aria-label="상태별 건수: 미착수 2, 진행 2, 리뷰 1, 완료 2, Issue 미등록 1, 취소 1">
+                    <span class="s-todo" style="flex:2"></span>
+                    <span class="s-prog" style="flex:2"></span>
+                    <span class="s-rev" style="flex:1"></span>
+                    <span class="s-done" style="flex:2"></span>
+                    <span class="s-none" style="flex:1"></span>
+                    <span class="s-cancel" style="flex:1"></span>
+                  </div>
+                  <div class="slg">
+                    <span><i class="sw-todo"></i>미착수 <b>2</b></span>
+                    <span><i class="sw-prog"></i>진행 <b>2</b></span>
+                    <span><i class="sw-rev"></i>리뷰 <b>1</b></span>
+                    <span><i class="sw-done"></i>완료 <b>2</b></span>
+                    <span><i class="sw-none"></i>Issue 미등록 <b>1</b></span>
+                    <span><i class="sw-cancel"></i>취소 <b>1</b> · 분모 제외</span>
+                  </div>
+                </div>
+
+                <div style="grid-column:span 12" class="dt-wrap">
+                  <div class="dt-hd"><b>작업 · Issue 매핑</b><span class="n">8건 중 6건</span><span class="r">담당자는 명시 배정만 표시 · 커밋 수는 진행률로 쓰지 않음</span></div>
+                  <table class="dt">
+                    <thead><tr><th style="width:82px">TASK</th><th>제목</th><th style="width:60px">Issue</th><th style="width:104px">상태</th><th style="width:88px">PR</th><th style="width:112px">담당</th></tr></thead>
+                    <tbody>
+                      <tr><td class="id">TASK-001</td><td class="t">실행 기반과 연결 가능성 확인</td><td class="lk">#12</td>
+                        <td><span class="st-cell"><span class="dot dot--prog"></span>진행</span></td><td class="lk na">—</td><td>UncleSamsun</td></tr>
+                      <tr><td class="id">TASK-002</td><td class="t">초대와 세션</td><td class="lk">#13</td>
+                        <td><span class="st-cell"><span class="dot dot--todo"></span>미착수</span></td><td class="lk na">—</td><td>미배정</td></tr>
+                      <tr class="excluded"><td class="id">TASK-003</td><td class="t">저장소 연결과 목록</td><td class="lk">#14</td>
+                        <td><span class="chip chip--cancel">취소 · 제외</span></td><td class="lk na">—</td><td>—</td></tr>
+                      <tr><td class="id">TASK-004</td><td class="t">문서 규약과 검증</td><td class="lk na">—</td>
+                        <td><span class="chip chip--none">Issue 미등록</span></td><td class="lk na">—</td><td>—</td></tr>
+                      <tr><td class="id">TASK-006</td><td class="t">문서 · 표 · 다이어그램</td><td class="lk">#17</td>
+                        <td><span class="st-cell"><span class="dot dot--rev"></span>리뷰</span></td><td class="lk">#21 #24</td><td>UncleSamsun</td></tr>
+                      <tr><td class="id">TASK-007</td><td class="t">현황 · 검색 · 작업 매핑</td><td class="lk">#18</td>
+                        <td><span class="st-cell"><span class="dot dot--done"></span>완료</span></td><td class="lk">#25</td><td>UncleSamsun</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style="grid-column:span 12" class="dt-wrap">
+                  <div class="dt-hd"><b>최근 변경</b><span class="n">마지막 정상 snapshot</span><span class="r">14:22 UTC 기준</span></div>
+                  <table class="dt">
+                    <tbody>
+                      <tr><td style="width:22px"><span class="dot dot--done"></span></td>
+                        <td class="t"><span class="mono">docs/04-tasks/implementation-plan.md</span></td><td class="ts">14:22</td></tr>
+                      <tr><td><span class="dot dot--done"></span></td>
+                        <td class="t"><span class="mono">docs/02-ui-spec/ui-handoff.md</span></td><td class="ts">14:22</td></tr>
+                      <tr><td><span class="dot dot--off"></span></td>
+                        <td class="t"><span class="mono">docs/03-tech-spec/api-spec.md</span></td><td class="ts">어제 09:04</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>UI-002.</b> 실패 카드만 색면을 씁니다. 조회 불가 카드는 점선으로 "값이 없음"을 형태에 담고 0%를 그리지 않습니다. 취소는 해치, Issue 미등록은 점선이라 색약에서도 구분됩니다.
+        <span class="api">GET /projects/{id}/overview · GET /projects/{id}/tasks · GET /projects/{id}/sync · POST /projects/{id}/sync</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══════════ 05 UI-003 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">05</span><h2>UI-003 문서 본문</h2>
+      <p>사이드바 문서 트리는 셸에 상주하므로 그대로 두고, 본문과 우측 목차만 바뀝니다. 본문 폭은 68자에서 끊습니다.</p>
+    </div>
+    <figure class="frame">
+      <div class="frame-bar"><span class="uid">UI-003</span><span class="path">/projects/syncdoc/documents/mvp-scope</span><span class="badge">MOCK · FIXTURE</span></div>
+      <div class="mkbox mk">
+        <div class="ui">
+          <div class="sh-top">
+            <a class="sh-mark" href="#" title="프로젝트 홈으로"><svg class="logo logo--sm" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>SyncDoc</a>
+            <button class="sw" type="button" title="프로젝트 전환"><span class="repo">UncleSamsun/syncdoc</span><span class="cv">▾</span></button>
+            <button class="sw sw--br" type="button" title="문서 기준 브랜치 변경">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="4.5" cy="3.6" r="1.7"/><circle cx="4.5" cy="12.4" r="1.7"/><circle cx="11.5" cy="6" r="1.7"/><path d="M4.5 5.3v5.4M11.5 7.7c0 2.3-2.4 2.8-4.4 3.2"/></svg>
+              <span class="repo">main</span><span class="cv">▾</span>
+            </button>
+            <span class="rootpath">docs</span>
+            <div class="sh-right">
+              <span class="syncpill"><span class="dot dot--done"></span>동기화 <span class="t">14:22 UTC</span></span>
+              <button class="ibtn" type="button" aria-label="연결 설정" title="연결 설정">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="4.6"/><circle cx="8" cy="8" r="1.8"/><path d="M12.6 8h1.8M3.4 8H1.6M8 12.6v1.8M8 3.4V1.6M11.25 11.25l1.28 1.28M4.75 4.75 3.47 3.47M4.75 11.25 3.47 12.53M11.25 4.75l1.28-1.28"/></svg>
+              </button>
+              <span class="av">MJ</span>
+            </div>
+          </div>
+          <div class="sh-body">
+            <nav class="sh-side">
+              <a class="nav-a" href="#"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>현황</a>
+              <a class="nav-a" href="#"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><path d="M6 4h8M6 8h8M6 12h8"/><path d="M2.5 4h1M2.5 8h1M2.5 12h1"/></svg>작업 <span class="cnt">8</span></a>
+              <a class="nav-a" href="#"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>검색</a>
+              <div class="nav-grp nav-grp--act"><span>문서</span><span class="n">14</span></div>
+              <div class="tree">
+                <details class="fold fold--cur" open>
+                  <summary class="fold-h">
+                    <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg>
+                    <svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg>
+                    <span class="fname">01 prd</span><span class="n">3</span>
+                  </summary>
+                  <div class="fold-b">
+                    <a href="#">brief</a>
+                    <a href="#" aria-current="page">mvp-scope</a>
+                    <a href="#">spec-standard-proposal</a>
+                  </div>
+                </details>
+                <details class="fold" open>
+                  <summary class="fold-h">
+                    <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg>
+                    <svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg>
+                    <span class="fname">02 ui-spec</span><span class="n">4</span>
+                  </summary>
+                  <div class="fold-b">
+                    <a href="#">ui-conventions</a>
+                    <a href="#">ui-direction-review</a>
+                    <a href="#">ui-handoff</a>
+                    <a href="#">ui-screens</a>
+                  </div>
+                </details>
+                <details class="fold">
+                  <summary class="fold-h">
+                    <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg>
+                    <svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg>
+                    <span class="fname">03 tech-spec</span><span class="n">5</span>
+                  </summary>
+                  <div class="fold-b">
+                    <a href="#">access-proposal</a>
+                    <a href="#">api-spec</a>
+                    <a href="#">architecture-proposal</a>
+                    <a href="#">data-model</a>
+                    <a href="#">identity-proposal</a>
+                  </div>
+                </details>
+                <details class="fold" open>
+                  <summary class="fold-h">
+                    <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg>
+                    <svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg>
+                    <span class="fname">04 tasks</span><span class="n">2</span>
+                  </summary>
+                  <div class="fold-b">
+                    <a href="#">collaboration-workflow</a>
+                    <a href="#">implementation-plan</a>
+                  </div>
+                </details>
+              </div>
+            </nav>
+            <div class="doc-shell">
+              <article class="doc">
+                <h1>MVP 기능과 인수 기준</h1>
+                <div class="dmeta">
+                  <span>docs/01-prd/mvp-scope.md</span><span>·</span><span>rev 1549821</span><span>·</span><span>snap_8f2c1a</span>
+                </div>
+                <h2>REQ-003 현황과 작업</h2>
+                <p>프로젝트 선택 시 최근 변경·동기화 시각·담당 작업·상태별 건수·문서 목록을 보여준다. 작업 정의의 정본은 <code>MD</code>, 실행 담당자·상태의 정본은 GitHub다.</p>
+                <p class="lead">Project 권한이 없으면 Project 상태와 완료율은 조회 불가로 표시하며 추정하지 않는다. 분모 0은 계산 대상 없음이다.</p>
+                <table class="mdtbl">
+                  <thead><tr><th>구분</th><th>분모</th><th>건수</th></tr></thead>
+                  <tbody>
+                    <tr><td>상태 명시 작업</td><td>포함</td><td>6</td></tr>
+                    <tr><td>취소</td><td>제외</td><td>1</td></tr>
+                    <tr><td>Issue 미등록</td><td>미등록 표시</td><td>1</td></tr>
+                  </tbody>
+                </table>
+                <div class="dgm">
+                  <div class="bar"><span>diagram 1 · flowchart</span><span class="r">원문 보기</span></div>
+                  <svg viewBox="0 0 440 88" role="img" aria-label="샘플 흐름도: 저장소 push에서 snapshot 게시까지">
+                    <g font-family="JetBrains Mono, monospace" font-size="9.5">
+                      <rect x="4" y="26" width="88" height="30" rx="4" fill="#F7F7F5" stroke="#D5D5D0"/>
+                      <text x="48" y="45" text-anchor="middle" fill="#0D0D0D">repo push</text>
+                      <path d="M94 41H128" stroke="#8C8C86" fill="none"/><path d="M128 41l-6-3v6z" fill="#8C8C86"/>
+                      <rect x="130" y="26" width="88" height="30" rx="4" fill="#F7F7F5" stroke="#D5D5D0"/>
+                      <text x="174" y="45" text-anchor="middle" fill="#0D0D0D">webhook</text>
+                      <path d="M220 41H254" stroke="#8C8C86" fill="none"/><path d="M254 41l-6-3v6z" fill="#8C8C86"/>
+                      <rect x="256" y="26" width="80" height="30" rx="4" fill="#F7F7F5" stroke="#D5D5D0"/>
+                      <text x="296" y="45" text-anchor="middle" fill="#0D0D0D">sync job</text>
+                      <path d="M338 41H366" stroke="#8C8C86" fill="none"/><path d="M366 41l-6-3v6z" fill="#8C8C86"/>
+                      <rect x="368" y="26" width="68" height="30" rx="4" fill="#DEF3E5" stroke="#127036"/>
+                      <text x="402" y="45" text-anchor="middle" fill="#127036">snapshot</text>
+                      <text x="296" y="78" text-anchor="middle" font-size="8.5" fill="#8C8C86">실패 시 이전 snapshot 유지</text>
+                    </g>
+                  </svg>
+                </div>
+                <div class="dgm-err">
+                  <div class="bar"><span>diagram 3 · 렌더 실패</span></div>
+                  <div class="bd">
+                    <b>문법 오류 — 4번째 줄</b>
+                    이 블록만 표시되지 않습니다. 문서의 나머지는 그대로 읽을 수 있습니다.
+                    <div style="margin-top:9px"><button class="btn btn--sm" type="button">원문 보기 (1.2 KB)</button></div>
+                  </div>
+                </div>
+              </article>
+              <aside class="toc">
+                <p class="h">이 문서</p>
+                <a href="#">REQ-001 초대와 로그인</a>
+                <a href="#">REQ-002 프로젝트 연결</a>
+                <a href="#" aria-current="true">REQ-003 현황과 작업</a>
+                <a href="#">REQ-004 문서 읽기</a>
+                <a href="#">REQ-005 다이어그램</a>
+                <a href="#">REQ-006 GitHub 변경 반영</a>
+                <a href="#">REQ-007 접근 범위</a>
+                <div class="wz">
+                  <p class="h" style="color:var(--warn-ink)">경고 2</p>
+                  <p><span>·</span><span>앵커 #req-009 대상 없음</span></p>
+                  <p><span>·</span><span>다이어그램 1건 렌더 실패</span></p>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>UI-003.</b> 문서 트리는 폴더마다 펼침 표식과 건수를 두고 접을 수 있습니다(위 <span class="mono">03 tech-spec</span>이 접힌 상태). 구분선은 두지 않고 대문자 라벨과 여백으로만 폴더를 나눕니다. 자식 항목은 들여쓰기 안내선으로 묶고, 열린 문서가 든 폴더 이름은 굵기를 올리지 않고 글자 색만 한 단 진하게 둡니다. 본문은 서버가 정화한 html을 그대로 씁니다. 목차는 <span class="mono">headings</span> 배열로, 다이어그램은 <span class="mono">diagrams[].source</span>를 제한된 Mermaid에 넘겨 그립니다. <span class="mono">warnings</span>는 본문에 끼우지 않고 우측 하단에 모읍니다.
+        <span class="api">GET /projects/{id}/documents · GET /projects/{id}/documents/{documentId} · GET /projects/{id}/assets/{assetId}</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══════════ 06 UI-004 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">06</span><h2>UI-004 검색</h2>
+      <p>현재 프로젝트의 제목·본문만 대상입니다. 결과에도 권한이 적용됩니다.</p>
+    </div>
+    <div class="frames2">
+      <figure class="frame">
+        <div class="frame-bar"><span class="uid">UI-004</span><span class="path">/projects/syncdoc/search?q=snapshot</span><span class="badge">MOCK</span></div>
+        <div class="mkbox mk">
+          <div class="ui ui--sm">
+            <div class="sr">
+              <div class="sfield"><span class="q">snapshot</span><span class="sc">현재 프로젝트 · 5건</span></div>
+              <div class="hit">
+                <span class="t">MVP API 계약</span>
+                <span class="p">docs/03-tech-spec/api-spec.md · 문서</span>
+                <span class="x">이전 <mark>snapshot</mark>을 지정한 URL에서도 현재 사용자 권한을 재확인한다. 회수된 <mark>snapshot</mark>은 410이며…</span>
+              </div>
+              <div class="hit">
+                <span class="t">MVP 기능과 인수 기준</span>
+                <span class="p">docs/01-prd/mvp-scope.md · REQ-006</span>
+                <span class="x">부분 수집을 빈 목록·완료로 오인하지 않음. 실패한 갱신 대신 이전 정상 <mark>snapshot</mark>을 유지한다.</span>
+              </div>
+              <div class="hit" style="border-bottom:0">
+                <span class="t">MVP 구현 계획</span>
+                <span class="p">docs/04-tasks/implementation-plan.md · TASK-005</span>
+                <span class="x">source revision 고정 수집, 원자적 게시, 임대 token과 backoff를 구현한다.</span>
+              </div>
+              <p class="cd">다른 프로젝트 문서는 결과에 나오지 않습니다.</p>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>UI-004.</b> 발췌는 서버가 escape한 텍스트입니다. 결과를 누르면 같은 snapshot의 본문 앵커로 이동합니다.
+          <span class="api">GET /projects/{id}/search?q=</span></figcaption>
+      </figure>
+      <figure class="frame">
+        <div class="frame-bar"><span class="uid">UI-004</span><span class="path">결과 없음 · 입력 제한</span><span class="badge">MOCK</span></div>
+        <div class="mkbox mk">
+          <div class="ui ui--sm">
+            <div class="sr">
+              <div class="sfield"><span class="q">webhook 서명 검증 순서</span><span class="sc">현재 프로젝트 · 0건</span></div>
+              <div style="display:flex; flex-direction:column; gap:9px; padding:22px 0; align-items:flex-start">
+                <span style="font-size:14px; font-weight:600">일치하는 문서가 없습니다</span>
+                <span style="font-size:12.5px; color:var(--ink2); max-width:40ch; line-height:1.6">검색어를 줄이거나 문서 목록에서 직접 찾아보세요. 권한이 없는 문서는 결과에 나타나지 않습니다.</span>
+                <button class="btn btn--sm" type="button">문서 목록 열기</button>
+              </div>
+              <p class="cd">검색어는 1~200자. 200자를 넘기면 입력을 잘라내지 않고 알린다.</p>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>결과 없음.</b> "없음"과 "권한 없음"을 같은 문구로 합치지 않되, 어떤 문서가 숨겨졌는지는 알려주지 않습니다.
+          <span class="api">GET /projects/{id}/search → 422 (길이 위반)</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ═══════════ 07 상태 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">07</span><h2>상태 화면</h2>
+      <p>인수 기준이 직접 요구하는 화면입니다. 문구도 여기 적힌 그대로 씁니다.</p>
+    </div>
+    <div class="states">
+
+      <div class="stc">
+        <div class="h"><b>로그인</b><span class="uid">UI-005</span></div>
+        <div class="stv mk" style="align-items:center; text-align:center">
+          <span class="sh-mark" style="justify-content:center"><svg class="logo logo--sm" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>SyncDoc</span>
+          <span class="sm" style="max-width:34ch">초대받은 GitHub 계정으로 로그인하세요.</span>
+          <button class="btn btn--pri" type="button">GitHub로 계속</button>
+          <span class="cd">이메일 가입·공개 가입 없음</span>
+        </div>
+        <p class="rule">로그인 외 공개 진입점을 두지 않는다. <em>세션·토큰을 화면이나 브라우저 저장소에 노출하지 않는다.</em></p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>미초대 계정</b><span class="uid">UI-006</span></div>
+        <div class="stv mk">
+          <span class="big">이 계정은 아직 초대되지 않았습니다</span>
+          <span class="sm">GitHub 로그인은 확인되었지만 서비스 이용이 허용되지 않았습니다. 관리자에게 GitHub 계정 등록을 요청하세요.</span>
+          <button class="btn" type="button">로그아웃</button>
+        </div>
+        <p class="rule">로그인 통과가 가입이 아니다. <em>프로젝트의 존재 여부도 알려주지 않는다.</em></p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>첫 동기화 대기</b><span class="uid">UI-007</span></div>
+        <div class="stv mk">
+          <span class="big">첫 수집을 기다리는 중</span>
+          <span class="sm">저장소를 연결했습니다. 문서 목록은 첫 수집이 끝나면 나타납니다.</span>
+          <span class="skel"></span><span class="skel w7"></span><span class="skel w45"></span>
+          <span class="cd">items [] · snapshotId null · 상세 409 DOCUMENTS_NOT_READY</span>
+        </div>
+        <p class="rule">빈 목록을 <em>"문서가 없음"으로 쓰지 않는다.</em> 대기와 없음은 다른 문구를 쓴다.</p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>갱신 실패 · 오래된 정보</b><span class="uid">UI-008</span></div>
+        <div class="stv mk">
+          <div class="banner banner--rev"><span>14:22 기준 정보입니다 · 이후 갱신 실패</span><span class="t">재시도 14:41</span></div>
+          <span class="sm">아래 내용은 마지막으로 성공한 snapshot입니다. 실패한 수집이 이 데이터를 덮어쓰지 않았습니다.</span>
+          <div class="row"><span class="dot dot--done"></span><span class="mono" style="font-size:11px">docs/04-tasks/implementation-plan.md</span><span class="cd" style="margin-left:auto">14:22</span></div>
+          <span class="cd">errorCode: GITHUB_UNAVAILABLE</span>
+        </div>
+        <p class="rule">마지막 정상 snapshot을 유지하되 <em>최신이라고 말하지 않는다.</em> 오류 문구에 토큰·내부 경로를 넣지 않는다.</p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>Project 조회 불가</b><span class="uid">UI-009</span></div>
+        <div class="stv mk">
+          <div class="naBox"><span class="v">조회 불가</span><span class="k">progress: null</span></div>
+          <span class="sm">이 계정으로 연결된 GitHub Project를 조회할 수 없습니다. Project 기반 완료율은 표시하지 않습니다. 문서와 Issue 현황은 그대로 사용할 수 있습니다.</span>
+          <span class="cd">저장소 권한과 Project 권한은 따로 확인됩니다</span>
+        </div>
+        <p class="rule"><em>0%로 대체하지 않고 빈 막대도 그리지 않는다</em> — 빈 막대는 0%로 읽힌다.</p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>집계 미완</b><span class="uid">UI-010</span></div>
+        <div class="stv mk">
+          <span class="big">2 / 6 <span class="chip chip--partial">확정 아님</span></span>
+          <span class="sm">전체 페이지 수집이 끝나지 않았습니다. 지금 값은 수집된 범위의 중간 집계입니다.</span>
+          <div class="sbar" style="width:100%" role="img" aria-label="수집된 범위의 상태별 건수: 진행 2, 완료 2, 미착수 2">
+            <span class="s-prog" style="flex:2"></span><span class="s-done" style="flex:2"></span><span class="s-todo" style="flex:2"></span>
+          </div>
+          <span class="cd">partial: true — counts·progress는 수집 완료 범위만</span>
+        </div>
+        <p class="rule">숫자를 숨기지도 않고 <em>확정으로 쓰지도 않는다.</em> 부분 수집을 완료된 집계로 보이게 하지 않는다.</p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>문서 권한 없음 · 없는 문서</b><span class="uid">UI-011</span></div>
+        <div class="stv mk">
+          <span class="big">이 문서를 찾을 수 없습니다</span>
+          <span class="sm">경로가 바뀌었거나 접근 권한이 없습니다. 문서 목록에서 다시 찾아보세요.</span>
+          <button class="btn" type="button">문서 목록 열기</button>
+          <span class="cd">404 — 비공개 대상과 없는 대상을 구분하지 않음</span>
+        </div>
+        <p class="rule">권한 없는 비공개 문서와 없는 문서는 <em>같은 문구·같은 404</em>다. 존재를 알려주는 차이를 만들지 않는다.</p>
+      </div>
+
+      <div class="stc">
+        <div class="h"><b>회수된 snapshot</b><span class="uid">UI-012</span></div>
+        <div class="stv mk">
+          <div class="banner banner--info"><span>이 버전은 더 이상 제공되지 않습니다</span><span class="t">410</span></div>
+          <span class="sm">링크가 가리키는 snapshot이 회수되었습니다. 현재 게시본으로 이동할 수 있습니다.</span>
+          <button class="btn btn--pri" type="button">최신 문서 목록으로</button>
+          <span class="cd">이전 snapshot URL도 현재 권한을 다시 확인합니다</span>
+        </div>
+        <p class="rule">막다른 길을 만들지 않는다. <em>항상 최신 목록으로 돌아가는 길을 준다.</em></p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ 08 컴포넌트 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">08</span><h2>공통 컴포넌트</h2>
+      <p>화면에 등장하는 조각은 이것뿐입니다. 새 조각이 필요하면 명세를 먼저 고칩니다.</p>
+    </div>
+    <div class="inv">
+      <div class="invc"><div class="demo mk" style="gap:18px; align-items:flex-end">
+        <span class="sh-mark" style="font-size:19px; gap:9px"><svg class="logo logo--md" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>SyncDoc</span>
+        <svg class="logo logo--lg" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>
+        <svg class="logo logo--sm" viewBox="171 360 912 495" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M 611.978 367.070 C 572.156 370.372, 536.843 383.655, 504.260 407.585 C 502.252 409.060, 501.321 409.089, 495.260 407.870 C 491.542 407.121, 482.875 406.525, 476 406.544 C 460.763 406.587, 451.243 408.851, 436.500 415.936 C 417.663 424.990, 405.474 435.423, 378.596 465.500 C 356.701 490.001, 348.254 498.686, 329.126 516.366 C 304.504 539.122, 295.060 551.982, 289.371 570.500 C 286.819 578.805, 286.603 580.814, 286.577 596.500 C 286.551 611.931, 286.813 614.558, 289.413 624.966 C 290.989 631.272, 293.790 640.923, 295.639 646.412 C 297.487 651.902, 299 656.912, 299 657.547 C 299 658.188, 293.331 660.155, 286.250 661.970 C 238.886 674.113, 202.919 690.519, 187.757 706.896 C 180.694 714.525, 177.683 720.748, 177.166 728.787 C 176.815 734.256, 177.162 735.884, 179.832 741.287 C 194.053 770.069, 257.915 795.977, 354 811.945 C 360.875 813.088, 367.443 814.234, 368.596 814.492 C 369.806 814.762, 372.244 817.476, 374.365 820.912 C 383.190 835.210, 399.010 843.300, 425.780 847.206 C 439.404 849.193, 478.147 848.829, 490.500 846.597 C 504.035 844.151, 514.918 840.651, 524.500 835.661 L 532.500 831.495 545.500 832.113 C 578.619 833.688, 642.588 834.172, 677.308 833.110 L 714.116 831.984 718.406 834.935 C 726.192 840.292, 738.963 844.491, 755.500 847.132 C 766.186 848.839, 806.826 848.894, 818.220 847.217 C 840.523 843.935, 855.275 837.845, 865.270 827.793 C 868.712 824.332, 872.422 820.275, 873.514 818.778 C 875.376 816.226, 876.654 815.865, 894 812.991 C 981.628 798.472, 1042.158 777.250, 1065.614 752.824 C 1074.289 743.789, 1076.426 739.295, 1076.467 730 C 1076.493 724.077, 1076 721.484, 1074.121 717.668 C 1064.582 698.293, 1032.091 680.250, 980.500 665.679 C 971.700 663.193, 961.881 660.595, 958.679 659.905 C 954.190 658.937, 952.961 658.290, 953.306 657.075 C 953.552 656.209, 955.409 649.875, 957.431 643 C 965.976 613.955, 966.157 588.308, 957.968 567.074 C 952.858 553.823, 944.880 543.117, 924.293 521.883 C 902.124 499.018, 894.688 490.778, 877.473 470 C 860.777 449.849, 855.382 443.945, 846.130 435.704 C 825.059 416.935, 803.475 408, 779.204 408 C 772.857 408, 764.836 408.493, 761.379 409.094 L 755.094 410.189 749.297 405.793 C 719.938 383.532, 683.214 370.013, 644 367.031 C 629.159 365.903, 626 365.907, 611.978 367.070 M 606 392.021 C 572.633 396.670, 544.429 408.035, 520.633 426.422 C 516.307 429.765, 511.983 433.075, 511.024 433.778 C 509.565 434.849, 507.763 434.547, 499.927 431.922 C 477.760 424.495, 456.277 427.631, 435.803 441.280 C 424.032 449.128, 413.571 459.239, 393.862 481.815 C 384.411 492.642, 364.712 513.425, 350.089 528 C 322.776 555.222, 319.483 559.277, 314.327 572.042 C 306.681 590.972, 307.665 609.822, 318.052 643.357 C 330.517 683.603, 333.536 691.267, 339.543 697.916 C 347.656 706.896, 361.825 708.542, 375.352 702.076 C 383.696 698.087, 395.184 687.517, 401.406 678.103 C 415.438 656.873, 423.135 632.706, 430.969 585.280 C 437.583 545.239, 437.979 543.085, 441.145 530 C 448.118 501.175, 460.778 477.902, 473.563 470.410 C 478.340 467.611, 481.700 467.549, 483.380 470.230 C 484.249 471.617, 483.438 473.899, 479.288 481.736 C 466.947 505.041, 462.220 522.984, 454.457 576 C 446.903 627.590, 443.670 641.364, 433.251 666.353 L 428.726 677.206 430.809 685.646 C 433.411 696.186, 436.547 703.054, 441.737 709.579 L 445.777 714.659 456.965 714.198 C 487.861 712.925, 514.975 722.621, 533.429 741.542 C 541.239 749.551, 546.411 758.309, 549.751 769.184 L 552.417 777.869 560.959 779.404 C 595.958 785.692, 654.368 786.394, 687.500 780.925 C 699.587 778.930, 698.656 779.532, 701.019 772.185 C 712.807 735.545, 750.982 711.911, 794.672 714.204 L 803.109 714.647 806.898 710.074 C 812.257 703.605, 815.478 697.672, 818.435 688.824 C 821.696 679.065, 821.655 676.748, 818.070 668.323 C 813.842 658.389, 808.339 639.642, 805.538 625.633 C 802.877 612.323, 801.497 602.716, 796.970 566 C 792.006 525.735, 786.325 503.189, 775.968 482.648 C 773.236 477.228, 771 472.181, 771 471.432 C 771 470.683, 771.922 469.577, 773.049 468.974 C 776.465 467.146, 781.235 469.530, 787.681 476.287 C 804.464 493.881, 811.906 516.953, 820.007 576.500 C 829.099 643.335, 840.192 674.789, 861.890 695.258 C 871.409 704.237, 880.015 708.388, 890.067 708.849 C 896.659 709.150, 898.352 708.855, 902.721 706.642 C 911.452 702.217, 915.832 694.847, 925.986 667.500 C 945.563 614.774, 945.626 585.281, 926.218 558.714 C 923.623 555.162, 913.205 543.535, 903.066 532.878 C 892.927 522.220, 874.877 501.800, 862.954 487.500 C 835.381 454.429, 825.120 444.647, 809.965 436.986 C 798.676 431.279, 790.700 429.491, 777 429.594 C 766.331 429.674, 763.328 430.075, 756.500 432.331 C 752.100 433.785, 747.825 434.980, 747 434.986 C 746.175 434.992, 742.297 432.380, 738.383 429.180 C 717.806 412.361, 691.843 400.128, 664.612 394.420 C 654.594 392.321, 649.042 391.815, 632.500 391.499 C 621.500 391.288, 609.575 391.523, 606 392.021 M 516.266 587.657 C 511.137 589.473, 504.828 596.293, 503.176 601.807 C 500.363 611.195, 502.692 619.799, 509.773 626.183 C 516.675 632.406, 525.045 633.589, 533.690 629.564 C 550.606 621.688, 550.730 597.024, 533.895 588.635 C 527.911 585.653, 522.737 585.366, 516.266 587.657 M 723.266 587.603 C 718.134 589.486, 711.813 596.344, 710.176 601.807 C 705.654 616.901, 716.196 632.025, 731.218 631.990 C 745.075 631.959, 755.582 618.664, 752.916 604.534 C 750.343 590.892, 736.246 582.843, 723.266 587.603 M 616 631.944 C 598.618 634.442, 587.647 641.171, 585.014 650.949 C 583.146 657.887, 586.257 665.414, 593.708 671.979 C 599.300 676.906, 601.997 678.422, 611.500 681.983 L 618.500 684.606 618.426 689.483 C 618.359 693.895, 617.960 694.708, 614.251 697.999 C 609.506 702.210, 604.391 704, 597.102 704 C 590.599 704, 586.088 702.128, 580.286 697.020 C 575.207 692.550, 572.021 691.979, 569 695 C 563.717 700.283, 569.357 709.253, 582 715.675 C 586.999 718.215, 588.456 718.467, 598 718.442 C 607.118 718.419, 609.224 718.080, 614 715.865 C 617.025 714.463, 620.915 712.119, 622.644 710.657 C 624.374 709.196, 626.057 708, 626.386 708 C 626.714 708, 628.987 709.530, 631.438 711.401 C 646.052 722.556, 668.875 721.177, 681.688 708.365 C 685.286 704.767, 686 703.411, 686 700.181 C 686 692.306, 680.367 690.885, 673.177 696.947 C 666.994 702.162, 662.310 704, 655.211 704 C 643.907 704, 633.518 696.119, 634.203 688.062 C 634.487 684.711, 634.799 684.450, 641.500 681.967 C 655.243 676.875, 662.682 671.393, 666.534 663.520 C 673.184 649.929, 664.871 637.812, 646.004 633.595 C 637.675 631.733, 623.063 630.929, 616 631.944 M 779.678 734.132 C 760.485 736.061, 747.070 741.939, 735.479 753.500 C 723.508 765.439, 717.989 778.222, 718.010 793.960 C 718.022 803.540, 720.781 809.877, 727.521 815.809 C 732.980 820.614, 743.275 824.340, 749.648 823.816 L 753.500 823.500 754.092 809.500 C 754.551 798.639, 755.158 794.292, 756.799 790.110 C 759.313 783.705, 762.520 780, 765.552 780 C 770.002 780, 770.500 782.103, 770.500 800.906 C 770.500 816.840, 770.694 818.830, 772.550 822 C 775.616 827.232, 778.714 828.273, 791.119 828.240 C 803.707 828.206, 808.229 826.597, 811.472 821 C 813.302 817.842, 813.500 815.764, 813.500 799.715 C 813.500 784.994, 813.758 781.765, 815 780.980 C 817.603 779.333, 820.062 779.908, 823.006 782.852 C 827.601 787.447, 829.500 795.460, 829.500 810.250 L 829.500 823.001 832.212 823 C 842.110 822.999, 855.511 812.754, 858.417 802.966 C 864.107 783.807, 855.493 760.457, 837.979 747.563 C 823.827 737.145, 801.312 731.958, 779.678 734.132 M 439.624 735.588 C 418.276 740.320, 402.987 750.982, 394.565 767.009 C 389.225 777.170, 387.609 783.225, 387.626 793 C 387.638 800.180, 388.064 802.386, 390.371 807.204 C 394.705 816.258, 402.839 821.812, 413.129 822.745 L 418.903 823.269 418.337 812.884 C 417.752 802.168, 419.194 793.392, 422.634 786.741 C 426.193 779.858, 431.581 777.905, 434.543 782.425 C 435.927 784.537, 435.978 785.897, 434.941 792.991 C 433.386 803.627, 434.086 815.457, 436.573 820.552 C 439.504 826.557, 443.315 827.997, 456.282 827.998 C 469.955 828, 473.340 826.747, 476.020 820.688 C 478.594 814.869, 479.426 804.384, 478.119 794.243 C 476.881 784.640, 477.693 781.366, 481.552 780.398 C 485.784 779.335, 489.131 782.609, 491.955 790.575 C 494.092 796.602, 494.401 799.147, 494.337 810.194 C 494.279 820.214, 494.559 823.001, 495.667 823.426 C 497.945 824.300, 507.038 822.008, 513.649 818.892 C 524.782 813.645, 530.118 805.246, 530.794 791.902 C 532.096 766.228, 513.833 744.116, 485 736.455 C 475.830 734.019, 449.014 733.506, 439.624 735.588"/></svg>
+      </div><div class="m"><b>제품 표식</b><span>구멍에서 내다보는 강아지. 검정 하나로 그리고 흰 부분은 바탕색이다. 큰 크기는 입·발가락·귀 접힘선까지 그리고, 상단바 26px에서는 그 디테일을 빼고 선을 두껍게 쓴다. 프로젝트 홈 링크를 겹한다.</span></div></div>
+
+      <div class="invc"><div class="demo mk">
+        <span class="st-cell"><span class="dot dot--todo"></span>미착수</span>
+        <span class="st-cell"><span class="dot dot--prog"></span>진행</span>
+        <span class="st-cell"><span class="dot dot--rev"></span>리뷰</span>
+        <span class="st-cell"><span class="dot dot--done"></span>완료</span>
+      </div><div class="m"><b>상태 표시</b><span>6px 점 + 글자 라벨. 표 안에서는 색면을 쓰지 않는다.</span></div></div>
+
+      <div class="invc"><div class="demo mk">
+        <span class="chip chip--none">Issue 미등록</span>
+        <span class="chip chip--cancel">취소 · 제외</span>
+        <span class="chip chip--partial">확정 아님</span>
+      </div><div class="m"><b>예외 칩</b><span>없음은 점선, 제외는 해치, 미확정은 주의색. 색 없이도 구분된다.</span></div></div>
+
+      <div class="invc"><div class="demo mk">
+        <button class="btn btn--pri" type="button">연결</button>
+        <button class="btn" type="button">취소</button>
+        <button class="btn btn--sm" type="button">원문 보기</button>
+      </div><div class="m"><b>버튼</b><span>주 동작은 검정 하나만. 높이 28 / 작은 것 24.</span></div></div>
+
+      <div class="invc"><div class="demo mk">
+        <button class="ibtn" type="button" aria-label="연결 설정" title="연결 설정"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><circle cx="8" cy="8" r="4.6"/><circle cx="8" cy="8" r="1.8"/><path d="M12.6 8h1.8M3.4 8H1.6M8 12.6v1.8M8 3.4V1.6M11.25 11.25l1.28 1.28M4.75 4.75 3.47 3.47M4.75 11.25 3.47 12.53M11.25 4.75l1.28-1.28"/></svg></button>
+      </div><div class="m"><b>아이콘 버튼</b><span>22px 정사각. 상단바 우측의 연결 설정에만 쓴다. 접근 라벨을 반드시 붙인다.</span></div></div>
+
+      <div class="invc"><div class="demo mk" style="flex-direction:column; align-items:stretch">
+        <div class="banner banner--rev" style="font-size:11.5px"><span>오래된 정보</span><span class="t">14:41</span></div>
+        <div class="banner banner--fail" style="font-size:11.5px"><span>연결 실패</span></div>
+      </div><div class="m"><b>배너</b><span>화면 전체에 걸린 상태. 주의·실패 두 종류만.</span></div></div>
+
+      <div class="invc"><div class="demo mk" style="flex-direction:column; align-items:stretch; gap:6px">
+        <div class="sbar" style="height:18px"><span class="s-prog" style="flex:2"></span><span class="s-done" style="flex:2"></span><span class="s-todo" style="flex:3"></span></div>
+        <div class="slg" style="margin:0"><span><i class="sw-prog"></i>진행 <b>2</b></span><span><i class="sw-done"></i>완료 <b>2</b></span></div>
+      </div><div class="m"><b>상태 스택바</b><span>세그먼트 사이 2px 틈. 범례와 숫자를 항상 같이 둔다.</span></div></div>
+
+      <div class="invc"><div class="demo mk" style="flex-direction:column; align-items:stretch">
+        <div class="card" style="padding:10px 12px"><span class="k">작업 완료</span><span class="v" style="font-size:19px">2<small> / 6</small></span><span class="d">분모를 항상 함께 적는다</span></div>
+      </div><div class="m"><b>지표 카드</b><span>숫자만 크게 두지 않고 분모·기준을 함께 쓴다.</span></div></div>
+
+      <div class="invc"><div class="demo mk" style="flex-direction:column; align-items:stretch; gap:7px">
+        <span class="skel"></span><span class="skel w7"></span><span class="skel w45"></span>
+      </div><div class="m"><b>골격 로딩</b><span>목록·본문 자리를 미리 잡아 화면 밀림을 막는다.</span></div></div>
+
+      <div class="invc"><div class="demo mk">
+        <span class="syncpill"><span class="dot dot--done"></span>동기화 <span class="t">14:22</span></span>
+        <span class="syncpill stale"><span class="dot dot--fail"></span>갱신 실패</span>
+      </div><div class="m"><b>동기화 칩</b><span>상단바 상주. 실패가 가장 먼저 여기에 나타난다.</span></div></div>
+
+      <div class="invc"><div class="demo mk">
+        <button class="sw" type="button"><span class="repo">UncleSamsun/syncdoc</span><span class="cv">▾</span></button>
+        <button class="sw sw--br" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="4.5" cy="3.6" r="1.7"/><circle cx="4.5" cy="12.4" r="1.7"/><circle cx="11.5" cy="6" r="1.7"/><path d="M4.5 5.3v5.4M11.5 7.7c0 2.3-2.4 2.8-4.4 3.2"/></svg><span class="repo">main</span><span class="cv">▾</span></button>
+        <button class="sw sw--br" type="button" aria-disabled="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"><circle cx="4.5" cy="3.6" r="1.7"/><circle cx="4.5" cy="12.4" r="1.7"/><circle cx="11.5" cy="6" r="1.7"/><path d="M4.5 5.3v5.4M11.5 7.7c0 2.3-2.4 2.8-4.4 3.2"/></svg><span class="repo">main</span></button>
+      </div><div class="m"><b>프로젝트 · 브랜치 스위처</b><span>상단바에 나란히. 브랜치 기본값은 main. 변경 권한이 없으면 점선 읽기 전용으로 둔다.</span></div></div>
+
+      <div class="invc"><div class="demo mk" style="flex-direction:column; align-items:stretch; padding:10px 12px">
+        <div class="tree" style="margin:0">
+          <details class="fold fold--cur" open>
+            <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">01 prd</span><span class="n">3</span></summary>
+            <div class="fold-b"><a href="#" aria-current="page">mvp-scope</a></div>
+          </details>
+          <details class="fold">
+            <summary class="fold-h"><svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5 8.5 6l-4 3.5"/></svg><svg class="fico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2 3.5h4.2l1.6 1.9H14v8.1H2z"/></svg><span class="fname">03 tech-spec</span><span class="n">5</span></summary>
+            <div class="fold-b"><a href="#">api-spec</a></div>
+          </details>
+        </div>
+      </div><div class="m"><b>문서 트리</b><span>폴더마다 펼침 표식·폴더 아이콘·문서 건수. 구분선 없이 라벨과 여백으로 나눈다. 접을 수 있고 여는 상태를 기억한다. 열린 문서가 든 폴더는 글자 색만 한 단 진하게 둔다.</span></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 09 남은 결정 ═══════════ -->
+  <section>
+    <div class="sec-head">
+      <span class="sec-n">09</span><h2>명세에 아직 못 박은 것</h2>
+      <p>구현을 막지는 않지만 확정되면 명세를 고칩니다.</p>
+    </div>
+    <div class="asks">
+      <div class="ask"><span class="n">1</span><div>
+        <b>연결 설정과 프로젝트 추가의 자리</b>
+        <p>사이드바 섹션이 문서로 바뀌면서 두 동작을 옮겼습니다 — 연결 설정은 상단바 우측 톱니바퀴, 저장소 연결은 프로젝트 홈의 주 버튼. 문서 섹션 머리에는 건수만 두고 동작 버튼을 두지 않았습니다. 다른 자리를 원하면 알려주세요.</p>
+      </div></div>
+      <div class="ask"><span class="n">2</span><div>
+        <b>동기화 폴링 주기의 화면 반응</b>
+        <p>설계값은 화면을 보는 동안 20초입니다. 갱신될 때 화면을 조용히 바꿀지, "새 버전 있음 · 새로 고치기"를 띄울지 정해야 합니다. 문서를 읽는 중 본문이 바뀌면 읽던 자리를 잃습니다.</p>
+      </div></div>
+      <div class="ask"><span class="n">3</span><div>
+        <b>모바일 폭</b>
+        <p>720px 이하에서 사이드바를 드로어로 바꾸는 것까지만 정했습니다. 현황 12열 격자와 6열 표를 좁은 화면에서 어떻게 접을지는 실제 사용 여부를 보고 정하는 편이 낫습니다.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <p><b>모든 수치·문서 목록·Issue 번호는 fixture 샘플입니다.</b> 실제 GitHub 조회 결과가 아닙니다.</p>
+    <p>제품 코드는 아직 없습니다. <span class="mono">frontend/</span>는 생성되지 않았고 이 페이지는 구현 기준 목업입니다 — 실행되는 React 앱이 아닙니다.</p>
+    <p>근거 — <span class="mono">docs/01-prd/mvp-scope.md</span> · <span class="mono">docs/03-tech-spec/api-spec.md</span> · <span class="mono">docs/04-tasks/implementation-plan.md</span></p>
+  </div>
+
+</div>
+
+</body>
+</html>
