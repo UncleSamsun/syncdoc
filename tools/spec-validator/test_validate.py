@@ -215,6 +215,47 @@ class MissingSettings(unittest.TestCase):
         self.assertEqual(errors(report), [])
 
 
+class MissingFormat(unittest.TestCase):
+    def test_reports_unchecked_when_format_file_is_absent(self):
+        report = run("no-format")
+        self.assertEqual(report.status, "미검사")
+
+    def test_does_not_report_errors_when_format_file_is_absent(self):
+        report = run("no-format")
+        self.assertEqual(errors(report), [])
+
+
+class BrokenFormat(unittest.TestCase):
+    """정의 파일이 있으나 잘못 쓴 경우는 미검사가 아니라 오류다."""
+
+    def test_invalid_json_is_c0_error(self):
+        report = run("bad-format-syntax")
+        self.assertEqual(report.status, "오류")
+        found = [f for f in errors(report, "C0")
+                 if f.file.endswith("spec-format.json")]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_unknown_check_unit_is_c0_error(self):
+        report = run("bad-format-unit")
+        found = [f for f in errors(report, "C0") if "paragraph" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_duplicate_type_is_c0_error(self):
+        report = run("bad-format-duplicate")
+        found = [f for f in errors(report, "C0")
+                 if "guide" in f.message and "중복" in f.message]
+        self.assertTrue(found, [str(f) for f in report.findings])
+
+    def test_broken_format_stops_before_c1_and_c2(self):
+        report = run("bad-format-syntax")
+        self.assertEqual([f for f in errors(report) if f.check != "C0"], [])
+
+    def test_format_errors_report_a_relative_path(self):
+        absolute = [f.file for f in run("bad-format-unit").findings
+                    if Path(f.file).is_absolute()]
+        self.assertEqual(absolute, [])
+
+
 class OutOfScope(unittest.TestCase):
     """rules/validation.md 2절이 검사하지 않겠다고 정한 것."""
 

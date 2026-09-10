@@ -12,21 +12,11 @@ rules/validation.md의 검사 두 가지만 확인한다.
     python tools/spec-validator/validate.py [ROOT] [DOCS_ROOT]
 """
 
+import json
 import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-
-# rules/spec-writing.md 3절의 type 허용 값
-ALLOWED_TYPES = (
-    # 명세 문서 — 구현 기준이 될 수 있다
-    "prd-overview", "prd-requirements",
-    "ui-conventions", "ui-screens",
-    "tech-overview", "tech-interface", "tech-data", "tech-ops",
-    "tasks",
-    # 명세가 아닌 문서 — status와 무관하게 구현 기준이 아니다
-    "proposal", "record", "guide",
-)
 
 # rules/spec-writing.md 5절의 검사 라벨 표. 이 표를 고치면 그 문서도 함께 고친다.
 # 검사 단위 접두어가 None이면 문서 전체에서 라벨을 찾는다.
@@ -47,8 +37,17 @@ CONTRACT_ID = re.compile(r"\AAPI-\d{3}\Z")
 APPLY_VALUES = ("적용", "보류", "미적용")
 
 # 저장소 루트 기준 고정 경로
+FORMAT_FILE = "rules/spec-format.json"
 SETTINGS_FILE = "rules/project-settings.md"
 DOCS_ROOT = "docs"
+
+# 정의 파일 구조. rules/validation.md C0이 정본이다.
+TYPE_KEYS = frozenset(("type", "name", "spec", "condition", "required", "labels", "checks"))
+CHECK_KEYS = {
+    "document": frozenset(("unit", "labels")),
+    "section": frozenset(("unit", "idPrefix", "labels")),
+    "table": frozenset(("unit", "heading", "columns", "idPrefix")),
+}
 
 # rules/spec-writing.md 6절의 문서 ID 형식
 DOC_ID = re.compile(r"\ADOC-\d{3}\Z")
@@ -60,7 +59,7 @@ _TABLE_ROW = re.compile(r"^\|(.+)\|\s*$")
 @dataclass(frozen=True)
 class Finding:
     kind: str      # "error"
-    check: str     # "C1" | "C2"
+    check: str     # "C0" | "C1" | "C2"
     file: str
     line: int
     message: str
@@ -87,6 +86,113 @@ class Document:
     lines: list
     type: str = None
     id: str = None
+
+
+@dataclass(frozen=True)
+class Check:
+    unit: str                 # "document" | "section" | "table"
+    labels: tuple = ()        # document·section: 요구 라벨
+    id_prefix: str = None     # section: 섹션 ID 접두어, table: ID 열 접두어
+    heading: str = None       # table: `## 제목`
+    columns: tuple = ()       # table: 채워져야 하는 열
+
+
+@dataclass(frozen=True)
+class DocType:
+    type: str
+    name: str
+    spec: bool
+    condition: str
+    required: tuple
+    labels: tuple
+    checks: tuple
+
+
+@dataclass
+class Format:
+    types: dict  # type -> DocType
+
+
+def load_format(path, rel):
+    """정의 파일을 읽어 (Format, findings)를 돌려준다.
+
+    구조 오류가 하나라도 있으면 Format은 None이다. JSON에는 항목별 줄번호가
+    없으므로 구문 오류 외에는 1줄로 보고한다.
+    """
+    findings = []
+
+    def err(line, message):
+        findings.append(Finding("error", "C0", rel, line, message))
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        err(e.lineno, "JSON이 아니다: %s" % e.msg)
+        return None, findings
+    if not isinstance(data, dict) or not isinstance(data.get("types"), list):
+        err(1, "최상위에 'types' 배열이 없다")
+        return None, findings
+
+    types = {}
+    for index, entry in enumerate(data["types"]):
+        where = "types[%d]" % index
+        if not isinstance(entry, dict):
+            err(1, "%s이 객체가 아니다" % where)
+            continue
+        keys = set(entry)
+        missing = sorted(TYPE_KEYS - keys)
+        extra = sorted(keys - TYPE_KEYS)
+        if missing:
+            err(1, "%s에 필드 %s가 없다" % (where, ", ".join(missing)))
+        if extra:
+            err(1, "%s에 모르는 필드 %s가 있다" % (where, ", ".join(extra)))
+        if missing or extra:
+            continue
+        name = entry["type"]
+        if not isinstance(name, str) or not name:
+            err(1, "%s의 type이 비어 있다" % where)
+            continue
+        if name in types:
+            err(1, "type '%s'이 중복된다" % name)
+            continue
+        checks = []
+        valid = True
+        for k, raw in enumerate(entry["checks"]):
+            cwhere = "%s(%s).checks[%d]" % (where, name, k)
+            unit = raw.get("unit") if isinstance(raw, dict) else None
+            if unit not in CHECK_KEYS:
+                err(1, "%s의 unit '%s'은 document·section·table 중 하나가 아니다"
+                    % (cwhere, unit))
+                valid = False
+                continue
+            need = CHECK_KEYS[unit]
+            cmissing = sorted(need - set(raw))
+            cextra = sorted(set(raw) - need)
+            if cmissing:
+                err(1, "%s에 필드 %s가 없다" % (cwhere, ", ".join(cmissing)))
+            if cextra:
+                err(1, "%s에 모르는 필드 %s가 있다" % (cwhere, ", ".join(cextra)))
+            if cmissing or cextra:
+                valid = False
+                continue
+            checks.append(Check(
+                unit=unit,
+                labels=tuple(raw.get("labels", ())),
+                id_prefix=raw.get("idPrefix"),
+                heading=raw.get("heading"),
+                columns=tuple(raw.get("columns", ())),
+            ))
+        if not valid:
+            continue
+        types[name] = DocType(
+            type=name, name=entry["name"], spec=bool(entry["spec"]),
+            condition=entry["condition"], required=tuple(entry["required"]),
+            labels=tuple(entry["labels"]), checks=tuple(checks),
+        )
+
+    if findings:
+        return None, findings
+    return Format(types=types), findings
 
 
 def _read_lines(path):
@@ -247,7 +353,17 @@ def validate(root, docs_root=DOCS_ROOT):
     root = Path(root)
     docs_dir = root / docs_root
     settings_file = root / SETTINGS_FILE
+    format_file = root / FORMAT_FILE
     report = Report()
+
+    if not format_file.is_file():
+        report.status = "미검사"
+        return report
+    fmt, findings = load_format(format_file, _relative(format_file, root))
+    if findings:
+        report.findings.extend(findings)
+        report.status = "오류"
+        return report
 
     table = parse_applied_spec(settings_file)
     if table is None:
@@ -286,7 +402,7 @@ def validate(root, docs_root=DOCS_ROOT):
             report.findings.append(Finding(
                 "error", "C1", doc.rel, 1,
                 "frontmatter의 type이 없어 문서를 분류할 수 없다"))
-        elif doc.type not in ALLOWED_TYPES:
+        elif doc.type not in fmt.types:
             report.findings.append(Finding(
                 "error", "C1", doc.rel, 1,
                 "type '%s'은 허용 값이 아니다" % doc.type))
