@@ -41,8 +41,22 @@ export async function apiGet<T>(path: string): Promise<T> {
 
 /** 상태를 바꾸는 요청. API-003이 준 CSRF 토큰을 헤더로 함께 보낸다. 204는 본문 없이 성공이다. */
 export async function apiPost<T>(path: string, body: unknown, csrfToken: string): Promise<T | null> {
+  return send<T>("POST", path, body, csrfToken);
+}
+
+/** 연결 설정 수정(API-012)처럼 일부만 바꾸는 요청. */
+export async function apiPatch<T>(path: string, body: unknown, csrfToken: string): Promise<T | null> {
+  return send<T>("PATCH", path, body, csrfToken);
+}
+
+async function send<T>(
+  method: "POST" | "PATCH",
+  path: string,
+  body: unknown,
+  csrfToken: string,
+): Promise<T | null> {
   const response = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
+    method,
     credentials: "same-origin",
     headers: {
       Accept: "application/json",
