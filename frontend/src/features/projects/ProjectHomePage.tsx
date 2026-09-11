@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiGet, apiPost, isApiError } from "../../shared/api/client";
+import { formatMoment, syncLabelOf, syncToneOf } from "../sync/syncLabels";
 import ConnectForm, { fieldErrorOf } from "./ConnectForm";
 import type { ProjectItem, RepositoryItem } from "./types";
 
@@ -70,12 +71,18 @@ export default function ProjectHomePage({ csrfToken }: Props) {
       <ul>
         {projects.map((project) => (
           <li key={project.id}>
+            <span data-tone={syncToneOf(project.syncState)}>{syncLabelOf(project)}</span>
             <span>{project.fullName}</span>
             <span>
               {project.branch} · {project.docsRoot} ·{" "}
-              {project.currentSnapshotId ?? "snapshot 없음"}
+              {project.currentSnapshotId ?? "snapshot 없음"} ·{" "}
+              {formatMoment(project.lastSuccessAt) ?? "성공한 수집 없음"}
             </span>
-            <span>{project.syncState === "queued" ? "첫 수집 대기" : "최신"}</span>
+            {/* 게시본이 없으면 건수를 0으로 만들지 않는다. 아직 모르는 것과 없는 것은 다르다. */}
+            {project.documentCount !== null && <span>문서 {project.documentCount}건</span>}
+            {project.syncState === "failed" && project.syncErrorCode && (
+              <span>오류 {project.syncErrorCode}</span>
+            )}
             {alreadyConnectedId === project.id && <span>이미 연결됨</span>}
             <a href={`/projects/${project.id}`}>열기</a>
           </li>

@@ -34,4 +34,20 @@ public class GitHubGatewayConfig {
                 ? new GitHubApiIdentityGateway(properties, builder)
                 : new UnconfiguredGitHubIdentityGateway();
     }
+
+    /** 수집용 토큰이다. 사용자 로그인 설정이 아니라 App ID와 private key로 판단한다. */
+    @Bean
+    InstallationTokenGateway installationTokenGateway(GitHubProperties properties,
+                                                      RestClient.Builder builder, Clock clock) {
+        return properties.isAppAuthConfigured()
+                ? new GitHubAppInstallationTokenGateway(properties, builder, clock)
+                : new UnconfiguredInstallationTokenGateway();
+    }
+
+    @Bean
+    RepositoryContentGateway repositoryContentGateway(GitHubProperties properties,
+                                                      InstallationTokenGateway tokens,
+                                                      RestClient.Builder builder) {
+        return new GitHubApiRepositoryContentGateway(properties, tokens, builder);
+    }
 }
