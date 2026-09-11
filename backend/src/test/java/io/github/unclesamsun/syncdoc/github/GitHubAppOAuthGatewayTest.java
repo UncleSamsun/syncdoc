@@ -30,7 +30,7 @@ class GitHubAppOAuthGatewayTest {
 
     @BeforeEach
     void setUp() {
-        properties = new GitHubProperties("Iv23test", "secret-value", "4895456",
+        properties = new GitHubProperties("Iv23test", "secret-value", "4895456", null,
                 "http://localhost:5173/api/v1/auth/github/callback",
                 "https://github.test", "https://api.github.test");
         builder = RestClient.builder();

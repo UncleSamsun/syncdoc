@@ -7,7 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @param clientId     사용자 인증에 쓰는 공개 식별자
  * @param clientSecret 토큰 교환에 쓰는 비밀값. 응답·로그에 넣지 않는다
- * @param appId        설치 토큰 발급에 쓰는 앱 ID. 지금은 기록만 하고 쓰지 않는다
+ * @param appId        설치 토큰 발급에 쓰는 앱 ID
+ * @param privateKey   App JWT 서명에 쓰는 PEM. 배포 secret에 두고 응답·로그에 넣지 않는다
  * @param redirectUri  GitHub에 등록한 콜백 주소와 정확히 같아야 한다
  * @param oauthBaseUrl 로그인·토큰 교환 호스트. 테스트가 다른 값을 넣는다
  * @param apiBaseUrl   REST API 호스트. 테스트가 다른 값을 넣는다
@@ -17,6 +18,7 @@ public record GitHubProperties(
         String clientId,
         String clientSecret,
         String appId,
+        String privateKey,
         String redirectUri,
         String oauthBaseUrl,
         String apiBaseUrl) {
@@ -30,6 +32,14 @@ public record GitHubProperties(
     /** 사용자 로그인에 필요한 값이 모두 있는지. 없으면 미설정 게이트웨이를 쓴다. */
     public boolean isUserAuthConfigured() {
         return notBlank(clientId) && notBlank(clientSecret);
+    }
+
+    /**
+     * 설치 토큰 발급에 필요한 값이 모두 있는지. 사용자 로그인과 따로 판단한다.
+     * private key 없이도 로그인과 저장소 연결은 되지만 사용자가 없는 동안의 수집은 되지 않는다.
+     */
+    public boolean isAppAuthConfigured() {
+        return notBlank(appId) && notBlank(privateKey);
     }
 
     private static boolean notBlank(String value) {

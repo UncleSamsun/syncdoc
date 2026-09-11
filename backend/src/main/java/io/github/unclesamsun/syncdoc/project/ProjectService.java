@@ -2,6 +2,7 @@ package io.github.unclesamsun.syncdoc.project;
 
 import io.github.unclesamsun.syncdoc.auth.CurrentUser;
 import io.github.unclesamsun.syncdoc.auth.UserCredentialService;
+import io.github.unclesamsun.syncdoc.document.domain.DocumentRepository;
 import io.github.unclesamsun.syncdoc.github.GitHubBranch;
 import io.github.unclesamsun.syncdoc.github.GitHubRepository;
 import io.github.unclesamsun.syncdoc.github.RepositoryAccessGateway;
@@ -9,6 +10,8 @@ import io.github.unclesamsun.syncdoc.project.domain.InstallationEntity;
 import io.github.unclesamsun.syncdoc.project.domain.InstallationRepository;
 import io.github.unclesamsun.syncdoc.project.domain.ProjectEntity;
 import io.github.unclesamsun.syncdoc.project.domain.ProjectRepository;
+import io.github.unclesamsun.syncdoc.sync.SyncQueue;
+import io.github.unclesamsun.syncdoc.sync.SyncStatusReader;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
@@ -35,23 +38,36 @@ public class ProjectService {
     private final InstallationRepository installations;
     private final RepositoryAccessGateway repositories;
     private final UserCredentialService credentials;
+    private final DocumentRepository documents;
+    private final SyncQueue queue;
+    private final SyncStatusReader syncStatus;
     private final TransactionTemplate transactions;
     private final Clock clock;
 
     public ProjectService(ProjectRepository projects, InstallationRepository installations,
                           RepositoryAccessGateway repositories, UserCredentialService credentials,
+                          DocumentRepository documents, SyncQueue queue, SyncStatusReader syncStatus,
                           TransactionTemplate transactions, Clock clock) {
         this.projects = projects;
         this.installations = installations;
         this.repositories = repositories;
         this.credentials = credentials;
+        this.documents = documents;
+        this.queue = queue;
+        this.syncStatus = syncStatus;
         this.transactions = transactions;
         this.clock = clock;
     }
 
+    /**
+     * @param syncState     수집 상태. UI-001의 상태 점과 `첫 수집 대기` 표시가 이 값을 쓴다
+     * @param lastSuccessAt 마지막으로 성공한 수집 시각. UI-008의 기준 시각이다
+     * @param documentCount 현재 게시본의 문서 수. 게시본이 없으면 null이며 0으로 대체하지 않는다
+     */
     public record ProjectView(UUID id, String githubRepositoryId, String fullName, String branch,
                               String docsRoot, String githubProjectNodeId, UUID currentSnapshotId,
-                              String syncState, long version, boolean manageable) {
+                              String syncState, Instant lastSuccessAt, String syncErrorCode,
+                              Integer documentCount, long version, boolean manageable) {
     }
 
     public record ConnectCommand(String githubRepositoryId, String branch, String docsRoot,
@@ -114,7 +130,8 @@ public class ProjectService {
                         repository.githubRepositoryId(), repository.fullName(), installationId,
                         user.id(), finalBranch, docsRoot, blankToNull(command.githubProjectNodeId()), now));
             });
-            return toView(saved, user, true);
+            queue.request(saved.getId(), true);
+            return toView(saved, true);
         } catch (DataIntegrityViolationException e) {
             // 동시 요청이 먼저 만들었다. 미리 확인하는 것만으로는 경쟁 상태를 막지 못한다.
             UUID existingId = projects.findByGithubRepositoryId(repository.githubRepositoryId())
@@ -130,7 +147,7 @@ public class ProjectService {
         Map<String, GitHubRepository> visible = visibleRepositories(user);
         return projects.findAllByOrderByCreatedAtDesc().stream()
                 .filter(project -> visible.containsKey(project.getGithubRepositoryId()))
-                .map(project -> toView(project, user, isManageable(project, user)))
+                .map(project -> toView(project, isManageable(project, user)))
                 .toList();
     }
 
@@ -141,7 +158,7 @@ public class ProjectService {
         String token = credentials.accessTokenFor(user.id());
         repositories.findRepository(token, project.getGithubRepositoryId())
                 .orElseThrow(ProjectNotFoundException::new);
-        return toView(project, user, isManageable(project, user));
+        return toView(project, isManageable(project, user));
     }
 
     /** API-012. 연결자 또는 서비스 관리자만 바꿀 수 있고, 그 외에는 존재를 알리지 않는다. */
@@ -158,6 +175,8 @@ public class ProjectService {
             throw new VersionConflictException();
         }
 
+        String previousBranch = project.getBranch();
+        String previousDocsRoot = project.getDocsRoot();
         String branch = command.branch() == null || command.branch().isBlank()
                 ? project.getBranch() : command.branch().trim();
         String docsRoot = command.docsRoot() == null || command.docsRoot().isBlank()
@@ -177,12 +196,17 @@ public class ProjectService {
         project.reconfigure(branch, docsRoot,
                 command.githubProjectNodeId() == null
                         ? project.getGithubProjectNodeId() : blankToNull(command.githubProjectNodeId()));
+        boolean sourceChanged = !branch.equals(previousBranch) || !docsRoot.equals(previousDocsRoot);
         try {
             projects.saveAndFlush(project);
         } catch (OptimisticLockingFailureException e) {
             throw new VersionConflictException();
         }
-        return toView(project, user, true);
+        if (sourceChanged) {
+            // 다른 브랜치·경로를 보게 됐다. 지금 게시본은 더 이상 설정과 맞지 않으므로 다시 모은다.
+            queue.request(project.getId(), true);
+        }
+        return toView(project, true);
     }
 
     private Map<String, GitHubRepository> visibleRepositories(CurrentUser user) {
@@ -216,12 +240,14 @@ public class ProjectService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private static ProjectView toView(ProjectEntity project, CurrentUser user, boolean manageable) {
+    private ProjectView toView(ProjectEntity project, boolean manageable) {
+        SyncStatusReader.SyncStatus status = syncStatus.statusOf(project.getId());
+        Integer documentCount = project.getCurrentSnapshotId() == null
+                ? null : (int) documents.countBySnapshotId(project.getCurrentSnapshotId());
         return new ProjectView(project.getId(), project.getGithubRepositoryId(), project.getFullName(),
                 project.getBranch(), project.getDocsRoot(), project.getGithubProjectNodeId(),
-                project.getCurrentSnapshotId(),
-                project.getCurrentSnapshotId() == null ? "queued" : "ready",
-                project.getVersion(), manageable);
+                project.getCurrentSnapshotId(), status.state(), status.lastSuccessAt(),
+                status.errorCode(), documentCount, project.getVersion(), manageable);
     }
 
     /** 없는 프로젝트와 볼 수 없는 프로젝트가 같은 응답이 되게 하는 예외다. */

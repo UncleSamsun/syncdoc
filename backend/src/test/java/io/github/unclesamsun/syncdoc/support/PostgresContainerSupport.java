@@ -18,12 +18,16 @@ import org.springframework.test.context.TestPropertySource;
  *
  * <p>GitHub 자격증명은 일부러 비워 둔다. 미설정 게이트웨이가 명시적으로 실패하는지도 검사 대상이다.
  */
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, TestFixtures.class})
 @AutoConfigureTestRestTemplate
 @TestPropertySource(properties = {
         "syncdoc.auth.cookie-secure=false",
         "syncdoc.auth.csrf-key=test-csrf-key",
         "syncdoc.crypto.token-key=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        // 배경 worker가 임의의 시점에 끼어들면 무엇이 언제 일어났는지 검증할 수 없다.
+        // 수집을 검사하는 테스트는 worker를 직접 호출한다.
+        "syncdoc.sync.worker-enabled=false",
+        "syncdoc.sync.webhook-secret=test-webhook-secret",
 })
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class PostgresContainerSupport {
@@ -33,6 +37,7 @@ public abstract class PostgresContainerSupport {
 
     @BeforeEach
     void clearIdentityTables() {
-        jdbcTemplate.execute("truncate table sessions, user_credentials, projects, github_installations, invitations, users cascade");
+        jdbcTemplate.execute("truncate table sessions, user_credentials, documents, document_snapshots, "
+                + "sync_runs, sync_jobs, webhook_deliveries, projects, github_installations, invitations, users cascade");
     }
 }

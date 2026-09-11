@@ -21,7 +21,7 @@ class GitHubApiIdentityGatewayTest {
 
     @BeforeEach
     void setUp() {
-        GitHubProperties properties = new GitHubProperties("Iv23test", "secret-value", "4895456",
+        GitHubProperties properties = new GitHubProperties("Iv23test", "secret-value", "4895456", null,
                 "http://localhost:5173/api/v1/auth/github/callback",
                 "https://github.test", "https://api.github.test");
         RestClient.Builder builder = RestClient.builder();

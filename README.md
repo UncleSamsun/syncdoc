@@ -71,3 +71,13 @@ python -c "import secrets;print('SYNCDOC_CSRF_KEY='+secrets.token_urlsafe(32))"
 평문 http로 로컬 개발할 때는 `SYNCDOC_COOKIE_SECURE=false`로 둔다. 실제 배포에서는 켠다.
 
 GitHub App 자격증명이 없으면 실제 로그인과 저장소 연결은 동작하지 않는다. 상태 확인, 미인증 401, 초대·세션 경계까지가 지금 범위다.
+
+### 수집 설정
+
+수집은 사용자가 접속하지 않는 동안에도 돌아야 하므로 사용자 토큰이 아니라 **설치 토큰**을 쓴다. GitHub App 설정에서 private key를 발급해 `SYNCDOC_GITHUB_PRIVATE_KEY`에 넣는다. 값에 공백이 있으므로 `.env`에서는 따옴표로 감싸고, 줄바꿈은 `\n`으로 바꿔 한 줄로 둔다.
+
+```bash
+SYNCDOC_GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
+```
+
+이 값이 없으면 로그인과 저장소 연결은 되지만 수집은 `INSTALLATION_TOKEN_UNAVAILABLE`로 실패한다. `SYNCDOC_GITHUB_WEBHOOK_SECRET`이 비어 있으면 webhook은 받지 않고 주기 조회(기본 60초)로만 갱신한다. API만 띄우는 프로세스는 `SYNCDOC_SYNC_WORKER_ENABLED=false`로 작업 실행을 끈다.
