@@ -20,6 +20,15 @@ public class FakeRepositoryAccessGateway implements RepositoryAccessGateway {
     private boolean complete = true;
     private RuntimeException failure;
 
+    /** 스프링 컨텍스트가 이 fake를 싱글턴으로 공유하므로 테스트마다 비운다. */
+    public void reset() {
+        byToken.clear();
+        branches.clear();
+        paths.clear();
+        complete = true;
+        failure = null;
+    }
+
     public void registerRepository(String userAccessToken, GitHubRepository repository) {
         byToken.computeIfAbsent(userAccessToken, key -> new ArrayList<>()).add(repository);
     }
