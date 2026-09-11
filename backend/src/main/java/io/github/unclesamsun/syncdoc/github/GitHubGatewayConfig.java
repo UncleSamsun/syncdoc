@@ -22,6 +22,13 @@ public class GitHubGatewayConfig {
     }
 
     @Bean
+    RepositoryAccessGateway repositoryAccessGateway(GitHubProperties properties, RestClient.Builder builder) {
+        return properties.isUserAuthConfigured()
+                ? new GitHubApiRepositoryAccessGateway(properties, builder)
+                : new UnconfiguredRepositoryAccessGateway();
+    }
+
+    @Bean
     GitHubIdentityGateway gitHubIdentityGateway(GitHubProperties properties, RestClient.Builder builder) {
         return properties.isUserAuthConfigured()
                 ? new GitHubApiIdentityGateway(properties, builder)
