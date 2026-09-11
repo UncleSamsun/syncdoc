@@ -61,6 +61,10 @@ public class UserCredentialEntity {
         return refreshTokenCiphertext;
     }
 
+    public Instant getExpiresAt() {
+        return expiresAt;
+    }
+
     public int getKeyVersion() {
         return keyVersion;
     }

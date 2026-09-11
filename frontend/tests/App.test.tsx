@@ -21,23 +21,35 @@ describe("App", () => {
     );
   });
 
-  it("greets the signed-in account by login", async () => {
+  it("lands on the project home once signed in", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            id: "u1",
-            githubUserId: "583231",
-            login: "octocat",
-            serviceAdmin: false,
-            csrfToken: "c1",
+      vi.fn((url: string) => {
+        if (String(url).endsWith("/me")) {
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({
+                id: "u1",
+                githubUserId: "583231",
+                login: "octocat",
+                serviceAdmin: false,
+                csrfToken: "c1",
+              }),
+              { status: 200, headers: { "Content-Type": "application/json" } },
+            ),
+          );
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ items: [], complete: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
           }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        ),
-      ),
+        );
+      }),
     );
     render(<App />);
-    await waitFor(() => expect(screen.getByText("octocat 님으로 로그인했습니다.")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "프로젝트 홈" })).toBeInTheDocument(),
+    );
   });
 });
