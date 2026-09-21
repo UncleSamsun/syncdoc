@@ -24,9 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class DocumentController {
 
     private final DocumentService documents;
+    private final AssetService assets;
 
-    public DocumentController(DocumentService documents) {
+    public DocumentController(DocumentService documents, AssetService assets) {
         this.documents = documents;
+        this.assets = assets;
     }
 
     /** API-017. */
@@ -48,6 +50,22 @@ public class DocumentController {
             @RequestParam(required = false) UUID snapshotId,
             HttpServletRequest request) {
         return noStore().body(documents.view(user(request), id, documentId, snapshotId));
+    }
+
+    /**
+     * API-020. 첨부는 저장할 때 정한 형식으로만 나가고, 브라우저가 내용을 보고 형식을 새로
+     * 추측하지 못하게 `nosniff`를 함께 보낸다.
+     */
+    @GetMapping("/projects/{id}/assets/{assetId}")
+    public ResponseEntity<byte[]> asset(@PathVariable UUID id, @PathVariable UUID assetId,
+                                        @RequestParam(required = false) UUID snapshotId,
+                                        HttpServletRequest request) {
+        AssetService.AssetContent content = assets.read(user(request), id, assetId, snapshotId);
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore().cachePrivate())
+                .header("X-Content-Type-Options", "nosniff")
+                .header("Content-Type", content.mime())
+                .body(content.bytes());
     }
 
     /** 계약 `## 공통`이 정한 대로 본문과 목록을 저장하지 않게 한다. */
@@ -88,6 +106,12 @@ public class DocumentController {
     ResponseEntity<ApiError> invalidCursor() {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ApiError.of("INVALID_REQUEST", "목록을 이어서 읽을 수 없습니다.", requestId()));
+    }
+
+    @ExceptionHandler(AssetService.SnapshotRequiredException.class)
+    ResponseEntity<ApiError> snapshotRequired() {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiError.of("INVALID_REQUEST", "어떤 게시본의 첨부인지 지정해야 합니다.", requestId()));
     }
 
     /** GitHub 권한을 확인할 수 없는 상태다. 예전 허용을 근거로 내용을 돌려주지 않는다. */

@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 public class FakeRepositoryContentGateway implements RepositoryContentGateway {
 
     private final Map<String, Map<String, String>> filesByRevision = new LinkedHashMap<>();
+    private final Map<String, Map<String, byte[]>> assetsByRevision = new LinkedHashMap<>();
     private String head = "rev-1";
     private RuntimeException failure;
     private RuntimeException readFailure;
@@ -26,6 +27,7 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
 
     public void reset() {
         filesByRevision.clear();
+        assetsByRevision.clear();
         head = "rev-1";
         failure = null;
         readFailure = null;
@@ -38,6 +40,11 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
     /** @param path 저장소 기준 전체 경로 */
     public void putFile(String revision, String path, String text) {
         filesByRevision.computeIfAbsent(revision, key -> new LinkedHashMap<>()).put(path, text);
+    }
+
+    /** 그림처럼 문서가 아닌 파일을 심는다. */
+    public void putAsset(String revision, String path, byte[] bytes) {
+        assetsByRevision.computeIfAbsent(revision, key -> new LinkedHashMap<>()).put(path, bytes);
     }
 
     public void head(String revision) {
@@ -97,6 +104,40 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
                     entry.getValue().length()));
         }
         return List.copyOf(files);
+    }
+
+    @Override
+    public List<SourceFile> listAssets(RepositoryRef repository, String revision, String requestedRoot,
+                                       int maxAssets) {
+        raise();
+        List<SourceFile> files = new ArrayList<>();
+        for (Map.Entry<String, byte[]> entry : assetsByRevision.getOrDefault(revision, Map.of()).entrySet()) {
+            if (!entry.getKey().startsWith(requestedRoot + "/")) {
+                continue;
+            }
+            if (files.size() >= maxAssets) {
+                throw new TooManyDocumentsException(maxAssets);
+            }
+            files.add(new SourceFile(entry.getKey(), blobSha(revision, entry.getKey()),
+                    entry.getValue().length));
+        }
+        return List.copyOf(files);
+    }
+
+    @Override
+    public byte[] readBytes(RepositoryRef repository, String blobSha, int maxBytes) {
+        for (Map.Entry<String, Map<String, byte[]>> revision : assetsByRevision.entrySet()) {
+            for (Map.Entry<String, byte[]> file : revision.getValue().entrySet()) {
+                if (blobSha(revision.getKey(), file.getKey()).equals(blobSha)) {
+                    if (file.getValue().length > maxBytes) {
+                        throw new DocumentTooLargeException(file.getKey(), maxBytes);
+                    }
+                    return file.getValue();
+                }
+            }
+        }
+        return readText(repository, blobSha, maxBytes)
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @Override

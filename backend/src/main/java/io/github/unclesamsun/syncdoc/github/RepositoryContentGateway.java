@@ -49,6 +49,18 @@ public interface RepositoryContentGateway {
      */
     String readText(RepositoryRef repository, String blobSha, int maxBytes);
 
+    /**
+     * 문서 경로 아래의 첨부 후보를 모은다. 어떤 형식을 받아들일지는 부르는 쪽이 정한다.
+     *
+     * @throws TooManyDocumentsException 상한을 넘을 때
+     */
+    List<SourceFile> listAssets(RepositoryRef repository, String revision, String docsRoot, int maxAssets);
+
+    /**
+     * @throws DocumentTooLargeException 상한을 넘는 첨부일 때
+     */
+    byte[] readBytes(RepositoryRef repository, String blobSha, int maxBytes);
+
     /** 연결 설정이 가리키는 문서 경로가 사라졌다. 재시도로 풀리지 않고 설정이나 저장소가 바뀌어야 한다. */
     class DocsRootMissingException extends RuntimeException {
 

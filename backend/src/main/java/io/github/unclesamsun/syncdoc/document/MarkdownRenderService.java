@@ -79,18 +79,22 @@ public class MarkdownRenderService {
 
         /** @return 같은 게시본의 문서 id. 그 경로에 문서가 없으면 null */
         UUID documentIdFor(String repositoryPath);
+
+        /** @return 같은 게시본의 첨부 id. 그 경로에 받아들인 첨부가 없으면 null */
+        UUID assetIdFor(String repositoryPath);
     }
 
     /**
      * @param projectId    링크를 서비스 경로로 만들 때 쓴다
+     * @param snapshotId   첨부 주소에 함께 담는다. 과거 게시본의 그림을 현재 것으로 섞지 않기 위해서다
      * @param documentPath 저장소 기준 경로. 상대 링크를 푸는 기준이다
      */
-    public RenderedDocument render(UUID projectId, String documentPath, String markdown,
+    public RenderedDocument render(UUID projectId, UUID snapshotId, String documentPath, String markdown,
                                    LinkTargets targets) {
         Node document = parser.parse(markdown);
         SpecMetadataParser.SpecMetadata spec = metadata.parse(document);
 
-        Collector collector = new Collector(projectId, documentPath, targets);
+        Collector collector = new Collector(projectId, snapshotId, documentPath, targets);
         document.accept(collector);
 
         String html = policy.sanitize(rendererBuilder
@@ -116,6 +120,7 @@ public class MarkdownRenderService {
     private static final class Collector extends AbstractVisitor {
 
         private final UUID projectId;
+        private final UUID snapshotId;
         private final String documentPath;
         private final LinkTargets targets;
         private final HeadingSlugs slugs = new HeadingSlugs();
@@ -126,8 +131,9 @@ public class MarkdownRenderService {
         private final List<DocumentWarning> warnings = new ArrayList<>();
         private String firstHeading;
 
-        private Collector(UUID projectId, String documentPath, LinkTargets targets) {
+        private Collector(UUID projectId, UUID snapshotId, String documentPath, LinkTargets targets) {
             this.projectId = projectId;
+            this.snapshotId = snapshotId;
             this.documentPath = documentPath;
             this.targets = targets;
         }
@@ -171,14 +177,25 @@ public class MarkdownRenderService {
 
         @Override
         public void visit(Image image) {
-            // 첨부는 아직 제공하지 않는다. 대체 글자만 남기고 무엇이 빠졌는지 경고로 알린다.
             String alt = textOf(image);
-            String destination = image.getDestination() == null ? "" : image.getDestination();
-            links.add(new DocumentLink("asset", destination, alt));
-            warnings.add(new DocumentWarning("ASSET_NOT_AVAILABLE", destination));
-            Text replacement = new Text(alt.isBlank() ? "[이미지]" : alt);
-            image.insertBefore(replacement);
-            image.unlink();
+            String destination = image.getDestination() == null ? "" : image.getDestination().trim();
+            String repositoryPath = destination.matches("(?i)^[a-z][a-z0-9+.-]*:.*")
+                    ? null : DocumentPaths.resolve(documentPath, destination);
+            UUID assetId = repositoryPath == null ? null : targets.assetIdFor(repositoryPath);
+            if (assetId == null) {
+                // 받아들이지 않은 형식이거나 저장소에 없는 그림이다. 대체 글자만 남기고 무엇이 빠졌는지 알린다.
+                links.add(new DocumentLink("asset", "", alt));
+                warnings.add(new DocumentWarning("ASSET_NOT_AVAILABLE", destination));
+                Text replacement = new Text(alt.isBlank() ? "[이미지]" : alt);
+                image.insertBefore(replacement);
+                image.unlink();
+                return;
+            }
+            String href = "/api/v1/projects/" + projectId + "/assets/" + assetId
+                    + "?snapshotId=" + snapshotId;
+            links.add(new DocumentLink("asset", href, alt));
+            image.setDestination(href);
+            visitChildren(image);
         }
 
         private DocumentLink resolve(String destination, String text) {

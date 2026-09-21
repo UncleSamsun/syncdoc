@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class RetryPolicyTest {
 
     private final RetryPolicy policy = new RetryPolicy(new SyncProperties(
-            null, null, null, null, null, 0, 0, 0, null, null));
+            null, null, null, null, null, 0, 0, 0, 0, 0, null, null));
     private final Instant now = Instant.parse("2026-09-11T00:00:00Z");
 
     @Test

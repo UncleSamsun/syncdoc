@@ -1,8 +1,13 @@
 package io.github.unclesamsun.syncdoc.sync;
 
 import tools.jackson.databind.ObjectMapper;
+import io.github.unclesamsun.syncdoc.document.AssetPolicy;
 import io.github.unclesamsun.syncdoc.document.DocumentVersions;
 import io.github.unclesamsun.syncdoc.document.MarkdownRenderService;
+import io.github.unclesamsun.syncdoc.document.domain.AssetContentEntity;
+import io.github.unclesamsun.syncdoc.document.domain.AssetContentRepository;
+import io.github.unclesamsun.syncdoc.document.domain.AssetEntity;
+import io.github.unclesamsun.syncdoc.document.domain.AssetRepository;
 import io.github.unclesamsun.syncdoc.document.domain.DocumentEntity;
 import io.github.unclesamsun.syncdoc.document.domain.DocumentRepository;
 import io.github.unclesamsun.syncdoc.document.domain.DocumentSnapshotEntity;
@@ -50,6 +55,8 @@ public class SyncWorker {
     private final RepositoryContentGateway contents;
     private final DocumentSnapshotRepository snapshots;
     private final DocumentRepository documents;
+    private final AssetRepository assets;
+    private final AssetContentRepository assetContents;
     private final MarkdownRenderService renderer;
     private final SyncProperties properties;
     private final ObjectMapper json;
@@ -57,7 +64,8 @@ public class SyncWorker {
 
     public SyncWorker(SyncQueue queue, ProjectRepository projects, InstallationRepository installations,
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
-                      DocumentRepository documents, MarkdownRenderService renderer,
+                      DocumentRepository documents, AssetRepository assets,
+                      AssetContentRepository assetContents, MarkdownRenderService renderer,
                       SyncProperties properties, ObjectMapper json, Clock clock) {
         this.queue = queue;
         this.projects = projects;
@@ -65,6 +73,8 @@ public class SyncWorker {
         this.contents = contents;
         this.snapshots = snapshots;
         this.documents = documents;
+        this.assets = assets;
+        this.assetContents = assetContents;
         this.renderer = renderer;
         this.properties = properties;
         this.json = json;
@@ -139,17 +149,32 @@ public class SyncWorker {
                 new DocumentSnapshotEntity(project.getId(), revision, DocumentVersions.RENDERER,
                         DocumentVersions.POLICY, clock.instant())));
         if (existing.isPresent()) {
-            // 앞선 시도가 중간에 멈춘 게시본이다. 절반만 남은 문서를 지우고 처음부터 채운다.
+            // 앞선 시도가 중간에 멈춘 게시본이다. 절반만 남은 문서와 첨부를 지우고 처음부터 채운다.
             documents.deleteBySnapshotId(snapshot.getId());
+            assets.deleteBySnapshotId(snapshot.getId());
         }
 
         List<RepositoryContentGateway.SourceFile> files = contents.listDocuments(repository, revision,
                 project.getDocsRoot(), properties.maxDocuments());
 
+        // 첨부를 먼저 담는다. 문서를 변환할 때 그림의 주소를 이미 알고 있어야 하기 때문이다.
+        Map<String, UUID> assetIdsByPath = collectAssets(repository, revision, project, snapshot.getId());
+
         // 링크를 같은 게시본의 다른 문서 주소로 바꾸려면 저장하기 전에 서로의 id를 알아야 한다.
         Map<String, UUID> idsByPath = new LinkedHashMap<>();
         files.forEach(file -> idsByPath.put(file.path(), UUID.randomUUID()));
-        MarkdownRenderService.LinkTargets targets = idsByPath::get;
+        MarkdownRenderService.LinkTargets targets = new MarkdownRenderService.LinkTargets() {
+
+            @Override
+            public UUID documentIdFor(String repositoryPath) {
+                return idsByPath.get(repositoryPath);
+            }
+
+            @Override
+            public UUID assetIdFor(String repositoryPath) {
+                return assetIdsByPath.get(repositoryPath);
+            }
+        };
         Set<String> specIds = new HashSet<>();
 
         int stored = 0;
@@ -170,10 +195,47 @@ public class SyncWorker {
         }
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("documents", stored);
+        summary.put("assets", assetIdsByPath.size());
         summary.put("revision", revision);
         if (!queue.publish(lease, snapshot.getId(), revision, diagnostics(summary))) {
             log.info("임대를 잃어 게시하지 않는다 project={} job={}", lease.projectId(), lease.jobId());
         }
+    }
+
+    /**
+     * 받아들일 수 있는 첨부를 담는다.
+     *
+     * <p>받지 않는 형식, 상한을 넘는 크기, 이름과 내용이 어긋나는 파일은 건너뛴다. 첨부 하나 때문에
+     * 문서 전체를 못 읽게 만들지 않는다. 건너뛴 그림은 문서 변환에서 경고로 드러난다.
+     *
+     * @return 저장소 경로에서 첨부 id를 찾는 표
+     */
+    private Map<String, UUID> collectAssets(RepositoryContentGateway.RepositoryRef repository,
+                                            String revision, ProjectEntity project, UUID snapshotId) {
+        Map<String, UUID> idsByPath = new LinkedHashMap<>();
+        List<RepositoryContentGateway.SourceFile> candidates = contents.listAssets(repository, revision,
+                project.getDocsRoot(), properties.maxAssets());
+
+        for (RepositoryContentGateway.SourceFile file : candidates) {
+            String mime = AssetPolicy.mimeFor(file.path()).orElse(null);
+            if (mime == null || file.size() > properties.maxAssetSize()) {
+                continue;
+            }
+            byte[] bytes = contents.readBytes(repository, file.blobSha(), properties.maxAssetSize());
+            if (!AssetPolicy.contentMatches(mime, bytes)) {
+                log.info("이름과 내용이 다른 첨부를 건너뛴다 path={}", file.path());
+                continue;
+            }
+            String hash = sha256(bytes);
+            if (!assetContents.existsById(hash)) {
+                // 같은 그림이 여러 게시본에 나와도 바이트는 한 벌만 남는다.
+                assetContents.save(new AssetContentEntity(hash, bytes, clock.instant()));
+            }
+            UUID id = UUID.randomUUID();
+            assets.save(new AssetEntity(id, snapshotId, file.path(), mime, hash, bytes.length));
+            idsByPath.put(file.path(), id);
+        }
+        return idsByPath;
     }
 
     /**
@@ -188,7 +250,7 @@ public class SyncWorker {
                                    Set<String> specIds) {
         MarkdownRenderService.RenderedDocument rendered;
         try {
-            rendered = renderer.render(projectId, path, text, targets);
+            rendered = renderer.render(projectId, snapshotId, path, text, targets);
         } catch (RuntimeException e) {
             throw new DocumentRenderFailedException(path, "변환에 실패했다");
         }
@@ -236,9 +298,13 @@ public class SyncWorker {
     }
 
     static String sha256(String text) {
+        return sha256(text.getBytes(StandardCharsets.UTF_8));
+    }
+
+    static String sha256(byte[] bytes) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(text.getBytes(StandardCharsets.UTF_8)));
+            return HexFormat.of().formatHex(digest.digest(bytes));
         } catch (Exception e) {
             throw new IllegalStateException("해시를 계산하지 못했다", e);
         }

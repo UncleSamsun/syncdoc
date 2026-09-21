@@ -24,7 +24,8 @@ SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스�
 | sync_runs | id, project_id, job_id, started_at, finished_at?, outcome, source_revision?, error_code?, diagnostics_json | project_id→projects, job_id→sync_jobs. latest attempt와 latest success를 구분. diagnostics는 오류 경로/코드만 보존 |
 | document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id) |
 | documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, links_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
-| assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0 |
+| assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0. mime은 허용 목록 CHECK |
+| asset_contents | storage_key, bytes, byte_size, created_at | storage_key는 내용 해시다. assets.storage_key→asset_contents. 같은 그림이 여러 게시본에 나와도 바이트는 한 벌만 남는다 |
 | tasks | id, snapshot_id, task_spec_id, document_id, anchor, confirmed, source_refs_json, validation_refs_json, github_issue_node_id? | snapshot_id→document_snapshots. document는 동일 snapshot 복합 FK. unique(snapshot_id,task_spec_id) |
 | github_issue_snapshots | id, project_id, github_issue_node_id, number, title, state, state_reason?, assignees_json, labels_json, linked_prs_json, observed_at | project_id→projects. unique(project_id,github_issue_node_id). GitHub가 정본인 파생 정보 |
 | webhook_deliveries | delivery_id, event, received_at, processed_at? | delivery_id PK. 서명 검증 후 저장. raw payload·토큰 미저장 |
@@ -46,6 +47,8 @@ links_json은 문서 안의 링크를 서비스 경로로 바꾼 결과다. 링�
 동기화가 전체 문서를 준비한 뒤 complete=true인 snapshot으로 current_snapshot_id를 한 트랜잭션에서 교체한다. 파싱/정화/중복 ID 오류가 있으면 새 게시본으로 전환하지 않고 실패 기록을 남긴다. 최초 오류도 빈 성공으로 처리하지 않는다.
 
 worker는 SKIP LOCKED로 due 작업 하나를 잡고 임대 token을 부여한다. 30초 heartbeat, 2분 임대를 제안한다. 완료 시 같은 lease_token인지 검사하고 재시도 작업의 결과를 오래된 worker가 덮어쓰지 못하게 한다. 활성 작업 중 이벤트는 rerun_requested로 합치고 완료 후 최신 revision 재확인 작업을 예약한다. 최소 재시도60초/최대15분,429는 GitHub 재시도 시각을 우선한다.
+
+첨부 내용의 저장 배치는 2026-09-21 사용자 승인으로 DB에 둔다(`asset_contents`). 자산당 10MB 제안값이면 감당되고 백업·권한 검사가 한 곳에 모인다. 부하를 확인한 뒤 파일·객체 저장소로 옮길 수 있으며 그때 `storage_key`의 뜻만 바뀐다.
 
 첨부는 실행 불가한 데이터로 취급한다. 최초 지원은 PNG/JPEG/WebP/GIF, 자산당10MB, 문서당1MB·최대1,000문서를 제안한다. SVG/HTML 자산·symlink·경로 이탈은 제한한다. 이 수치는 제안값이며 부하 검증 후 조정한다.
 
