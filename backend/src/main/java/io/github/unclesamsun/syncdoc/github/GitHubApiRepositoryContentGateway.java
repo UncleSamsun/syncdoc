@@ -26,6 +26,8 @@ import org.springframework.web.client.RestClientException;
 public class GitHubApiRepositoryContentGateway implements RepositoryContentGateway {
 
     private static final int PER_PAGE = 100;
+    /** Issue·PR 목록에서 읽을 최대 페이지. 넘으면 불완전으로 알린다. */
+    private static final int MAX_PAGES = 5;
     /** 문서 경로 아래로 내려갈 최대 깊이. 순환·과도한 중첩에서 멈춘다. */
     private static final int MAX_DEPTH = 10;
 
@@ -138,6 +140,104 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
             throw new DocumentTooLargeException(blobSha, maxBytes);
         }
         return decoded;
+    }
+
+    @Override
+    public IssuePage listIssues(RepositoryRef repository, int max) {
+        String token = tokens.accessToken(repository.githubInstallationId());
+        List<IssueSummary> items = new ArrayList<>();
+        boolean complete = true;
+
+        for (int page = 1; ; page++) {
+            List<Map<String, Object>> body = getArray(properties.apiBaseUrl() + "/repos/"
+                    + repository.fullName() + "/issues?state=all&per_page=" + PER_PAGE + "&page=" + page,
+                    token);
+            for (Map<String, Object> issue : body) {
+                // GitHub는 PR도 Issue 목록에 담는다. 작업 집계에서 PR을 Issue로 세지 않는다.
+                if (issue.containsKey("pull_request")) {
+                    continue;
+                }
+                if (items.size() >= max) {
+                    return new IssuePage(List.copyOf(items), false);
+                }
+                items.add(toIssue(issue));
+            }
+            if (body.size() < PER_PAGE) {
+                break;
+            }
+            if (page >= MAX_PAGES) {
+                // 더 있는데 다 읽지 못했다. 이 사실을 숨기면 집계가 확정처럼 보인다.
+                complete = false;
+                break;
+            }
+        }
+        return new IssuePage(List.copyOf(items), complete);
+    }
+
+    @Override
+    public List<PullRequestSummary> listPullRequests(RepositoryRef repository, int max) {
+        String token = tokens.accessToken(repository.githubInstallationId());
+        List<PullRequestSummary> items = new ArrayList<>();
+
+        for (int page = 1; page <= MAX_PAGES; page++) {
+            List<Map<String, Object>> body = getArray(properties.apiBaseUrl() + "/repos/"
+                    + repository.fullName() + "/pulls?state=all&per_page=" + PER_PAGE + "&page=" + page,
+                    token);
+            for (Map<String, Object> pull : body) {
+                if (items.size() >= max) {
+                    return List.copyOf(items);
+                }
+                items.add(new PullRequestSummary(
+                        sizeOf(pull.get("number")),
+                        String.valueOf(pull.get("title")),
+                        String.valueOf(pull.get("state")),
+                        pull.get("merged_at") != null));
+            }
+            if (body.size() < PER_PAGE) {
+                break;
+            }
+        }
+        return List.copyOf(items);
+    }
+
+    private static IssueSummary toIssue(Map<String, Object> issue) {
+        return new IssueSummary(
+                String.valueOf(issue.get("node_id")),
+                sizeOf(issue.get("number")),
+                String.valueOf(issue.get("title")),
+                String.valueOf(issue.get("state")),
+                issue.get("state_reason") == null ? null : String.valueOf(issue.get("state_reason")),
+                namesOf(issue.get("assignees"), "login"),
+                namesOf(issue.get("labels"), "name"));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> namesOf(Object value, String key) {
+        if (!(value instanceof List<?> list)) {
+            return List.of();
+        }
+        List<String> names = new ArrayList<>();
+        for (Object element : list) {
+            if (element instanceof Map<?, ?> map && map.get(key) != null) {
+                names.add(String.valueOf(map.get(key)));
+            }
+        }
+        return List.copyOf(names);
+    }
+
+    private List<Map<String, Object>> getArray(String uri, String token) {
+        try {
+            List<Map<String, Object>> body = client.get()
+                    .uri(uri)
+                    .headers(headers -> applyHeaders(headers, token))
+                    .retrieve()
+                    .body(JSON_ARRAY);
+            return body == null ? List.of() : body;
+        } catch (HttpClientErrorException e) {
+            throw translate(e);
+        } catch (RestClientException e) {
+            throw new GitHubLookupFailedException("GitHub에 연결하지 못했다");
+        }
     }
 
     /**

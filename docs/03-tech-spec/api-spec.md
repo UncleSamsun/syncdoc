@@ -91,6 +91,8 @@ API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 
 
 **오류:** Project를 조회할 수 없으면 실패로 만들지 않고 `projectAccess:"unavailable"`과 Project 기반 `progress:null`로 답한다. 문서와 Issue 정보는 접근 가능한 범위에서 유지한다.
 
+`projectAccess`는 `available` · `unavailable` · `not_connected` 셋이다. 연결 설정에 GitHub Project가 없으면 `not_connected`이며 권한 문제와 구분한다(2026-09-21 사용자 확정). 어느 값이든 Project 기반 완료율을 추정하지 않는다.
+
 ## API-018 문서 본문
 
 **출력:** `html`은 서버 allowlist 정화 결과다. `headings`는 `{level,id,text}`, `diagrams`는 `{id,syntax:"mermaid",source}`이며 `html`의 서비스 생성 placeholder와 연결한다. 원본 Markdown의 script를 `html`로 보내지 않는다. React는 diagram source를 코드로 평가하지 않고 제한된 Mermaid에만 전달한다.

@@ -19,7 +19,7 @@ SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스�
 | user_credentials | user_id, access_token_ciphertext, refresh_token_ciphertext?, expires_at?, refresh_expires_at?, key_version, version | user_id PK/FK→users. 토큰 암호화키는 DB 밖. refresh는 낙관적 잠금으로 중복 회전 방지 |
 | sessions | id, user_id, token_hash, expires_at, created_at | user_id→users, token_hash unique. 원시 쿠키값 미저장 |
 | github_installations | id, github_installation_id, owner_github_id, status, updated_at | 외부 installation ID unique. 실제 private key는 배포 secret에 저장 |
-| projects | id, github_repository_id, full_name, installation_id, created_by, branch, docs_root, github_project_node_id?, current_snapshot_id?, version, created_at | repository ID unique, installation_id→github_installations, created_by→users. snapshot 복합 FK 아래 참고 |
+| projects | id, github_repository_id, full_name, installation_id, created_by, branch, docs_root, github_project_node_id?, current_snapshot_id?, issues_observed_at?, issues_complete, version, created_at | repository ID unique, installation_id→github_installations, created_by→users. snapshot 복합 FK 아래 참고 |
 | sync_jobs | id, project_id, kind, state, attempt, due_at, lease_until?, lease_token?, target_revision?, rerun_requested, last_error_code?, created_at | project_id→projects. queued/running 활성 kind별 partial unique(project_id,kind). state CHECK |
 | sync_runs | id, project_id, job_id, started_at, finished_at?, outcome, source_revision?, error_code?, diagnostics_json | project_id→projects, job_id→sync_jobs. latest attempt와 latest success를 구분. diagnostics는 오류 경로/코드만 보존 |
 | document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id) |
@@ -38,7 +38,9 @@ projects(project_id=id,current_snapshot_id)는 document_snapshots(project_id,id)
 
 GitHub Project 상태·목표일·숨겨진 다른 저장소 항목은 공용 테이블에 복제하지 않는다. 첫 MVP는 사용자 자격증명으로 요청 시 조회한다. 성능 측정 뒤 사용자+Project별 캐시를 도입할 수 있지만 별도 권한 철회 설계가 필요하다.
 
-작업-Issue 연결은 Issue 본문의 서비스 관리 메타데이터 영역(작업 ID·명세 경로·기준 revision) 한 곳을 외부 정본으로 제안한다. tasks.github_issue_node_id는 이를 읽은 파생값이다. 한 작업 ID에 여러 Issue가 주장되면 mapping_conflict로 표시하고 임의 선택하지 않는다. Issue 번호와 TASK ID는 분리한다.
+작업-Issue 연결은 **Issue 제목의 `TASK-NNN:` 접두사**로 한다(2026-09-21 사용자 확정). 이 저장소의 Issue가 이미 쓰는 형식이라 추가 규약 없이 동작하고, 사람이 Issue 목록에서도 어느 작업인지 바로 읽는다. tasks.github_issue_node_id는 이를 읽은 파생값이다. 한 작업 ID에 여러 Issue가 주장되면 mapping_conflict로 표시하고 임의 선택하지 않는다. Issue 번호와 TASK ID는 분리한다.
+
+검토했지만 채택하지 않은 안: Issue 본문에 서비스 관리 메타데이터 영역(작업 ID·명세 경로·기준 revision)을 두는 방식. 제목을 고쳐도 연결이 유지되고 기준 revision까지 묶을 수 있지만, 기존 Issue를 모두 고쳐야 하고 블록 형식을 규칙 파일에 새로 확정해야 한다. 제목 규칙이 실제로 부족해지면 그때 다시 본다.
 
 ## 저장과 갱신
 

@@ -1,6 +1,10 @@
 package io.github.unclesamsun.syncdoc.sync;
 
 import tools.jackson.databind.ObjectMapper;
+import io.github.unclesamsun.syncdoc.dashboard.IssueCollector;
+import io.github.unclesamsun.syncdoc.dashboard.TaskIds;
+import io.github.unclesamsun.syncdoc.dashboard.domain.TaskEntity;
+import io.github.unclesamsun.syncdoc.dashboard.domain.TaskRepository;
 import io.github.unclesamsun.syncdoc.document.AssetPolicy;
 import io.github.unclesamsun.syncdoc.document.DocumentVersions;
 import io.github.unclesamsun.syncdoc.document.MarkdownRenderService;
@@ -49,6 +53,10 @@ public class SyncWorker {
 
     private static final Logger log = LoggerFactory.getLogger(SyncWorker.class);
 
+    /** 작업을 뽑을 문서 종류와 제목 단계. 규칙 파일이 정한 작업계획 문서의 형식이다. */
+    private static final String TASKS_DOCUMENT_KIND = "tasks";
+    private static final int TASK_HEADING_LEVEL = 2;
+
     private final SyncQueue queue;
     private final ProjectRepository projects;
     private final InstallationRepository installations;
@@ -58,6 +66,8 @@ public class SyncWorker {
     private final AssetRepository assets;
     private final AssetContentRepository assetContents;
     private final MarkdownRenderService renderer;
+    private final TaskRepository tasks;
+    private final IssueCollector issueCollector;
     private final SyncProperties properties;
     private final ObjectMapper json;
     private final Clock clock;
@@ -66,7 +76,8 @@ public class SyncWorker {
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
                       DocumentRepository documents, AssetRepository assets,
                       AssetContentRepository assetContents, MarkdownRenderService renderer,
-                      SyncProperties properties, ObjectMapper json, Clock clock) {
+                      TaskRepository tasks, IssueCollector issueCollector, SyncProperties properties,
+                      ObjectMapper json, Clock clock) {
         this.queue = queue;
         this.projects = projects;
         this.installations = installations;
@@ -76,6 +87,8 @@ public class SyncWorker {
         this.assets = assets;
         this.assetContents = assetContents;
         this.renderer = renderer;
+        this.tasks = tasks;
+        this.issueCollector = issueCollector;
         this.properties = properties;
         this.json = json;
         this.clock = clock;
@@ -150,6 +163,7 @@ public class SyncWorker {
                         DocumentVersions.POLICY, clock.instant())));
         if (existing.isPresent()) {
             // 앞선 시도가 중간에 멈춘 게시본이다. 절반만 남은 문서와 첨부를 지우고 처음부터 채운다.
+            tasks.deleteBySnapshotId(snapshot.getId());
             documents.deleteBySnapshotId(snapshot.getId());
             assets.deleteBySnapshotId(snapshot.getId());
         }
@@ -184,8 +198,14 @@ public class SyncWorker {
                         properties.maxDocumentSize());
             }
             String text = contents.readText(repository, file.blobSha(), properties.maxDocumentSize());
-            documents.save(convert(project.getId(), snapshot.getId(), idsByPath.get(file.path()),
-                    file.path(), text, targets, specIds));
+            UUID documentId = idsByPath.get(file.path());
+            MarkdownRenderService.RenderedDocument rendered =
+                    render(project.getId(), snapshot.getId(), file.path(), text, targets, specIds);
+            documents.save(toEntity(documentId, snapshot.getId(), file.path(), text, rendered));
+            // 작업계획 문서의 제목이 작업 목록의 정본이다. 다른 종류의 문서에서는 뽑지 않는다.
+            if (TASKS_DOCUMENT_KIND.equals(rendered.kind())) {
+                saveTasks(snapshot.getId(), documentId, rendered);
+            }
             stored++;
             if (stored % 20 == 0 && !queue.renew(lease.jobId(), lease.token())) {
                 // 임대를 잃었다. 다른 worker가 같은 작업을 다시 하고 있으므로 여기서 멈춘다.
@@ -193,8 +213,11 @@ public class SyncWorker {
                 return;
             }
         }
+        boolean issuesComplete = collectIssues(project.getId(), repository);
+
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("documents", stored);
+        summary.put("issuesComplete", issuesComplete);
         summary.put("assets", assetIdsByPath.size());
         summary.put("revision", revision);
         if (!queue.publish(lease, snapshot.getId(), revision, diagnostics(summary))) {
@@ -239,15 +262,16 @@ public class SyncWorker {
     }
 
     /**
-     * 문서 하나를 변환해 저장할 형태로 만든다.
+     * 문서 하나를 변환한다.
      *
      * <p>변환·정화에 실패하거나 규약 ID가 겹치면 예외를 던져 수집 전체를 실패로 만든다.
      * 데이터 설계가 정한 대로, 그런 게시본으로는 전환하지 않고 마지막 정상 게시본을 유지한다.
      * 문제가 있는 문서 하나를 조용히 빼고 게시하면 문서가 사라진 것처럼 보인다.
      */
-    private DocumentEntity convert(UUID projectId, UUID snapshotId, UUID documentId, String path,
-                                   String text, MarkdownRenderService.LinkTargets targets,
-                                   Set<String> specIds) {
+    private MarkdownRenderService.RenderedDocument render(UUID projectId, UUID snapshotId, String path,
+                                                          String text,
+                                                          MarkdownRenderService.LinkTargets targets,
+                                                          Set<String> specIds) {
         MarkdownRenderService.RenderedDocument rendered;
         try {
             rendered = renderer.render(projectId, snapshotId, path, text, targets);
@@ -257,12 +281,31 @@ public class SyncWorker {
         if (rendered.specId() != null && !specIds.add(rendered.specId())) {
             throw new DocumentRenderFailedException(path, "규약 ID " + rendered.specId() + "가 겹친다");
         }
+        return rendered;
+    }
+
+    private DocumentEntity toEntity(UUID documentId, UUID snapshotId, String path, String text,
+                                    MarkdownRenderService.RenderedDocument rendered) {
         DocumentEntity document = new DocumentEntity(documentId, snapshotId, path, rendered.title(),
                 sha256(text), rendered.plainText());
         document.rendered(rendered.title(), rendered.specId(), rendered.kind(), rendered.html(),
                 rendered.plainText(), write(rendered.headings()), write(rendered.diagrams()),
                 write(rendered.links()), write(rendered.warnings()));
         return document;
+    }
+
+    /**
+     * 작업계획 문서의 `## TASK-NNN` 제목을 작업으로 남긴다.
+     *
+     * <p>Issue 연결은 여기서 하지 않는다. 작업은 명세가, 실행 상태는 GitHub가 정본이며 둘을 잇는 일은
+     * 조회 시점에 한다. 수집 때 붙여 두면 Issue 상태가 바뀌어도 옛 연결이 남는다.
+     */
+    private void saveTasks(UUID snapshotId, UUID documentId,
+                           MarkdownRenderService.RenderedDocument rendered) {
+        for (TaskIds.ExtractedTask task : TaskIds.fromHeadings(rendered.headings(), TASK_HEADING_LEVEL)) {
+            tasks.save(new TaskEntity(snapshotId, task.taskSpecId(), documentId, task.anchor(),
+                    task.title(), true));
+        }
     }
 
     /** 변환 단계의 실패. 어느 문서에서 났는지만 남기고 원문이나 예외 내용은 담지 않는다. */
@@ -285,6 +328,19 @@ public class SyncWorker {
             return json.writeValueAsString(value);
         } catch (RuntimeException e) {
             return "[]";
+        }
+    }
+
+    /**
+     * Issue를 읽는다. 읽지 못해도 수집을 실패로 만들지 않는다 — 권한이 아직 없을 수 있고,
+     * 그때 문서 현황까지 못 보게 되는 편이 더 나쁘다. 집계가 확정인지는 관찰 기록으로 판단한다.
+     */
+    private boolean collectIssues(UUID projectId, RepositoryContentGateway.RepositoryRef repository) {
+        try {
+            return issueCollector.collect(projectId, repository);
+        } catch (RuntimeException e) {
+            log.info("Issue를 읽지 못해 집계를 불완전으로 둔다 project={}", projectId);
+            return false;
         }
     }
 
