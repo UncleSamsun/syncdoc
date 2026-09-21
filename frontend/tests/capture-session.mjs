@@ -7,6 +7,10 @@
 //
 //   npm run e2e:login
 //
+// 브라우저 프로필을 tests/.auth/profile에 남긴다. 다시 실행할 때 GitHub 로그인을 되풀이하지
+// 않게 하려는 것이다. 이 폴더도 형상관리에 넣지 않는다.
+//
+// 어디까지 갔는지 보이도록 옮겨 다닌 주소를 그대로 찍는다. 막히면 그 줄을 보고 판단한다.
 // 저장하는 것은 이 서비스의 쿠키뿐이다. GitHub 쿠키는 파일에 넣지 않는다.
 // 세션 수명은 12시간이다. 만료되면 다시 실행한다. 저장 파일은 형상관리에 넣지 않는다.
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -15,46 +19,74 @@ import { chromium } from "@playwright/test";
 
 const base = process.env.SYNCDOC_E2E_BASE_URL ?? "http://localhost:8081";
 const out = process.env.SYNCDOC_E2E_STATE ?? "tests/.auth/session.json";
+const profile = process.env.SYNCDOC_E2E_PROFILE ?? "tests/.auth/profile";
 const waitMs = 10 * 60 * 1000;
 
-/** 이름이 맞는 쿠키가 생길 때까지 기다린다. */
-async function waitForCookie(context, page, name, host, what) {
-  console.log(what);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** 창을 닫았는지 본다. 닫힌 뒤에는 쿠키를 읽을 수 없다. */
+let closed = false;
+
+/** 이름이 맞는 쿠키가 생길 때까지 기다린다. @return 찾았으면 true */
+async function waitForCookie(context, name, host) {
   const until = Date.now() + waitMs;
-  while (Date.now() < until) {
-    const cookies = await context.cookies();
+  while (Date.now() < until && !closed) {
+    let cookies;
+    try {
+      cookies = await context.cookies();
+    } catch {
+      return false;
+    }
     if (cookies.some((cookie) => cookie.name === name && cookie.value
         && cookie.domain.includes(host))) {
       return true;
     }
-    await page.waitForTimeout(1000);
+    await sleep(1000);
   }
   return false;
 }
 
-const browser = await chromium.launch({ headless: false });
-const context = await browser.newContext({ locale: "ko-KR" });
-const page = await context.newPage();
-
-// 1단계. GitHub에 먼저 로그인한다.
-await page.goto("https://github.com/login");
-const signedInToGitHub = await waitForCookie(context, page, "user_session", "github.com",
-    `열린 창에서 GitHub에 로그인하세요. ${waitMs / 60000}분 안에 끝내면 됩니다.`);
-if (!signedInToGitHub) {
-  console.error("GitHub 로그인을 확인하지 못했습니다. 저장하지 않습니다.");
-  await browser.close();
+function fail(message) {
+  console.error(message);
+  console.error("창을 닫지 말고 끝까지 두세요. 세션 쿠키가 생기면 스크립트가 알아서 닫습니다.");
   process.exit(1);
 }
 
+mkdirSync(profile, { recursive: true });
+const context = await chromium.launchPersistentContext(profile, {
+  headless: false,
+  locale: "ko-KR",
+});
+const page = context.pages()[0] ?? await context.newPage();
+page.on("close", () => {
+  closed = true;
+});
+page.on("framenavigated", (frame) => {
+  if (frame === page.mainFrame()) {
+    console.log("  →", frame.url().replace(/(client_id|code|state)=[^&]*/g, "$1=…"));
+  }
+});
+
+// 1단계. GitHub에 먼저 로그인한다.
+console.log(`[1/2] 열린 창에서 GitHub에 로그인하세요. ${waitMs / 60000}분 안에 끝내면 됩니다.`);
+await page.goto("https://github.com/login");
+if (!await waitForCookie(context, "user_session", "github.com")) {
+  fail(closed ? "창이 닫혔습니다. 저장하지 않습니다." : "GitHub 로그인을 확인하지 못했습니다.");
+}
+
 // 2단계. 그 상태에서 서비스 인증을 시작한다. 승인 화면이 나오면 사람이 누른다.
-console.log("GitHub 로그인을 확인했습니다. 이제 서비스 인증을 시작합니다.");
+console.log("[2/2] GitHub 로그인을 확인했습니다. 승인 화면이 나오면 계속을 누르세요.");
 await page.goto(`${base}/api/v1/auth/github/start`);
-const signedIn = await waitForCookie(context, page, "SYNCDOC_SESSION", "localhost",
-    "승인 화면이 나오면 계속을 누르세요.");
-if (!signedIn) {
-  console.error(`세션 쿠키를 찾지 못했습니다. 저장하지 않습니다. 마지막 주소: ${page.url()}`);
-  await browser.close();
-  process.exit(1);
+if (!await waitForCookie(context, "SYNCDOC_SESSION", "localhost")) {
+  let last = "(알 수 없음)";
+  try {
+    last = page.url();
+  } catch {
+    // 창이 이미 닫혔다.
+  }
+  fail(closed
+      ? `창이 닫혔습니다. 세션 쿠키가 아직 없었습니다. 마지막 주소: ${last}`
+      : `세션 쿠키를 찾지 못했습니다. 마지막 주소: ${last}`);
 }
 
 // 서비스 쿠키만 남긴다. GitHub 쿠키를 파일에 쓰지 않는다.
@@ -63,4 +95,4 @@ const cookies = (await context.cookies())
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, JSON.stringify({ cookies, origins: [] }, null, 2), "utf-8");
 console.log(`세션을 ${out}에 저장했습니다. 쿠키 ${cookies.length}개.`);
-await browser.close();
+await context.close();
