@@ -2,6 +2,7 @@ package io.github.unclesamsun.syncdoc.sync;
 
 import tools.jackson.databind.ObjectMapper;
 import io.github.unclesamsun.syncdoc.document.DocumentVersions;
+import io.github.unclesamsun.syncdoc.document.MarkdownRenderService;
 import io.github.unclesamsun.syncdoc.document.domain.DocumentEntity;
 import io.github.unclesamsun.syncdoc.document.domain.DocumentRepository;
 import io.github.unclesamsun.syncdoc.document.domain.DocumentSnapshotEntity;
@@ -17,10 +18,13 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
 import java.util.HexFormat;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -46,20 +50,22 @@ public class SyncWorker {
     private final RepositoryContentGateway contents;
     private final DocumentSnapshotRepository snapshots;
     private final DocumentRepository documents;
+    private final MarkdownRenderService renderer;
     private final SyncProperties properties;
     private final ObjectMapper json;
     private final Clock clock;
 
     public SyncWorker(SyncQueue queue, ProjectRepository projects, InstallationRepository installations,
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
-                      DocumentRepository documents, SyncProperties properties, ObjectMapper json,
-                      Clock clock) {
+                      DocumentRepository documents, MarkdownRenderService renderer,
+                      SyncProperties properties, ObjectMapper json, Clock clock) {
         this.queue = queue;
         this.projects = projects;
         this.installations = installations;
         this.contents = contents;
         this.snapshots = snapshots;
         this.documents = documents;
+        this.renderer = renderer;
         this.properties = properties;
         this.json = json;
         this.clock = clock;
@@ -85,6 +91,9 @@ public class SyncWorker {
         } catch (RepositoryContentGateway.DocumentTooLargeException e) {
             queue.fail(lease, "DOCUMENT_TOO_LARGE", null,
                     diagnostics(Map.of("limit", properties.maxDocumentSize())));
+        } catch (DocumentRenderFailedException e) {
+            queue.fail(lease, "DOCUMENT_RENDER_FAILED", null,
+                    diagnostics(Map.of("path", e.path(), "reason", e.getMessage())));
         } catch (GitHubGatewayNotConfiguredException e) {
             queue.fail(lease, "INSTALLATION_TOKEN_UNAVAILABLE", null, diagnostics(Map.of()));
         } catch (GitHubLookupFailedException e) {
@@ -137,6 +146,12 @@ public class SyncWorker {
         List<RepositoryContentGateway.SourceFile> files = contents.listDocuments(repository, revision,
                 project.getDocsRoot(), properties.maxDocuments());
 
+        // 링크를 같은 게시본의 다른 문서 주소로 바꾸려면 저장하기 전에 서로의 id를 알아야 한다.
+        Map<String, UUID> idsByPath = new LinkedHashMap<>();
+        files.forEach(file -> idsByPath.put(file.path(), UUID.randomUUID()));
+        MarkdownRenderService.LinkTargets targets = idsByPath::get;
+        Set<String> specIds = new HashSet<>();
+
         int stored = 0;
         for (RepositoryContentGateway.SourceFile file : files) {
             if (file.size() > properties.maxDocumentSize()) {
@@ -144,8 +159,8 @@ public class SyncWorker {
                         properties.maxDocumentSize());
             }
             String text = contents.readText(repository, file.blobSha(), properties.maxDocumentSize());
-            documents.save(new DocumentEntity(snapshot.getId(), file.path(), titleOf(file.path(), text),
-                    sha256(text), text));
+            documents.save(convert(project.getId(), snapshot.getId(), idsByPath.get(file.path()),
+                    file.path(), text, targets, specIds));
             stored++;
             if (stored % 20 == 0 && !queue.renew(lease.jobId(), lease.token())) {
                 // 임대를 잃었다. 다른 worker가 같은 작업을 다시 하고 있으므로 여기서 멈춘다.
@@ -161,6 +176,56 @@ public class SyncWorker {
         }
     }
 
+    /**
+     * 문서 하나를 변환해 저장할 형태로 만든다.
+     *
+     * <p>변환·정화에 실패하거나 규약 ID가 겹치면 예외를 던져 수집 전체를 실패로 만든다.
+     * 데이터 설계가 정한 대로, 그런 게시본으로는 전환하지 않고 마지막 정상 게시본을 유지한다.
+     * 문제가 있는 문서 하나를 조용히 빼고 게시하면 문서가 사라진 것처럼 보인다.
+     */
+    private DocumentEntity convert(UUID projectId, UUID snapshotId, UUID documentId, String path,
+                                   String text, MarkdownRenderService.LinkTargets targets,
+                                   Set<String> specIds) {
+        MarkdownRenderService.RenderedDocument rendered;
+        try {
+            rendered = renderer.render(projectId, path, text, targets);
+        } catch (RuntimeException e) {
+            throw new DocumentRenderFailedException(path, "변환에 실패했다");
+        }
+        if (rendered.specId() != null && !specIds.add(rendered.specId())) {
+            throw new DocumentRenderFailedException(path, "규약 ID " + rendered.specId() + "가 겹친다");
+        }
+        DocumentEntity document = new DocumentEntity(documentId, snapshotId, path, rendered.title(),
+                sha256(text), rendered.plainText());
+        document.rendered(rendered.title(), rendered.specId(), rendered.kind(), rendered.html(),
+                rendered.plainText(), write(rendered.headings()), write(rendered.diagrams()),
+                write(rendered.links()), write(rendered.warnings()));
+        return document;
+    }
+
+    /** 변환 단계의 실패. 어느 문서에서 났는지만 남기고 원문이나 예외 내용은 담지 않는다. */
+    static class DocumentRenderFailedException extends RuntimeException {
+
+        private final String path;
+
+        DocumentRenderFailedException(String path, String reason) {
+            super(reason);
+            this.path = path;
+        }
+
+        String path() {
+            return path;
+        }
+    }
+
+    private String write(Object value) {
+        try {
+            return json.writeValueAsString(value);
+        } catch (RuntimeException e) {
+            return "[]";
+        }
+    }
+
     private String currentRevision(ProjectEntity project) {
         if (project.getCurrentSnapshotId() == null) {
             return null;
@@ -168,27 +233,6 @@ public class SyncWorker {
         return snapshots.findById(project.getCurrentSnapshotId())
                 .map(DocumentSnapshotEntity::getSourceRevision)
                 .orElse(null);
-    }
-
-    /** 제목은 첫 제목 줄에서 가져온다. 없으면 파일명을 쓴다. frontmatter는 건너뛴다. */
-    static String titleOf(String path, String text) {
-        String[] lines = text.split("\r?\n");
-        int index = 0;
-        if (lines.length > 0 && lines[0].trim().equals("---")) {
-            index = 1;
-            while (index < lines.length && !lines[index].trim().equals("---")) {
-                index++;
-            }
-            index++;
-        }
-        for (; index < lines.length; index++) {
-            String line = lines[index].trim();
-            if (line.startsWith("# ")) {
-                return line.substring(2).trim();
-            }
-        }
-        String name = path.substring(path.lastIndexOf('/') + 1);
-        return name.endsWith(".md") ? name.substring(0, name.length() - 3) : name;
     }
 
     static String sha256(String text) {

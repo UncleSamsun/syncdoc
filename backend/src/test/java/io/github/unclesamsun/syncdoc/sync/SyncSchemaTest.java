@@ -97,10 +97,10 @@ class SyncSchemaTest extends PostgresContainerSupport {
         UUID project = fixture.newProject("207").getId();
         UUID snapshot = snapshots.saveAndFlush(
                 new DocumentSnapshotEntity(project, "abc123", "r0", "p0", Instant.now())).getId();
-        documents.saveAndFlush(new DocumentEntity(snapshot, "docs/a.md", "A", "h1", "본문"));
+        documents.saveAndFlush(new DocumentEntity(UUID.randomUUID(), snapshot, "docs/a.md", "A", "h1", "본문"));
 
         assertThatThrownBy(() -> documents.saveAndFlush(
-                new DocumentEntity(snapshot, "docs/a.md", "A", "h2", "다른 본문")))
+                new DocumentEntity(UUID.randomUUID(), snapshot, "docs/a.md", "A", "h2", "다른 본문")))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
