@@ -35,7 +35,7 @@ export function syncToneOf(state: SyncState): "ok" | "fail" | "review" | "todo" 
 }
 
 /** 시각은 고정폭으로 보이는 식별 정보다. 초는 버리고 분까지만 보여 준다. */
-export function formatMoment(value: string | null): string | null {
+export function formatMoment(value: string | null | undefined): string | null {
   if (!value) {
     return null;
   }

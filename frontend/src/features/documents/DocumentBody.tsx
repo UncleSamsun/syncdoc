@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DiagramView, { DIAGRAM_LIMITS } from "./DiagramView";
 import type { DocumentDiagram } from "./types";
 
@@ -20,6 +20,7 @@ type Props = {
 export default function DocumentBody({ html, diagrams, title }: Props) {
   const body = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { hash } = useLocation();
   const [slots, setSlots] = useState<{ id: string; node: Element }[]>([]);
 
   const diagramsById = useMemo(() => {
@@ -59,7 +60,12 @@ export default function DocumentBody({ html, diagrams, title }: Props) {
         node,
       })),
     );
-  }, [html, title]);
+
+    // 검색 결과나 작업 표에서 앵커가 붙은 주소로 들어왔다. 본문을 그린 뒤라야 그 자리를 찾을 수 있다.
+    if (hash) {
+      document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView({ block: "start" });
+    }
+  }, [html, title, hash]);
 
   /** 문서 안 링크는 화면을 새로 불러오지 않고 옮겨 간다. 앵커는 그 자리에서 이동한다. */
   const onClick = (event: React.MouseEvent<HTMLDivElement>) => {
