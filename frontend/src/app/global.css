@@ -1,6 +1,35 @@
+/*
+ * 색·크기 값은 공통 UI 규칙(docs/02-ui-spec/ui-conventions.md)과 화면 정의 페이지에서 가져왔다.
+ * 값을 바꾸려면 그 문서를 먼저 고친다.
+ */
 :root {
   font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
   color-scheme: light;
+
+  --bg: #ffffff;
+  --sunk: #f7f7f5;
+  --hover: #f1f1ee;
+  --line: #e7e7e4;
+  --line2: #d5d5d0;
+  --ink: #0d0d0d;
+  --ink2: #5b5b57;
+  --ink3: #8c8c86;
+  --act: #0d0d0d;
+  --st-todo-ink: #5f656b;
+  --st-prog-ink: #0a64ac;
+  --st-rev-ink: #8a5d04;
+  --st-done-ink: #127036;
+  --warn-ink: #b85408;
+  --st-fail: #d0392a;
+  --fail-ink: #d0392a;
+  --sf-fail: #fff4f3;
+  --sf-ok: #f0faf4;
+  --f-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 body {
@@ -9,6 +38,12 @@ body {
 
 main {
   padding: 24px;
+}
+
+.mono {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--ink3);
 }
 
 .centered {
@@ -23,8 +58,471 @@ main {
 .button {
   display: inline-block;
   padding: 10px 18px;
-  border-radius: 8px;
-  background: #1f2328;
+  border-radius: 6px;
+  background: var(--act);
   color: #fff;
   text-decoration: none;
+}
+
+/* 셸 (UI-000) */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.sh-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sh-top .brand {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sw {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.rootpath {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--ink3);
+}
+
+.syncpill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--st-done-ink);
+  color: var(--st-done-ink);
+  background: var(--sf-ok);
+  font-size: 11.5px;
+}
+
+.syncpill.stale {
+  border-color: var(--st-fail);
+  background: var(--sf-fail);
+  color: var(--fail-ink);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.shell-body {
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  flex: 1;
+}
+
+.sh-side {
+  border-right: 1px solid var(--line);
+  background: var(--sunk);
+  padding: 10px 8px;
+  overflow-y: auto;
+}
+
+.nav-grp {
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding: 14px 9px 5px;
+}
+
+.nav-grp .cnt {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.shell-main {
+  min-width: 0;
+  padding: 0;
+}
+
+/* 문서 트리 (UI-003) */
+.tree {
+  display: flex;
+  flex-direction: column;
+}
+
+.fold-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 27px;
+  padding: 0 7px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.fold-h .fname {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.fold-h .n {
+  font-size: 9.5px;
+  color: var(--ink3);
+  font-variant-numeric: tabular-nums;
+}
+
+.fold--cur > .fold-h {
+  color: var(--ink);
+}
+
+.fold-b {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 1px 0 7px 13px;
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+
+.fold-b a {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--ink2);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fold-b a:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.fold-b a[aria-current] {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 500;
+  border: 1px solid var(--line);
+}
+
+/* 문서 본문 (UI-003) */
+.doc-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 168px;
+}
+
+.doc {
+  padding: 26px 34px 34px;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+
+.doc h1 {
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.028em;
+}
+
+.dmeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--ink3);
+}
+
+.doc-body p,
+.doc-body li {
+  font-size: 14.5px;
+  line-height: 1.78;
+  max-width: 68ch;
+}
+
+.doc-body h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 26px 0 0;
+}
+
+.doc-body code {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  background: var(--sunk);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.doc-body img {
+  max-width: 100%;
+}
+
+/* 표는 자기 컨테이너에서만 가로로 스크롤한다. */
+.tblwrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.mdtbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  border: 1px solid var(--line);
+}
+
+.mdtbl th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink2);
+  background: var(--sunk);
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.mdtbl td {
+  padding: 7px 11px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink2);
+}
+
+/* 다이어그램 */
+.dgm,
+.dgm-err {
+  margin: 18px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dgm-err {
+  border-color: var(--st-fail);
+}
+
+.dgm .bar,
+.dgm-err .bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 11px;
+  background: var(--sunk);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--ink3);
+}
+
+.dgm-err .bar {
+  background: var(--sf-fail);
+  border-bottom-color: var(--st-fail);
+  color: var(--fail-ink);
+}
+
+.dgm .bar .r,
+.dgm-err .bar .r {
+  margin-left: auto;
+  color: var(--ink);
+  border: 1px solid var(--line2);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.dgm svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 14px 12px;
+}
+
+.dgm-err .bd {
+  padding: 11px;
+  font-size: 12px;
+  color: var(--ink2);
+}
+
+.dgm-err .bd b {
+  display: block;
+  color: var(--ink);
+  font-size: 12.5px;
+  margin-bottom: 3px;
+}
+
+.dgm pre,
+.dgm-err pre {
+  margin: 0;
+  padding: 11px;
+  overflow-x: auto;
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  background: var(--sunk);
+}
+
+/* 목차와 경고 */
+.toc {
+  padding: 26px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.toc .h {
+  font-size: 10.5px;
+  font-family: var(--f-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+
+.toc a {
+  font-size: 11.5px;
+  color: var(--ink2);
+  text-decoration: none;
+  padding: 3px 0 3px 10px;
+  border-left: 1px solid var(--line);
+}
+
+.toc a[data-level="3"] {
+  padding-left: 18px;
+}
+
+.toc .wz {
+  margin-top: 18px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.toc .wz p {
+  font-size: 11px;
+  color: var(--warn-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 5px 0 0;
+}
+
+/* 상태 화면 (UI-007·008·011·012) */
+.state {
+  padding: 34px;
+  max-width: 68ch;
+}
+
+.state h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 15px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.banner--fail {
+  background: var(--sf-fail);
+  border: 1px solid var(--st-fail);
+  color: var(--fail-ink);
+}
+
+.banner-h {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.banner-h .mono {
+  margin-left: auto;
+}
+
+.banner p {
+  margin: 0;
+  color: var(--ink2);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.skeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--hover);
+}
+
+/* 좁은 화면 */
+@media (max-width: 720px) {
+  .shell-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sh-side {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .doc-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc {
+    border-right: 0;
+    padding: 20px;
+  }
+
+  .toc {
+    position: static;
+    border-top: 1px solid var(--line);
+  }
 }
