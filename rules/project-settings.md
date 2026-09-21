@@ -41,7 +41,7 @@
 | tech-overview | 적용 | |
 | tech-interface | 적용 | |
 | tech-data | 적용 | |
-| tech-ops | 보류 | 실행·운영 설계는 TASK-008에서 작성한다 |
+| tech-ops | 적용 | |
 | tasks | 적용 | |
 | proposal | 적용 | |
 | record | 적용 | |

@@ -17,5 +17,40 @@ services:
       timeout: 3s
       retries: 10
 
+  # 수집 worker를 포함한 API 프로세스. profile로 나눠 띄울 수 있지만 MVP는 한 프로세스다.
+  backend:
+    build:
+      context: ../backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SYNCDOC_DB_URL: jdbc:postgresql://postgres:5432/${SYNCDOC_DB_NAME:-syncdoc}
+      SYNCDOC_DB_USER: ${SYNCDOC_DB_USER:-syncdoc}
+      SYNCDOC_DB_PASSWORD: ${SYNCDOC_DB_PASSWORD:-syncdoc}
+      SYNCDOC_GITHUB_APP_ID: ${SYNCDOC_GITHUB_APP_ID:-}
+      SYNCDOC_GITHUB_CLIENT_ID: ${SYNCDOC_GITHUB_CLIENT_ID:-}
+      SYNCDOC_GITHUB_CLIENT_SECRET: ${SYNCDOC_GITHUB_CLIENT_SECRET:-}
+      SYNCDOC_GITHUB_PRIVATE_KEY: ${SYNCDOC_GITHUB_PRIVATE_KEY:-}
+      SYNCDOC_GITHUB_WEBHOOK_SECRET: ${SYNCDOC_GITHUB_WEBHOOK_SECRET:-}
+      SYNCDOC_GITHUB_REDIRECT_URI: ${SYNCDOC_GITHUB_REDIRECT_URI:-http://localhost:8081/api/v1/auth/github/callback}
+      SYNCDOC_ADMIN_GITHUB_USER_ID: ${SYNCDOC_ADMIN_GITHUB_USER_ID:-}
+      SYNCDOC_CSRF_KEY: ${SYNCDOC_CSRF_KEY:-}
+      SYNCDOC_TOKEN_KEY: ${SYNCDOC_TOKEN_KEY:-}
+      # 평문 http로 도는 로컬 구성에서는 꺼야 쿠키가 붙는다. 실제 배포에서는 켠다.
+      SYNCDOC_COOKIE_SECURE: ${SYNCDOC_COOKIE_SECURE:-false}
+      SYNCDOC_SYNC_WORKER_ENABLED: ${SYNCDOC_SYNC_WORKER_ENABLED:-true}
+      SYNCDOC_SYNC_POLL_INTERVAL: ${SYNCDOC_SYNC_POLL_INTERVAL:-60s}
+
+  # 정적 자산을 내보내고 `/api`를 백엔드로 넘긴다. 브라우저는 이 한 곳만 본다.
+  web:
+    build:
+      context: ../frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${SYNCDOC_WEB_PORT:-8081}:80"
+
 volumes:
   syncdoc-postgres:
