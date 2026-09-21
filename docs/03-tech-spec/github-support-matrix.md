@@ -21,7 +21,7 @@ GitHub App의 사용자 인증과 설치 인증 조합을 채택하고, 필요�
 | 브랜치 목록·경로 존재 확인 | REQ-002, REQ-006 | `GET /repos/{o}/{r}/branches`, `GET /repos/{o}/{r}/contents/{path}?ref=` (사용자 토큰) | Contents: read | **확인 2026-09-11** |
 | 설치 토큰 발급 | REQ-006 | `POST /app/installations/{id}/access_tokens` (App JWT, RS256) | 없음 (App 자격증명) | **확인 2026-09-11** |
 | 문서 파일 읽기 | REQ-004, REQ-006 | `GET /repositories/{id}`, `GET /repos/{o}/{r}/commits/{ref}`, `GET /repos/{o}/{r}/contents/{path}?ref=`, `GET /repos/{o}/{r}/git/blobs/{sha}` (설치 토큰) | Contents: read | **확인 2026-09-11** |
-| Issue·PR 상태·담당자 | REQ-003 | `GET /repos/{o}/{r}/issues`, `GET /repos/{o}/{r}/pulls` | Issues: read, Pull requests: read | 미확인 |
+| Issue·PR 상태·담당자 | REQ-003 | `GET /repos/{o}/{r}/issues`, `GET /repos/{o}/{r}/pulls` (설치 토큰) | Issues: read, Pull requests: read | **확인 2026-09-21** |
 | Project(v2) 상태·필드 | REQ-003, REQ-007 | GraphQL `projectV2` (사용자 토큰) | Projects: read (조직 Project는 조직 설치 필요) | 미확인 |
 | push·issues·pull_request webhook | REQ-006 | App webhook | 이벤트 구독: push, issues, pull_request, projects_v2_item | 미확인 |
 | 요청자의 저장소 권한 확인 | REQ-007 | `GET /repos/{o}/{r}` (사용자 토큰) 또는 `GET /repos/{o}/{r}/collaborators/{u}/permission` | Metadata: read | 미확인 |
@@ -58,6 +58,16 @@ TASK-005에서 실제 저장소 `UncleSamsun/syncdoc`을 사용자 없이 수집
 - **webhook은 비밀값이 없으면 받지 않는다.** 실제 서버에 서명 없는 push 본문을 보내니 503 `WEBHOOK_NOT_CONFIGURED`로 거절했다. 확인하지 못한 요청을 처리하지 않는다.
 - 서버 로그에 설치 토큰(`ghs_`)·사용자 토큰(`gho_`)·App JWT·private key·client secret이 한 건도 없고 예외도 0건이었다.
 
+## 2026-09-21에 확인한 것 (현황)
+
+TASK-007에서 사용자가 App 권한에 Issues·Pull requests read를 더한 뒤 실제 저장소로 확인했다.
+
+- **설치 토큰으로 Issue와 PR을 읽는다.** `UncleSamsun/syncdoc`의 Issue 13건과 PR 목록을 읽었다. GitHub는 PR도 Issue 목록에 담아 주므로 `pull_request` 필드가 있는 항목은 걸러낸다. 그러지 않으면 PR이 작업으로 두 번 세어진다.
+- **제목 접두사 매핑이 실제로 맞는다.** 작업계획 문서에서 뽑은 TASK-001 ~ TASK-008 여덟 개에 대해 TASK-004→#10, TASK-005→#31, TASK-006→#33, TASK-007→#37이 붙었고 나머지 넷은 Issue 미등록으로 남았다. 실제 상태와 같다.
+- **한 작업에 PR이 여럿인 경우가 실제로 있다.** TASK-006에 PR #34·#35·#36이 모두 붙었고 완료는 하나로 셌다.
+- **규약을 따르지 않는 문서에서는 작업이 잡히지 않는다.** `main`의 작업계획 문서에는 frontmatter가 없어 종류를 알 수 없고, 그래서 작업이 0건이었다. `dev`에서는 여덟 건이 잡혔다. 규칙 파일이 정본이라는 전제의 결과이며, 이런 문서를 드러내는 일은 산출물 체크리스트(Issue #10의 남은 조건)가 맡는다.
+- 서버 로그에 설치 토큰·사용자 토큰이 한 건도 없고 예외도 0건이었다.
+
 ## 확정되지 않은 항목
 
 - 조직 소유 저장소의 앱 설치 승인 절차와 조직의 앱 접근 제한 정책
@@ -69,6 +79,6 @@ TASK-005에서 실제 저장소 `UncleSamsun/syncdoc`을 사용자 없이 수집
 ## 다음
 
 1. TASK-006에서 문서 변환을 만들며 첨부·이미지 읽기 범위를 확인한다.
-2. TASK-007에서 Issue·PR·Project 행을 확인한다.
+2. Project(v2) 행은 연결한 GitHub Project가 생기면 확인한다. 지금은 연결하지 않아 `not_connected`다.
 3. 서로 다른 권한의 테스트 계정 2개로 권한 교집합을 검증한다. 지금은 계정이 하나뿐이라 "보이지 않는 저장소" 경로를 fake로만 확인했다.
 4. 확인 결과가 예상 권한과 다르면 [접근 설계](access-proposal.md)와 이 표를 고친다.

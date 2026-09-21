@@ -44,6 +44,12 @@ public class GitHubGatewayConfig {
                 : new UnconfiguredInstallationTokenGateway();
     }
 
+    /** Project(v2)는 REST에 없어 GraphQL로 읽는다. 사용자 토큰을 쓰므로 설치 설정과 무관하다. */
+    @Bean
+    ProjectBoardGateway projectBoardGateway(GitHubProperties properties, RestClient.Builder builder) {
+        return new GitHubGraphQlProjectBoardGateway(properties, builder);
+    }
+
     @Bean
     RepositoryContentGateway repositoryContentGateway(GitHubProperties properties,
                                                       InstallationTokenGateway tokens,

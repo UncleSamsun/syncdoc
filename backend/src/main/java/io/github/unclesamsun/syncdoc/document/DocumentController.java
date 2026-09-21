@@ -25,10 +25,12 @@ public class DocumentController {
 
     private final DocumentService documents;
     private final AssetService assets;
+    private final SearchService search;
 
-    public DocumentController(DocumentService documents, AssetService assets) {
+    public DocumentController(DocumentService documents, AssetService assets, SearchService search) {
         this.documents = documents;
         this.assets = assets;
+        this.search = search;
     }
 
     /** API-017. */
@@ -50,6 +52,17 @@ public class DocumentController {
             @RequestParam(required = false) UUID snapshotId,
             HttpServletRequest request) {
         return noStore().body(documents.view(user(request), id, documentId, snapshotId));
+    }
+
+    /** API-019. 결과는 현재 프로젝트의 한 게시본 안에서만 찾는다. */
+    @GetMapping("/projects/{id}/search")
+    public ResponseEntity<SearchService.SearchResults> search(
+            @PathVariable UUID id,
+            @RequestParam(name = "q", required = false) String query,
+            @RequestParam(required = false) UUID snapshotId,
+            @RequestParam(required = false) Integer limit,
+            HttpServletRequest request) {
+        return noStore().body(search.search(user(request), id, query, snapshotId, limit));
     }
 
     /**
@@ -106,6 +119,12 @@ public class DocumentController {
     ResponseEntity<ApiError> invalidCursor() {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ApiError.of("INVALID_REQUEST", "목록을 이어서 읽을 수 없습니다.", requestId()));
+    }
+
+    @ExceptionHandler(SearchService.InvalidQueryException.class)
+    ResponseEntity<ApiError> invalidQuery(SearchService.InvalidQueryException e) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiError.of("INVALID_REQUEST", e.getMessage(), requestId()));
     }
 
     @ExceptionHandler(AssetService.SnapshotRequiredException.class)

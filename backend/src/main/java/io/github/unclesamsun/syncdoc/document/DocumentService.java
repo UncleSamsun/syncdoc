@@ -63,7 +63,7 @@ public class DocumentService {
     public DocumentListView list(CurrentUser user, UUID projectId, UUID requestedSnapshotId, String cursor,
                                  Integer limit) {
         ProjectService.ProjectView project = projects.view(user, projectId);
-        Optional<DocumentSnapshotEntity> snapshot = resolveSnapshot(project, requestedSnapshotId);
+        Optional<DocumentSnapshotEntity> snapshot = snapshotFor(project, requestedSnapshotId);
         if (snapshot.isEmpty()) {
             return new DocumentListView(null, List.of(), null);
         }
@@ -84,7 +84,7 @@ public class DocumentService {
     @Transactional(readOnly = true)
     public DocumentView view(CurrentUser user, UUID projectId, UUID documentId, UUID requestedSnapshotId) {
         ProjectService.ProjectView project = projects.view(user, projectId);
-        DocumentSnapshotEntity snapshot = resolveSnapshot(project, requestedSnapshotId)
+        DocumentSnapshotEntity snapshot = snapshotFor(project, requestedSnapshotId)
                 .orElseThrow(DocumentsNotReadyException::new);
 
         DocumentEntity document = documents.findById(documentId)
@@ -102,12 +102,12 @@ public class DocumentService {
     }
 
     /**
-     * 지정한 게시본을 찾는다. 지정이 없으면 현재 게시본이다.
+     * 지정한 게시본을 찾는다. 지정이 없으면 현재 게시본이다. 검색도 같은 판정을 써야 해서 공개한다.
      *
      * @throws SnapshotGoneException 지정한 게시본이 이 프로젝트에 없을 때. 보관에서 지워졌다는 뜻이다
      */
-    private Optional<DocumentSnapshotEntity> resolveSnapshot(ProjectService.ProjectView project,
-                                                             UUID requestedSnapshotId) {
+    public Optional<DocumentSnapshotEntity> snapshotFor(ProjectService.ProjectView project,
+                                                        UUID requestedSnapshotId) {
         if (requestedSnapshotId == null) {
             return project.currentSnapshotId() == null
                     ? Optional.empty() : snapshots.findById(project.currentSnapshotId());

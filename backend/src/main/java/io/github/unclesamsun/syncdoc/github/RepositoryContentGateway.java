@@ -61,6 +61,35 @@ public interface RepositoryContentGateway {
      */
     byte[] readBytes(RepositoryRef repository, String blobSha, int maxBytes);
 
+    /**
+     * 저장소의 Issue를 읽는다. 상태·담당자·라벨은 GitHub가 정본이며 여기서는 관찰만 한다.
+     *
+     * @param max 읽을 최대 건수. 상한에 걸리면 불완전으로 알린다
+     */
+    IssuePage listIssues(RepositoryRef repository, int max);
+
+    /**
+     * 저장소의 PR을 읽는다. 작업 완료 수를 세는 데 쓰지 않고 작업마다 어떤 PR이 있는지만 보여준다.
+     */
+    List<PullRequestSummary> listPullRequests(RepositoryRef repository, int max);
+
+    /**
+     * @param complete 상한에 걸리지 않고 전부 읽었으면 true. 집계가 확정인지 판단하는 근거다
+     */
+    record IssuePage(List<IssueSummary> items, boolean complete) {
+    }
+
+    /**
+     * @param nodeId      GitHub가 준 전역 ID. 번호와 달리 저장소를 옮겨도 바뀌지 않는다
+     * @param stateReason `completed`·`not_planned`. 취소를 완료와 구분하는 유일한 값이다
+     */
+    record IssueSummary(String nodeId, int number, String title, String state, String stateReason,
+                        List<String> assignees, List<String> labels) {
+    }
+
+    record PullRequestSummary(int number, String title, String state, boolean merged) {
+    }
+
     /** 연결 설정이 가리키는 문서 경로가 사라졌다. 재시도로 풀리지 않고 설정이나 저장소가 바뀌어야 한다. */
     class DocsRootMissingException extends RuntimeException {
 

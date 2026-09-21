@@ -40,6 +40,13 @@ public class ProjectEntity {
     @Column(name = "current_snapshot_id")
     private UUID currentSnapshotId;
 
+    @Column(name = "issues_observed_at")
+    private Instant issuesObservedAt;
+
+    /** Issue를 상한에 걸리지 않고 전부 읽었는지. 집계를 확정으로 볼 수 있는지의 근거다. */
+    @Column(name = "issues_complete", nullable = false)
+    private boolean issuesComplete;
+
     @Version
     @Column(nullable = false)
     private long version;
@@ -98,6 +105,20 @@ public class ProjectEntity {
 
     public UUID getCurrentSnapshotId() {
         return currentSnapshotId;
+    }
+
+    public Instant getIssuesObservedAt() {
+        return issuesObservedAt;
+    }
+
+    public boolean isIssuesComplete() {
+        return issuesComplete;
+    }
+
+    /** Issue를 다시 읽었다. 언제 어디까지 읽었는지를 함께 남긴다. */
+    public void issuesObserved(Instant at, boolean complete) {
+        this.issuesObservedAt = at;
+        this.issuesComplete = complete;
     }
 
     public long getVersion() {

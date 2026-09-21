@@ -17,6 +17,10 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
 
     private final Map<String, Map<String, String>> filesByRevision = new LinkedHashMap<>();
     private final Map<String, Map<String, byte[]>> assetsByRevision = new LinkedHashMap<>();
+    private final List<IssueSummary> issues = new ArrayList<>();
+    private final List<PullRequestSummary> pullRequests = new ArrayList<>();
+    private boolean issuesComplete = true;
+    private RuntimeException issueFailure;
     private String head = "rev-1";
     private RuntimeException failure;
     private RuntimeException readFailure;
@@ -28,6 +32,10 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
     public void reset() {
         filesByRevision.clear();
         assetsByRevision.clear();
+        issues.clear();
+        pullRequests.clear();
+        issuesComplete = true;
+        issueFailure = null;
         head = "rev-1";
         failure = null;
         readFailure = null;
@@ -45,6 +53,26 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
     /** 그림처럼 문서가 아닌 파일을 심는다. */
     public void putAsset(String revision, String path, byte[] bytes) {
         assetsByRevision.computeIfAbsent(revision, key -> new LinkedHashMap<>()).put(path, bytes);
+    }
+
+    /** @param stateReason `completed`·`not_planned`. 취소와 완료를 가르는 값이다 */
+    public void putIssue(String nodeId, int number, String title, String state, String stateReason,
+                         List<String> assignees) {
+        issues.add(new IssueSummary(nodeId, number, title, state, stateReason, assignees, List.of()));
+    }
+
+    public void putPullRequest(int number, String title, String state, boolean merged) {
+        pullRequests.add(new PullRequestSummary(number, title, state, merged));
+    }
+
+    /** 상한에 걸려 일부만 읽은 상황을 만든다. */
+    public void issuesIncomplete() {
+        issuesComplete = false;
+    }
+
+    /** Issue 권한이 없는 상황을 만든다. */
+    public void failIssuesWith(RuntimeException failure) {
+        issueFailure = failure;
     }
 
     public void head(String revision) {
@@ -104,6 +132,22 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
                     entry.getValue().length()));
         }
         return List.copyOf(files);
+    }
+
+    @Override
+    public IssuePage listIssues(RepositoryRef repository, int max) {
+        if (issueFailure != null) {
+            throw issueFailure;
+        }
+        return new IssuePage(List.copyOf(issues), issuesComplete);
+    }
+
+    @Override
+    public List<PullRequestSummary> listPullRequests(RepositoryRef repository, int max) {
+        if (issueFailure != null) {
+            throw issueFailure;
+        }
+        return List.copyOf(pullRequests);
     }
 
     @Override

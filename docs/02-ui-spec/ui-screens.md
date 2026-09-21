@@ -266,9 +266,11 @@ status: 확정
 
 **연결 요구:** REQ-003, REQ-007
 
-**진입:** `projectAccess`가 `unavailable`일 때 Project 완료율 자리. **종료:** 권한이 확인되면 완료율로 대체된다.
+**진입:** `projectAccess`가 `unavailable` 또는 `not_connected`일 때 Project 완료율 자리. **종료:** 권한이 확인되거나 Project를 연결하면 완료율로 대체된다.
 
 **레이아웃:** 점선 상자에 `조회 불가`, 우측에 `progress: null`, 본문 `이 계정으로 연결된 GitHub Project를 조회할 수 없습니다. Project 기반 완료율은 표시하지 않습니다. 문서와 Issue 현황은 그대로 사용할 수 있습니다.`
+
+`not_connected`는 같은 자리에 `연결 안 함`과 `이 프로젝트에 GitHub Project를 연결하지 않았습니다. 연결하면 Project 기반 완료율을 함께 보여줍니다.`를 쓴다. 할 일이 다르므로 권한 없음과 같은 문구를 쓰지 않는다.
 
 0%로 대체하지 않고 빈 막대도 그리지 않는다. 저장소 권한과 Project 권한을 같은 값으로 취급하지 않는다. 문서·Issue 정보는 접근 가능한 범위에서 계속 표시한다.
 

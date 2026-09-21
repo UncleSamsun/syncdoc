@@ -37,7 +37,8 @@ public abstract class PostgresContainerSupport {
 
     @BeforeEach
     void clearIdentityTables() {
-        jdbcTemplate.execute("truncate table sessions, user_credentials, documents, assets, asset_contents, document_snapshots, "
+        jdbcTemplate.execute("truncate table sessions, user_credentials, tasks, github_issue_snapshots, "
+                + "documents, assets, asset_contents, document_snapshots, "
                 + "sync_runs, sync_jobs, webhook_deliveries, projects, github_installations, invitations, users cascade");
     }
 }
