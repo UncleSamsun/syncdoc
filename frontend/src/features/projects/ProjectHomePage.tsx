@@ -16,6 +16,8 @@ export default function ProjectHomePage({ csrfToken }: Props) {
   const [loadError, setLoadError] = useState<string>();
   const [fieldError, setFieldError] = useState<{ field: string; message: string }>();
   const [alreadyConnectedId, setAlreadyConnectedId] = useState<string>();
+  // 연결 양식은 주 버튼의 펼친 상태다. 연결한 프로젝트가 없으면 바로 펼쳐 둔다.
+  const [formOpen, setFormOpen] = useState(true);
 
   const reload = useCallback(async () => {
     try {
@@ -44,6 +46,7 @@ export default function ProjectHomePage({ csrfToken }: Props) {
     setAlreadyConnectedId(undefined);
     try {
       await apiPost<ProjectItem>("/projects", input, csrfToken);
+      setFormOpen(false);
       await reload();
     } catch (error) {
       if (isApiError(error) && error.status === 409) {
@@ -63,34 +66,57 @@ export default function ProjectHomePage({ csrfToken }: Props) {
   };
 
   return (
-    <main>
-      <h1>프로젝트 홈</h1>
-      <p>연결한 저장소의 문서와 실행 상태를 한곳에서 봅니다.</p>
-      {loadError && <p role="alert">{loadError}</p>}
+    <main className="home">
+      <header className="home-h">
+        <h1>프로젝트 홈</h1>
+        <button type="button" className="button" onClick={() => setFormOpen((open) => !open)}>
+          저장소 연결
+        </button>
+      </header>
+      <p className="lead">연결한 저장소의 문서와 실행 상태를 한곳에서 봅니다.</p>
+      {loadError && (
+        <p className="banner banner--fail" role="alert">
+          {loadError}
+        </p>
+      )}
 
-      <ul>
+      <ul className="plist">
         {projects.map((project) => (
-          <li key={project.id}>
-            <span data-tone={syncToneOf(project.syncState)}>{syncLabelOf(project)}</span>
-            <span>{project.fullName}</span>
-            <span>
-              {project.branch} · {project.docsRoot} ·{" "}
-              {project.currentSnapshotId ?? "snapshot 없음"} ·{" "}
-              {formatMoment(project.lastSuccessAt) ?? "성공한 수집 없음"}
+          <li className="pcard" key={project.id}>
+            <span className={`st st--${syncToneOf(project.syncState)}`}>
+              <span className="dot" aria-hidden="true" />
+              {syncLabelOf(project)}
             </span>
-            {/* 게시본이 없으면 건수를 0으로 만들지 않는다. 아직 모르는 것과 없는 것은 다르다. */}
-            {project.documentCount !== null && <span>문서 {project.documentCount}건</span>}
-            {project.syncState === "failed" && project.syncErrorCode && (
-              <span>오류 {project.syncErrorCode}</span>
-            )}
-            {alreadyConnectedId === project.id && <span>이미 연결됨</span>}
-            <a href={`/projects/${project.id}`}>열기</a>
+            <span className="nm">
+              <b>{project.fullName}</b>
+              <span className="mono">
+                {project.branch} · {project.docsRoot} ·{" "}
+                {project.currentSnapshotId?.slice(0, 8) ?? "snapshot 없음"} ·{" "}
+                {formatMoment(project.lastSuccessAt) ?? "성공한 수집 없음"}
+              </span>
+            </span>
+            <span className="rr">
+              {project.documentCount !== null && (
+                <span className="chip">문서 {project.documentCount}건</span>
+              )}
+              {project.syncState === "failed" && project.syncErrorCode && (
+                <span className="chip chip--fail">오류 {project.syncErrorCode}</span>
+              )}
+              {alreadyConnectedId === project.id && <span className="chip">이미 연결됨</span>}
+              <a className="button button--quiet" href={`/projects/${project.id}`}>
+                열기
+              </a>
+            </span>
           </li>
         ))}
       </ul>
 
-      <h2>저장소 연결</h2>
-      <ConnectForm repositories={repositories} onConnect={connect} fieldError={fieldError} />
+      {formOpen && (
+        <section className="connect">
+          <h2>저장소 연결</h2>
+          <ConnectForm repositories={repositories} onConnect={connect} fieldError={fieldError} />
+        </section>
+      )}
     </main>
   );
 }
