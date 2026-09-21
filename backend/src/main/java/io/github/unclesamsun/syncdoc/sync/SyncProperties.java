@@ -14,6 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param maxRetryDelay   재시도 간격 상한
  * @param maxDocuments    한 게시본에 담을 문서 수 상한
  * @param maxDocumentSize 문서 하나의 원문 크기 상한
+ * @param maxAssets       한 게시본에 담을 첨부 수 상한
+ * @param maxAssetSize    첨부 하나의 크기 상한
  * @param maxPayloadBytes webhook 본문 크기 상한. 넘으면 413이다
  * @param webhookSecret   webhook 서명 검증 비밀값. 없으면 서명을 확인할 수 없어 받지 않는다
  * @param workerEnabled   이 프로세스가 작업을 실행할지. API와 worker를 나눠 띄울 때 쓴다
@@ -27,6 +29,8 @@ public record SyncProperties(
         Duration maxRetryDelay,
         int maxDocuments,
         int maxDocumentSize,
+        int maxAssets,
+        int maxAssetSize,
         int maxPayloadBytes,
         String webhookSecret,
         Boolean workerEnabled) {
@@ -39,6 +43,9 @@ public record SyncProperties(
         maxRetryDelay = orDefault(maxRetryDelay, Duration.ofMinutes(15));
         maxDocuments = maxDocuments > 0 ? maxDocuments : 1000;
         maxDocumentSize = maxDocumentSize > 0 ? maxDocumentSize : 1024 * 1024;
+        maxAssets = maxAssets > 0 ? maxAssets : 1000;
+        // 데이터 설계가 제안한 자산당 10MB다.
+        maxAssetSize = maxAssetSize > 0 ? maxAssetSize : 10 * 1024 * 1024;
         maxPayloadBytes = maxPayloadBytes > 0 ? maxPayloadBytes : 1024 * 1024;
         workerEnabled = workerEnabled == null || workerEnabled;
     }

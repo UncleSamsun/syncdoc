@@ -26,11 +26,26 @@ public class HtmlPolicy {
 
     public String sanitize(String html) {
         Document cleaned = Jsoup.parse(Jsoup.clean(html, "", safelist));
+        dropForeignImages(cleaned);
         cleaned.outputSettings()
                 .prettyPrint(false)
                 .escapeMode(Entities.EscapeMode.base)
                 .charset("UTF-8");
         return cleaned.body().html();
+    }
+
+    /**
+     * 서비스가 만든 첨부 주소가 아닌 그림은 버린다.
+     *
+     * <p>원문에 직접 쓴 `<img src="https://...">`를 그대로 두면 문서를 여는 것만으로 바깥 서버에
+     * 요청이 나간다. 누가 어떤 문서를 언제 읽었는지가 그 서버에 남으므로 허용하지 않는다.
+     */
+    private static void dropForeignImages(Document document) {
+        document.select("img").forEach(image -> {
+            if (!image.attr("src").startsWith("/api/v1/projects/")) {
+                image.remove();
+            }
+        });
     }
 
     private static Safelist buildSafelist() {
@@ -40,13 +55,14 @@ public class HtmlPolicy {
                         "ul", "ol", "li",
                         "pre", "code", "em", "strong", "del", "sup", "sub",
                         "table", "thead", "tbody", "tr", "th", "td",
-                        "a", "div", "span",
+                        "a", "div", "span", "img",
                         // 명세가 허용한 접기다. 열고 닫는 동작에 script가 필요 없다.
                         "details", "summary")
                 // 제목 id는 목차와 문서 간 앵커 이동이 쓴다.
                 .addAttributes("h1", "id").addAttributes("h2", "id").addAttributes("h3", "id")
                 .addAttributes("h4", "id").addAttributes("h5", "id").addAttributes("h6", "id")
                 .addAttributes("a", "href", "title", "id", "data-link-kind")
+                .addAttributes("img", "src", "alt", "title")
                 .addAttributes("th", "align").addAttributes("td", "align")
                 .addAttributes("code", "class")
                 .addAttributes("div", "class", "data-diagram-id")

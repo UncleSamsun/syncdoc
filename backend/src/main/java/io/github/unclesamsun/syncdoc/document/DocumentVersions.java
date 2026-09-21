@@ -8,11 +8,11 @@ package io.github.unclesamsun.syncdoc.document;
  */
 public final class DocumentVersions {
 
-    /** commonmark-java 0.24.0 + GFM 표 + frontmatter, 제목 앵커와 다이어그램 분리 포함. */
-    public static final String RENDERER = "commonmark-0.24.0+1";
+    /** commonmark-java 0.24.0 + GFM 표 + frontmatter, 제목 앵커·다이어그램 분리·첨부 주소 해소 포함. */
+    public static final String RENDERER = "commonmark-0.24.0+2";
 
-    /** 허용 목록 정화 1판. 접기는 허용하고 script·이벤트 속성·허용 밖 규약은 버린다. */
-    public static final String POLICY = "allowlist+1";
+    /** 허용 목록 정화 2판. 접기와 서비스 첨부 그림은 허용하고, 바깥 주소 그림과 script는 버린다. */
+    public static final String POLICY = "allowlist+2";
 
     private DocumentVersions() {
     }

@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.client.HttpClientErrorException;
@@ -73,6 +74,22 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
     @Override
     public List<SourceFile> listDocuments(RepositoryRef repository, String revision, String docsRoot,
                                           int maxDocuments) {
+        return walk(repository, revision, docsRoot, maxDocuments, path -> path.endsWith(".md"));
+    }
+
+    @Override
+    public List<SourceFile> listAssets(RepositoryRef repository, String revision, String docsRoot,
+                                       int maxAssets) {
+        return walk(repository, revision, docsRoot, maxAssets, path -> !path.endsWith(".md"));
+    }
+
+    /**
+     * 문서 경로 아래를 훑는다. symlink와 submodule은 담지 않는다. 저장소 밖을 가리킬 수 있다.
+     *
+     * @param accept 담을 파일을 고르는 조건
+     */
+    private List<SourceFile> walk(RepositoryRef repository, String revision, String docsRoot, int max,
+                                  Predicate<String> accept) {
         String token = tokens.accessToken(repository.githubInstallationId());
         String fullName = repository.fullName();
         List<SourceFile> files = new ArrayList<>();
@@ -92,13 +109,12 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
                 String path = String.valueOf(entry.get("path"));
                 if ("dir".equals(type)) {
                     pending.addLast(path);
-                } else if ("file".equals(type) && path.endsWith(".md")) {
-                    if (files.size() >= maxDocuments) {
-                        throw new TooManyDocumentsException(maxDocuments);
+                } else if ("file".equals(type) && accept.test(path)) {
+                    if (files.size() >= max) {
+                        throw new TooManyDocumentsException(max);
                     }
                     files.add(new SourceFile(path, String.valueOf(entry.get("sha")), sizeOf(entry.get("size"))));
                 }
-                // symlink와 submodule은 담지 않는다. 저장소 밖을 가리킬 수 있다.
             }
         }
         return List.copyOf(files);
@@ -106,6 +122,11 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
 
     @Override
     public String readText(RepositoryRef repository, String blobSha, int maxBytes) {
+        return new String(readBytes(repository, blobSha, maxBytes), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public byte[] readBytes(RepositoryRef repository, String blobSha, int maxBytes) {
         String token = tokens.accessToken(repository.githubInstallationId());
         Map<String, Object> blob = getObject(
                 properties.apiBaseUrl() + "/repos/" + repository.fullName() + "/git/blobs/" + blobSha, token);
@@ -116,7 +137,7 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
         if (decoded.length > maxBytes) {
             throw new DocumentTooLargeException(blobSha, maxBytes);
         }
-        return new String(decoded, StandardCharsets.UTF_8);
+        return decoded;
     }
 
     /**

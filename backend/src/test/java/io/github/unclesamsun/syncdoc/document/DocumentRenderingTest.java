@@ -19,16 +19,34 @@ class DocumentRenderingTest {
     private static final UUID PROJECT = UUID.fromString("11111111-1111-1111-1111-111111111111");
     private static final UUID GUIDE = UUID.fromString("22222222-2222-2222-2222-222222222222");
 
+    private static final UUID SNAPSHOT = UUID.fromString("33333333-3333-3333-3333-333333333333");
+    private static final UUID PICTURE = UUID.fromString("44444444-4444-4444-4444-444444444444");
+
     private final MarkdownRenderService renderer =
             new MarkdownRenderService(new SpecMetadataParser(), new HtmlPolicy());
-    private final Map<String, UUID> snapshot = new HashMap<>(Map.of("docs/01-prd/guide.md", GUIDE));
+    private final Map<String, UUID> documents = new HashMap<>(Map.of("docs/01-prd/guide.md", GUIDE));
+    private final Map<String, UUID> assets = new HashMap<>();
+
+    /** 같은 게시본에 든 문서와 첨부를 테스트가 직접 등록한다. */
+    private final MarkdownRenderService.LinkTargets targets = new MarkdownRenderService.LinkTargets() {
+
+        @Override
+        public UUID documentIdFor(String repositoryPath) {
+            return documents.get(repositoryPath);
+        }
+
+        @Override
+        public UUID assetIdFor(String repositoryPath) {
+            return assets.get(repositoryPath);
+        }
+    };
 
     private RenderedDocument render(String markdown) {
         return render("docs/03-tech-spec/api-spec.md", markdown);
     }
 
     private RenderedDocument render(String path, String markdown) {
-        return renderer.render(PROJECT, path, markdown, snapshot::get);
+        return renderer.render(PROJECT, SNAPSHOT, path, markdown, targets);
     }
 
     @Test
@@ -191,12 +209,36 @@ class DocumentRenderingTest {
     }
 
     @Test
-    void an_image_is_reported_as_a_missing_attachment_instead_of_a_broken_picture() {
+    void an_image_in_the_snapshot_becomes_a_service_address() {
+        assets.put("docs/03-tech-spec/images/architecture.png", PICTURE);
+
         RenderedDocument rendered = render("![구성도](./images/architecture.png)");
 
-        assertThat(rendered.html()).doesNotContain("<img").contains("구성도");
+        assertThat(rendered.html())
+                .contains("<img")
+                .contains("/api/v1/projects/" + PROJECT + "/assets/" + PICTURE + "?snapshotId=" + SNAPSHOT);
         assertThat(rendered.links()).extracting(DocumentLink::kind).contains("asset");
+        assertThat(rendered.warnings()).isEmpty();
+    }
+
+    @Test
+    void an_image_that_was_not_collected_is_reported_instead_of_shown_broken() {
+        RenderedDocument rendered = render("![구성도](./images/architecture.svg)");
+
+        assertThat(rendered.html()).doesNotContain("<img").contains("구성도");
         assertThat(rendered.warnings()).extracting(DocumentWarning::code).contains("ASSET_NOT_AVAILABLE");
+    }
+
+    @Test
+    void an_image_pointing_at_another_server_never_loads() {
+        // 문서를 여는 것만으로 바깥 서버에 요청이 나가면 누가 무엇을 읽었는지가 그 서버에 남는다.
+        RenderedDocument rendered = render("""
+                ![추적](https://evil.test/pixel.png)
+
+                <img src="https://evil.test/raw.png">
+                """);
+
+        assertThat(rendered.html()).doesNotContain("evil.test").doesNotContain("<img");
     }
 
     @Test
