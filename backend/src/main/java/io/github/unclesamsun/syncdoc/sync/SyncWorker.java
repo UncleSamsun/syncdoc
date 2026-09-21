@@ -144,16 +144,21 @@ public class SyncWorker {
         String revision = contents.headRevision(repository, project.getBranch());
         queue.rememberTargetRevision(lease, revision);
 
+        // Issue는 문서와 상관없이 바뀐다. 문서가 그대로여서 일찍 끝나는 경우에도 읽어야
+        // 현황이 멈추지 않는다. 실제 실행에서 이 순서를 놓쳐 Issue가 한 번도 갱신되지 않았다.
+        boolean issuesComplete = collectIssues(project.getId(), repository);
+
         Optional<DocumentSnapshotEntity> existing = snapshots
                 .findByProjectIdAndSourceRevisionAndRendererVersionAndPolicyVersion(
                         project.getId(), revision, DocumentVersions.RENDERER, DocumentVersions.POLICY);
         if (existing.isPresent() && existing.get().isComplete()) {
             // 같은 revision을 같은 규칙으로 이미 만들었다. 다시 변환하지 않는다.
             if (revision.equals(currentRevision(project))) {
-                queue.succeedUnchanged(lease, revision, diagnostics(Map.of("unchanged", true)));
+                queue.succeedUnchanged(lease, revision,
+                        diagnostics(Map.of("unchanged", true, "issuesComplete", issuesComplete)));
             } else {
                 queue.publish(lease, existing.get().getId(), revision,
-                        diagnostics(Map.of("reusedSnapshot", true)));
+                        diagnostics(Map.of("reusedSnapshot", true, "issuesComplete", issuesComplete)));
             }
             return;
         }
@@ -213,8 +218,6 @@ public class SyncWorker {
                 return;
             }
         }
-        boolean issuesComplete = collectIssues(project.getId(), repository);
-
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("documents", stored);
         summary.put("issuesComplete", issuesComplete);

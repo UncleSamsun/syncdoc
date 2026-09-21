@@ -317,6 +317,21 @@ class VisibilityAndProgressTest extends PostgresContainerSupport {
     }
 
     @Test
+    void collecting_twice_reads_the_issues_again_instead_of_failing_on_duplicates() {
+        Actor owner = actor("9014", "gho_n");
+        ProjectEntity project = projectVisibleTo(owner, "gho_n", "913");
+        contents().putIssue("I_1", 11, "TASK-001: 실행 기반", "open", null, List.of());
+        collect(project.getId());
+
+        // 두 번째 수집이다. 문서가 그대로여도 Issue는 다시 읽어야 현황이 멈추지 않는다.
+        collect(project.getId());
+
+        String body = overview(owner, project.getId());
+        assertThat(body).contains("\"issues\":false");
+        assertThat(body).contains("\"inProgress\":1");
+    }
+
+    @Test
     void before_the_first_collection_the_overview_has_no_snapshot_and_no_made_up_numbers() {
         Actor owner = actor("9013", "gho_m");
         ProjectEntity project = projectVisibleTo(owner, "gho_m", "912");

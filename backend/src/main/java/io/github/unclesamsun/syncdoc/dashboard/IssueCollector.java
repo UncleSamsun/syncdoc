@@ -72,7 +72,7 @@ public class IssueCollector {
                     .add(Map.of("number", pull.number(), "state", pull.state(), "merged", pull.merged()));
         }
 
-        issues.deleteByProjectId(projectId);
+        issues.clearProject(projectId);
         for (RepositoryContentGateway.IssueSummary issue : page.items()) {
             String taskSpecId = TaskIds.fromIssueTitle(issue.title());
             issues.save(new IssueSnapshotEntity(projectId, issue.nodeId(), issue.number(), issue.title(),
