@@ -77,7 +77,7 @@ OAuth 콜백 주소는 GitHub App에 등록한 값과 정확히 같아야 한다
 | GitHub 중단·429 | 수집이 실패로 기록되고 60초~15분 backoff로 재시도한다. 마지막 정상 게시본은 그대로 보인다 | 없다. 길어지면 화면의 실패 배너와 오류 코드를 본다 |
 | 설치 토큰 발급 실패 | `INSTALLATION_TOKEN_UNAVAILABLE`로 기록되고 문서는 마지막 게시본이 보인다 | App private key와 설치 권한을 확인한다 |
 | Issue 권한 없음 | 문서 현황은 그대로 보이고 집계만 `partial`로 표시된다 | App 권한에 Issues·Pull requests read를 더한다 |
-| worker·서버 재시작 | 임대가 끊긴 작업을 다른 worker가 회수해 이어 한다. 오래된 worker가 나중에 돌아와도 결과를 남기지 못한다 | 없다 |
+| worker·서버 재시작 | 임대가 끊긴 작업을 다른 worker가 회수해 이어 한다. 오래된 worker가 나중에 돌아와도 결과를 남기지 못한다. 회수는 임대(기본 2분)가 지난 뒤이므로 그만큼 늦게 이어진다 | 없다. 2분을 기다린다 |
 | DB 재시작 | 기동 시 Flyway가 스키마를 확인하고 이어 받는다. 게시본과 작업 큐는 DB에 있으므로 유실되지 않는다 | 없다 |
 | 수집이 계속 실패 | 마지막 정상 게시본을 계속 보여준다. 빈 목록으로 바뀌지 않는다 | API-014의 오류 코드로 원인을 가른다 |
 
@@ -97,9 +97,25 @@ OAuth 콜백 주소는 GitHub App에 등록한 값과 정확히 같아야 한다
 
 복원 절차는 볼륨을 되돌리고 같은 `SYNCDOC_TOKEN_KEY`로 띄우는 것이다. 키가 다르면 저장된 토큰을 풀 수 없어 사용자가 다시 로그인해야 한다.
 
+논리 백업으로 받아 두는 경우의 명령이다. 2026-09-21에 이 절차로 받아 빈 데이터베이스에 되돌리고 원본과 비교했다. 표 16개의 행 수와 문서 본문 md5가 모두 같았다. 확인 내용은 [MVP 실제 흐름 검증 기록](../04-tasks/mvp-verification-record.md)에 있다.
+
+```bash
+# 받기
+docker exec syncdoc-postgres-1 pg_dump -U syncdoc -d syncdoc -Fc -f /tmp/syncdoc.dump
+docker cp syncdoc-postgres-1:/tmp/syncdoc.dump ./syncdoc-$(date +%Y%m%d).dump
+
+# 되돌리기 (빈 데이터베이스에)
+docker cp ./syncdoc-20260921.dump syncdoc-postgres-1:/tmp/syncdoc.dump
+docker exec syncdoc-postgres-1 psql -U syncdoc -d postgres -c "create database syncdoc_restore"
+docker exec syncdoc-postgres-1 pg_restore -U syncdoc -d syncdoc_restore /tmp/syncdoc.dump
+```
+
+되돌린 뒤에는 표 행 수만 보지 말고 문서 본문까지 비교한다. 행 수는 같은데 내용이 비어 있는 복원을 성공으로 보지 않기 위해서다.
+
 ## 아직 확인하지 않은 것
 
 - 외부 서버에서의 실제 배포와 롤백. 지금 기록은 로컬 컨테이너 구성에서 확인한 것이다.
-- 백업 복원을 실제로 한 결과. 절차만 적었고 돌려 보지 않았다.
-- webhook 실제 delivery. 공개 URL이 필요하며 서명 검증은 테스트로만 확인했다.
 - 부하와 자원 사용량. 문서 수·첨부 크기에 따른 메모리·시간은 재지 않았다.
+- 첨부(그림)를 가진 저장소의 복원. 지금 자료에는 첨부가 0건이라 복원 비교에 포함되지 않았다.
+
+백업 복원, webhook 실제 delivery, 프로세스 강제 종료 후 재개, GitHub 중단 중 동작은 2026-09-21에 확인했다. 결과와 남은 제한은 [MVP 실제 흐름 검증 기록](../04-tasks/mvp-verification-record.md)에 있다.

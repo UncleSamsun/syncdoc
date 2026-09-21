@@ -55,10 +55,11 @@
 |---|---|
 | JDK 25 | `C:\Program Files\Microsoft\jdk-25.0.4.101-hotspot` (Microsoft OpenJDK 25.0.4.1 LTS, 2026-09-10 설치) |
 | 문서 검증기 | `python tools/spec-validator/validate.py` (Python 3.11, 표준 라이브러리만) |
+| 화면 흐름 시험 | `cd frontend && npm run e2e` (Playwright, Chromium만 내려받음) |
 
 셸의 기본 `java`는 Temurin 17이다. Gradle toolchain이 JDK 25를 요구하므로 `JAVA_HOME`을 JDK 25로 두고 실행한다. TASK-001에서 확인했다.
 
-이 PC의 Windows Application Control 정책이 서명·평판이 없는 네이티브 Node 모듈의 로드를 차단한다. `frontend/package.json`은 `overrides`로 `rolldown`을 1.2.6에 고정한다. 1.2.8 바인딩은 차단되어 Vite와 Vitest가 시작하지 못한다. 다른 PC에서 이 고정이 필요 없다면 그때 조정한다.
+이 PC의 Windows Application Control 정책이 서명·평판이 없는 네이티브 Node 모듈의 로드를 차단한다. `frontend/package.json`은 `overrides`로 `rolldown`을 1.2.6에 고정한다. 1.2.8 바인딩은 차단되어 Vite와 Vitest가 시작하지 못한다. 다른 PC에서 이 고정이 필요 없다면 그때 조정한다. Playwright는 같은 정책에 걸리지 않았다(2026-09-21 설치·실행 확인).
 
 ### 고정한 버전 (TASK-001, 2026-09-10)
 
@@ -69,6 +70,7 @@
 | Java toolchain | 25 | `backend/build.gradle.kts` |
 | PostgreSQL | 17 | `deploy/compose.yaml`, 테스트 컨테이너 |
 | React·Vite·Vitest·rolldown | `frontend/package-lock.json` | lock 파일과 `overrides` |
+| Playwright | `frontend/package-lock.json` | lock 파일 (2026-09-21 도입, Chromium만 설치) |
 
 실제 실행·검증 명령은 [README](../README.md)의 로컬 실행 절에 있다.
 
@@ -80,11 +82,12 @@
 
 빌드·테스트가 도는 실행 골격까지 만든 단계다. GitHub App 연동, GitHub Project, 보호 규칙, 배포 파이프라인은 아직 구성하지 않았다. 검증 명령을 임의로 만들거나 검증 통과로 표시하지 않는다.
 
+검증기 CI 연결은 2026-09-21에 끝났다. `dev`·`main`으로 가는 PR과 `dev` push에서 [`.github/workflows/verify.yml`](../.github/workflows/verify.yml)이 백엔드 테스트·프런트 테스트와 빌드·문서 검사를 돌린다. 실제 흐름 검증에서 확인한 사실과 남은 제한은 [MVP 실제 흐름 검증 기록](../docs/04-tasks/mvp-verification-record.md)에 있다.
+
 ## 추가로 정할 설정
 
 - 로그인·초대·저장소 접근 방식
 - 기준 GitHub Project와 담당 영역
-- 검증기 CI 연결 (`tools/spec-validator/` 실행 워크플로)
 - 세션 수명과 `state` 쿠키 수명 (TASK-002에서 12시간·10분으로 채택. 운영 기준은 미확정)
 - 클라우드/사내 서버 배포 환경과 릴리스 절차
 

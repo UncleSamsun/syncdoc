@@ -14,3 +14,8 @@ Thumbs.db
 frontend/node_modules/
 frontend/dist/
 frontend/coverage/
+
+# E2E (Playwright). 세션 파일은 사람의 로그인 결과라 남기지 않는다.
+frontend/tests/.auth/
+frontend/test-results/
+frontend/playwright-report/
