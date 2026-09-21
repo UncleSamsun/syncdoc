@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import DocumentTree from "../documents/DocumentTree";
 import type { DocumentItem } from "../documents/types";
 import type { ProjectItem, SyncStatus } from "../projects/types";
@@ -11,6 +11,9 @@ type Props = {
   documents: DocumentItem[];
   currentDocumentId?: string;
   currentPath?: string;
+  /** 사이드바 `작업` 항목의 건수. 현황을 아직 읽지 않았으면 비운다. */
+  taskCount?: number;
+  active?: "overview" | "tasks" | "search" | "documents";
   children: ReactNode;
 };
 
@@ -20,8 +23,8 @@ type Props = {
  * <p>프로젝트를 고르고 저장소를 연결하는 일은 사이드바가 아니라 UI-001이 전담한다. 사이드바에
  * 프로젝트 관련 동작 버튼을 두지 않는다.
  *
- * <p>현황·작업·검색 이동 항목은 그 화면을 만드는 TASK-007에서 붙인다. 갈 수 없는 항목을 먼저
- * 보여주지 않는다.
+ * <p>이동 항목 셋(현황·작업·검색)은 어느 화면에서도 같은 자리에 있다. `작업`은 현황 화면의 작업
+ * 표로 간다 — 전체 목록 화면은 아직 화면 명세에 없다.
  */
 export default function AppShell({
   project,
@@ -29,6 +32,8 @@ export default function AppShell({
   documents,
   currentDocumentId,
   currentPath,
+  taskCount,
+  active,
   children,
 }: Props) {
   const syncState = status?.state ?? project.syncState;
@@ -55,7 +60,27 @@ export default function AppShell({
       </header>
 
       <div className="shell-body">
-        <nav className="sh-side" aria-label="문서">
+        <nav className="sh-side" aria-label="프로젝트">
+          <NavLink
+            className="nav-a"
+            to={`/projects/${project.id}`}
+            end
+            aria-current={active === "overview" ? "page" : undefined}
+          >
+            현황
+          </NavLink>
+          <a className="nav-a" href={`/projects/${project.id}#tasks`}>
+            작업
+            {taskCount !== undefined && <span className="cnt">{taskCount}</span>}
+          </a>
+          <NavLink
+            className="nav-a"
+            to={`/projects/${project.id}/search`}
+            aria-current={active === "search" ? "page" : undefined}
+          >
+            검색
+          </NavLink>
+
           <div className="nav-grp">
             문서
             <span className="cnt">{documents.length}</span>
