@@ -280,6 +280,60 @@ class SyncCollectionTest extends PostgresContainerSupport {
     }
 
     @Test
+    void a_collected_document_is_already_converted() {
+        UUID project = connectedProject("413");
+        fake().putFile("rev-1", "docs/guide.md", """
+                ---
+                id: DOC-1
+                type: guide
+                ---
+
+                # 안내서
+
+                | 항목 | 값 |
+                |---|---|
+                | 상태 | 확정 |
+                """);
+
+        collect(project);
+
+        DocumentEntity stored = documents.findBySnapshotIdOrderByPath(currentSnapshot(project)).getFirst();
+        assertThat(stored.getState()).isEqualTo(DocumentEntity.VALID);
+        assertThat(stored.getHtml()).contains("<table>");
+        assertThat(stored.getSpecId()).isEqualTo("DOC-1");
+        assertThat(stored.getKind()).isEqualTo("guide");
+        // 검색이 쓸 본문에는 표시가 남지 않는다.
+        assertThat(stored.getPlainText()).doesNotContain("<table>").contains("확정");
+    }
+
+    @Test
+    void two_documents_claiming_the_same_spec_id_stop_the_publication() {
+        UUID project = connectedProject("414");
+        fake().putFile("rev-1", "docs/a.md", """
+                ---
+                id: DOC-1
+                type: guide
+                ---
+
+                # 하나
+                """);
+        fake().putFile("rev-1", "docs/b.md", """
+                ---
+                id: DOC-1
+                type: guide
+                ---
+
+                # 둘
+                """);
+
+        collect(project);
+
+        // 둘 중 하나를 골라 게시하지 않는다. 무엇이 맞는지는 저장소가 정할 일이다.
+        assertThat(currentSnapshot(project)).isNull();
+        assertThat(status.statusOf(project).errorCode()).isEqualTo("DOCUMENT_RENDER_FAILED");
+    }
+
+    @Test
     void a_connected_project_starts_with_a_waiting_collection() {
         ProjectEntity project = fixture.newProject("412");
 

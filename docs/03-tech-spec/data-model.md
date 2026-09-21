@@ -23,7 +23,7 @@ SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스�
 | sync_jobs | id, project_id, kind, state, attempt, due_at, lease_until?, lease_token?, target_revision?, rerun_requested, last_error_code?, created_at | project_id→projects. queued/running 활성 kind별 partial unique(project_id,kind). state CHECK |
 | sync_runs | id, project_id, job_id, started_at, finished_at?, outcome, source_revision?, error_code?, diagnostics_json | project_id→projects, job_id→sync_jobs. latest attempt와 latest success를 구분. diagnostics는 오류 경로/코드만 보존 |
 | document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id) |
-| documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
+| documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, links_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
 | assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0 |
 | tasks | id, snapshot_id, task_spec_id, document_id, anchor, confirmed, source_refs_json, validation_refs_json, github_issue_node_id? | snapshot_id→document_snapshots. document는 동일 snapshot 복합 FK. unique(snapshot_id,task_spec_id) |
 | github_issue_snapshots | id, project_id, github_issue_node_id, number, title, state, state_reason?, assignees_json, labels_json, linked_prs_json, observed_at | project_id→projects. unique(project_id,github_issue_node_id). GitHub가 정본인 파생 정보 |
@@ -40,6 +40,8 @@ GitHub Project 상태·목표일·숨겨진 다른 저장소 항목은 공용 �
 작업-Issue 연결은 Issue 본문의 서비스 관리 메타데이터 영역(작업 ID·명세 경로·기준 revision) 한 곳을 외부 정본으로 제안한다. tasks.github_issue_node_id는 이를 읽은 파생값이다. 한 작업 ID에 여러 Issue가 주장되면 mapping_conflict로 표시하고 임의 선택하지 않는다. Issue 번호와 TASK ID는 분리한다.
 
 ## 저장과 갱신
+
+links_json은 문서 안의 링크를 서비스 경로로 바꾼 결과다. 링크 해소는 같은 snapshot의 다른 문서를 알아야 가능하므로 변환 시점에 한 번 만들어 보관하고 조회 때 다시 계산하지 않는다.
 
 동기화가 전체 문서를 준비한 뒤 complete=true인 snapshot으로 current_snapshot_id를 한 트랜잭션에서 교체한다. 파싱/정화/중복 ID 오류가 있으면 새 게시본으로 전환하지 않고 실패 기록을 남긴다. 최초 오류도 빈 성공으로 처리하지 않는다.
 
