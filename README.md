@@ -38,6 +38,21 @@ main은 릴리스 기준, dev는 개발 통합 브랜치다. 작업 브랜치는
 
 2026-09-08 전면 재시작 후 작성한 자료만 Git으로 관리한다. 이전 작업 보관본은 게시 대상에서 제외한다.
 
+## 컨테이너로 실행
+
+한 번에 띄우려면 이 방법을 쓴다. 웹 컨테이너가 정적 자산을 내보내고 `/api`를 백엔드로 넘기므로 브라우저는 `http://localhost:8081` 한 곳만 본다.
+
+```bash
+cp deploy/.env.example deploy/.env   # 값 채우기
+docker compose -f deploy/compose.yaml --env-file deploy/.env up -d --build
+```
+
+- 웹: http://localhost:8081
+- 상태 확인: http://localhost:8081/api/v1/health/ready
+- 실행·운영 절차(설정 주입, 장애·복구, 백업 대상)는 [실행과 운영](docs/03-tech-spec/ops.md)에 있다.
+
+OAuth 콜백 주소는 GitHub App에 등록한 값과 같아야 한다. 컨테이너 구성(`http://localhost:8081/api/v1/auth/github/callback`)과 개발 서버(`http://localhost:5173/...`)는 다른 주소이므로 둘 다 쓰려면 둘 다 등록한다.
+
 ## 로컬 실행
 
 버전은 2026-09-10에 고정했다: Java 25, Spring Boot 4.1.1, Gradle 9.7.1, PostgreSQL 17, React 19, Vite 8.
