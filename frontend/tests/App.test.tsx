@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "../src/app/App";
 
@@ -15,7 +16,7 @@ describe("App", () => {
         }),
       ),
     );
-    render(<App />);
+    render(<MemoryRouter><App /></MemoryRouter>);
     await waitFor(() =>
       expect(screen.getByText("초대받은 GitHub 계정으로 로그인하세요.")).toBeInTheDocument(),
     );
@@ -47,7 +48,7 @@ describe("App", () => {
         );
       }),
     );
-    render(<App />);
+    render(<MemoryRouter><App /></MemoryRouter>);
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: "프로젝트 홈" })).toBeInTheDocument(),
     );
