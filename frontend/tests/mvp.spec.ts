@@ -134,12 +134,44 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     await expectNoSideScroll(page);
     expect(decodeURIComponent(page.url())).toContain(decodeURIComponent(href ?? ""));
     if (href?.includes("#")) {
-      // 제목이 든 자리로 옮겨 가야 한다. 문서 맨 위에 그대로 있으면 이동하지 않은 것이다.
+      // 검색 결과가 준 자리가 화면에 실제로 있어야 한다. 예전에는 본문 첫 제목을 뺄 때 id까지
+      // 지워서, 이 링크를 눌러도 아무 데도 가지 않았다.
       const anchor = href.slice(href.indexOf("#") + 1);
       // 앵커에 한글과 점이 섞여 있어 `#id` 선택자로는 못 쓴다. 속성으로 고른다.
-      await expect(page.locator(`[id="${anchor.replace(/"/g, '\\"')}"]`))
-          .toBeInViewport({ timeout: 10_000 });
+      const target = page.locator(`[id="${anchor.replace(/"/g, '\\"')}"]`);
+      await expect(target).toHaveCount(1);
+      // 제목만 빼고 남긴 앵커는 넓이·높이가 0이라 보이는지로는 판단할 수 없다. 자리로 본다.
+      const box = await target.boundingBox();
+      const viewport = page.viewportSize();
+      expect(box, "앵커가 화면에 없다").not.toBeNull();
+      expect(box!.y, "앵커가 보이는 자리에 없다").toBeGreaterThanOrEqual(-2);
+      expect(box!.y).toBeLessThan(viewport!.height);
     }
+  });
+
+  test("게시본의 모든 문서가 열리고 가로로 밀리지 않는다 (UI-003)", async ({ page }) => {
+    const projectId = await open(page);
+    const list = await (await page.request.get(`${API}/projects/${projectId}/documents`)).json();
+    const items = list.items as DocumentItem[];
+    expect(items.length, "수집된 문서가 없다").toBeGreaterThan(0);
+
+    // 문서 하나가 브라우저를 죽이면 그 문서를 연 사람은 화면을 잃는다. 원문은 우리가 고르지
+    // 않으므로 게시본에 든 것을 전부 열어 본다.
+    const broken: string[] = [];
+    for (const item of items) {
+      try {
+        await page.goto(`/projects/${projectId}/documents/${item.id}`, { waitUntil: "load" });
+        await expect(page.locator(".doc h1")).toBeVisible();
+        const overflow = await page.evaluate(
+            () => document.body.scrollWidth - window.innerWidth);
+        if (overflow > 1) {
+          broken.push(`${item.path}: 가로로 ${overflow}px 밀린다`);
+        }
+      } catch (error) {
+        broken.push(`${item.path}: 열지 못했다 (${String(error).slice(0, 60)})`);
+      }
+    }
+    expect(broken, broken.join(" / ")).toHaveLength(0);
   });
 
   test("지금 동기화를 누르면 수집이 돌고 현황이 갱신된다 (API-013·API-014)", async ({ page }) => {

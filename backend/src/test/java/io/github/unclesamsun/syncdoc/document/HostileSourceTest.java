@@ -151,9 +151,37 @@ class HostileSourceTest extends PostgresContainerSupport {
             for (String fragment : FORBIDDEN) {
                 assertThat(lowered).as(path + "의 본문에 " + fragment).doesNotContain(fragment);
             }
+            // 깊게 겹친 블록은 여는 쪽 브라우저 탭을 죽인다. 상한 안에 들어와야 한다.
+            assertThat(deepestNesting(html)).as(path + "의 중첩 깊이")
+                    .isLessThanOrEqualTo(NestingLimit.MAX_DEPTH);
             checked.add(path);
         }
         assertThat(checked).hasSize(fixtures.size());
+    }
+
+    @Test
+    void a_document_that_nests_too_deep_says_so_and_keeps_what_was_inside() {
+        HttpHeaders owner = signIn("9003", "gho_deep");
+        ProjectEntity project = connect("9003", "gho_deep", "903");
+        ((FakeRepositoryContentGateway) contentGateway).putFile("rev-1", "docs/deep.md",
+                hostileFixtures().get("deep-nesting.md"));
+
+        queue.request(project.getId(), true);
+        assertThat(worker.runOnce()).isTrue();
+
+        JsonNode list = json.readTree(
+                body(owner, "/api/v1/projects/" + project.getId() + "/documents"));
+        JsonNode view = json.readTree(body(owner, "/api/v1/projects/" + project.getId()
+                + "/documents/" + list.path("items").get(0).path("id").asString()));
+
+        // 끊었다는 사실을 문서가 스스로 말한다. 조용히 짧아지면 읽는 사람이 알 수 없다.
+        List<String> codes = new ArrayList<>();
+        view.path("warnings").forEach(warning -> codes.add(warning.path("code").asString()));
+        assertThat(codes).contains("CONTENT_TOO_DEEP");
+        assertThat(deepestNesting(view.path("html").asString()))
+                .isLessThanOrEqualTo(NestingLimit.MAX_DEPTH);
+        // 겹침만 풀고 안에 있던 내용은 남긴다.
+        assertThat(view.path("html").asString()).contains("깊은 인용");
     }
 
     @Test
@@ -194,6 +222,24 @@ class HostileSourceTest extends PostgresContainerSupport {
         } catch (URISyntaxException | IOException e) {
             throw new IllegalStateException("공격 fixture를 읽지 못했다", e);
         }
+    }
+
+    /** body 바로 아래를 1로 센 가장 깊은 요소의 깊이. */
+    private static int deepestNesting(String html) {
+        org.jsoup.nodes.Element body = org.jsoup.Jsoup.parseBodyFragment(html).body();
+        int max = 0;
+        for (org.jsoup.nodes.Element element : body.getAllElements()) {
+            if (element == body) {
+                continue;
+            }
+            int depth = 1;
+            for (org.jsoup.nodes.Element parent = element.parent();
+                    parent != null && parent != body; parent = parent.parent()) {
+                depth += 1;
+            }
+            max = Math.max(max, depth);
+        }
+        return max;
     }
 
     private static String readText(Path file) {

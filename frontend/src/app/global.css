@@ -270,6 +270,11 @@ main {
   color: var(--ink3);
 }
 
+.doc-body {
+  /* 깊게 겹친 목록은 들여쓰기만으로 본문보다 넓어진다. 페이지를 밀지 말고 여기서 스크롤한다. */
+  overflow-x: auto;
+}
+
 .doc-body p,
 .doc-body li {
   font-size: 16.5px;

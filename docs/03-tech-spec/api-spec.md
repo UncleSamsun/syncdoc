@@ -97,6 +97,8 @@ API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 
 
 **출력:** `html`은 서버 allowlist 정화 결과다. `headings`는 `{level,id,text}`, `diagrams`는 `{id,syntax:"mermaid",source}`이며 `html`의 서비스 생성 placeholder와 연결한다. 원본 Markdown의 script를 `html`로 보내지 않는다. React는 diagram source를 코드로 평가하지 않고 제한된 Mermaid에만 전달한다.
 
+**중첩 깊이:** 목록·인용이 깊게 겹친 원문은 브라우저가 감당하지 못해 탭이 죽는다(2026-09-21 확인: 목록 100단, 인용 200단). 변환할 때 블록 중첩을 50단으로 끊고, 끊은 문서에는 `CONTENT_TOO_DEEP` 경고를 남긴다. 끊긴 자리의 내용을 조용히 버리지 않고 남은 내용은 그 자리에 이어서 보여 준다.
+
 **오류:** 첫 동기화 전이면 409 `DOCUMENTS_NOT_READY`다. 회수된 snapshot을 지정하면 410이며 최신 목록으로 돌아갈 수 있게 안내한다. 응답 시 추가 검증에 실패한 문서는 `html` 대신 422를 반환한다.
 
 **접근 조건:** 이전 snapshot을 지정한 URL에서도 현재 사용자의 권한을 다시 확인한다.
