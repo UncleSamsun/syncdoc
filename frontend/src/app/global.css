@@ -248,6 +248,8 @@ main {
   padding: 26px 34px 34px;
   border-right: 1px solid var(--line);
   min-width: 0;
+  /* 본문에 들어온 긴 주소도 같다. 넓은 것은 표·코드·다이어그램처럼 자기 상자에서 스크롤한다. */
+  overflow-wrap: anywhere;
 }
 
 .doc h1 {
@@ -408,6 +410,10 @@ main {
   position: sticky;
   top: 0;
   align-self: start;
+  /* 경고에 붙는 링크 주소처럼 띄어쓰기 없는 긴 값이 들어온다. 칸을 넓히지 말고 줄을 바꾼다.
+     칸이 넓어지면 페이지 전체가 가로로 밀린다. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .toc .h {

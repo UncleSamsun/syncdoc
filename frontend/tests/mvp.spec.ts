@@ -77,24 +77,38 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     await expect(done.locator(".n")).toContainText("기준");
   });
 
-  test("작업 표에 Issue에서 읽은 상태가 보인다 (UI-002)", async ({ page }) => {
-    await open(page);
-    const rows = page.locator("table tbody tr");
-    expect(await rows.count()).toBeGreaterThan(0);
-    await expect(rows.first()).toContainText(/TASK-\d{3}/);
+  test("작업 표가 집계와 같은 수를 보여준다 (UI-002)", async ({ page }) => {
+    const projectId = await open(page);
+    const overview = await (await page.request.get(`${API}/projects/${projectId}/overview`)).json();
+    const total = overview.taskTotal as number;
+
+    // 건수를 시험이 정해 두지 않는다. 보고 있는 브랜치에 작업 목록이 없을 수도 있다.
+    // 화면과 집계가 어긋나지 않는지가 검사 대상이다.
+    const rows = page.locator("table.tasks tbody tr");
+    await expect(page.locator("section.panel", { hasText: "작업 · Issue" })).toBeVisible();
+    expect(await rows.count()).toBe(total);
+    if (total > 0) {
+      await expect(rows.first()).toContainText(/TASK-\d{3}/);
+    }
   });
 
-  test("문서 본문과 표·다이어그램이 화면에 나온다 (UI-003)", async ({ page }) => {
+  test("문서 본문과 표가 화면에 나온다 (UI-003)", async ({ page }) => {
     const projectId = await open(page);
     const found = await findDocuments(page, projectId);
+    test.skip(!found.withTable, "지금 보고 있는 게시본에 표가 든 문서가 없다");
 
-    expect(found.withTable, "표가 든 문서를 목록에서 찾지 못했다").toBeTruthy();
     await page.goto(`/projects/${projectId}/documents/${found.withTable}`);
     await expect(page.locator(".doc table").first()).toBeVisible();
     // 목차는 본문에서 뽑은 제목이다. 본문이 비면 목차도 비어 이 확인이 걸린다.
     await expect(page.locator(".toc a").first()).toBeVisible();
+    await expectNoSideScroll(page);
+  });
 
-    expect(found.withDiagram, "다이어그램이 든 문서를 목록에서 찾지 못했다").toBeTruthy();
+  test("다이어그램이 브라우저에서 그려진다 (UI-003)", async ({ page }) => {
+    const projectId = await open(page);
+    const found = await findDocuments(page, projectId);
+    test.skip(!found.withDiagram, "지금 보고 있는 게시본에 다이어그램이 든 문서가 없다");
+
     await page.goto(`/projects/${projectId}/documents/${found.withDiagram}`);
     const diagram = page.locator("[aria-label^='다이어그램']").first();
     await expect(diagram).toBeVisible();
@@ -117,11 +131,14 @@ test.describe("로그인한 사용자의 한 흐름", () => {
 
     await target.locator("a.t").click();
     await expect(page.locator(".doc h1")).toBeVisible();
-    expect(page.url()).toContain(href ?? "");
+    await expectNoSideScroll(page);
+    expect(decodeURIComponent(page.url())).toContain(decodeURIComponent(href ?? ""));
     if (href?.includes("#")) {
       // 제목이 든 자리로 옮겨 가야 한다. 문서 맨 위에 그대로 있으면 이동하지 않은 것이다.
       const anchor = href.slice(href.indexOf("#") + 1);
-      await expect(page.locator(`#${CSS.escape(anchor)}`)).toBeInViewport({ timeout: 10_000 });
+      // 앵커에 한글과 점이 섞여 있어 `#id` 선택자로는 못 쓴다. 속성으로 고른다.
+      await expect(page.locator(`[id="${anchor.replace(/"/g, '\\"')}"]`))
+          .toBeInViewport({ timeout: 10_000 });
     }
   });
 
@@ -140,9 +157,20 @@ test.describe("로그인한 사용자의 한 흐름", () => {
       .toBe("succeeded");
 
     await page.reload();
-    await expect(page.locator(".syncpill")).toContainText(/최신|방금|전/);
+    // 수집이 끝나자마자 주기 조회가 다음 작업을 잡아 둘 수 있다. 그래서 `최신`으로 못 박지 않고,
+    // 정해진 상태 문구 중 하나와 마지막 성공 시각이 함께 보이는지를 본다. 시각 없는 상태나
+    // 뜻 모를 문구가 나오면 걸린다.
+    await expect(page.locator(".syncpill"))
+        .toContainText(/(최신|수집 중|갱신 대기|갱신 실패).*\d{4}-\d{2}-\d{2} \d{2}:\d{2}/);
   });
 });
+
+/** 페이지 본문이 가로로 밀리지 않는지 본다. 공통 UI 규칙이 정한 것이다. */
+async function expectNoSideScroll(page: Page) {
+  const overflow = await page.evaluate(
+      () => document.body.scrollWidth - window.innerWidth);
+  expect(overflow, "페이지가 가로로 밀린다").toBeLessThanOrEqual(1);
+}
 
 /** 첫 프로젝트를 열고 그 id를 준다. 어떤 저장소가 연결되어 있든 같은 흐름으로 돈다. */
 async function open(page: Page): Promise<string> {
