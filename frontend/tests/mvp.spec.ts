@@ -149,6 +149,20 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     }
   });
 
+  test("작업 전체 목록이 집계와 같은 수를 보여준다 (UI-014)", async ({ page }) => {
+    const projectId = await open(page);
+    await page.getByRole("link", { name: /작업/ }).first().click();
+    await expect(page.getByRole("heading", { name: "작업", exact: true })).toBeVisible();
+
+    const list = await (await page.request.get(`${API}/projects/${projectId}/tasks`)).json();
+    // 현황 표는 20건까지다. 여기서는 전부 보여야 한다.
+    await expect(page.locator("table.tasks tbody tr")).toHaveCount(list.items.length);
+    // 거르지 않은 상태의 문구다. 거르면 `걸러진 n건 / 전체 n건`으로 바뀐다.
+    await expect(page.locator(".tasklist header .n"))
+        .toHaveText(`${list.items.length}건 중 ${list.total}건`);
+    await expectNoSideScroll(page);
+  });
+
   test("산출물 체크리스트가 판정과 같은 것을 보여준다 (UI-013)", async ({ page }) => {
     const projectId = await open(page);
     await page.getByRole("link", { name: /산출물/ }).click();

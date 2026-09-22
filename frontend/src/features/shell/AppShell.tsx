@@ -25,8 +25,7 @@ type Props = {
  * <p>프로젝트를 고르고 저장소를 연결하는 일은 사이드바가 아니라 UI-001이 전담한다. 사이드바에
  * 프로젝트 관련 동작 버튼을 두지 않는다.
  *
- * <p>이동 항목 넷(현황·작업·산출물·검색)은 어느 화면에서도 같은 자리에 있다. `작업`은 현황 화면의
- * 작업 표로 간다 — 전체 목록 화면은 아직 화면 명세에 없다.
+ * <p>이동 항목 넷(현황·작업·산출물·검색)은 어느 화면에서도 같은 자리에 있다.
  */
 export default function AppShell({
   project,
@@ -72,10 +71,14 @@ export default function AppShell({
           >
             현황
           </NavLink>
-          <a className="nav-a" href={`/projects/${project.id}#tasks`}>
+          <NavLink
+            className="nav-a"
+            to={`/projects/${project.id}/tasks`}
+            aria-current={active === "tasks" ? "page" : undefined}
+          >
             작업
             {taskCount !== undefined && <span className="cnt">{taskCount}</span>}
-          </a>
+          </NavLink>
           <NavLink
             className="nav-a"
             to={`/projects/${project.id}/checklist`}
