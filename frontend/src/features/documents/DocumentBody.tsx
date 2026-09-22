@@ -37,9 +37,17 @@ export default function DocumentBody({ html, diagrams, title }: Props) {
     root.innerHTML = html;
 
     // 문서의 첫 제목이 화면 제목과 같으면 본문에서 뺀다. 같은 제목을 두 번 읽게 하지 않는다.
+    // 다만 그 제목을 가리키는 앵커는 남긴다. 검색 결과·목차·문서 간 링크가 그 id로 찾아온다.
     const first = root.firstElementChild;
     if (first?.tagName === "H1" && first.textContent?.trim() === title.trim()) {
-      first.remove();
+      const anchorId = first.getAttribute("id");
+      if (anchorId) {
+        const marker = document.createElement("span");
+        marker.id = anchorId;
+        first.replaceWith(marker);
+      } else {
+        first.remove();
+      }
     }
 
     // 표는 자기 컨테이너에서 가로로 스크롤한다. 본문 전체가 가로로 밀리지 않게 한다.

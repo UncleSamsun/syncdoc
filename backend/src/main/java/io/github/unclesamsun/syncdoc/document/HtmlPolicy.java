@@ -24,14 +24,22 @@ public class HtmlPolicy {
 
     private final Safelist safelist = buildSafelist();
 
-    public String sanitize(String html) {
+    /**
+     * @param html      정화한 본문
+     * @param truncated 중첩이 너무 깊어 끊은 곳이 있으면 true
+     */
+    public record Sanitized(String html, boolean truncated) {
+    }
+
+    public Sanitized sanitize(String html) {
         Document cleaned = Jsoup.parse(Jsoup.clean(html, "", safelist));
         dropForeignImages(cleaned);
+        boolean truncated = NestingLimit.apply(cleaned);
         cleaned.outputSettings()
                 .prettyPrint(false)
                 .escapeMode(Entities.EscapeMode.base)
                 .charset("UTF-8");
-        return cleaned.body().html();
+        return new Sanitized(cleaned.body().html(), truncated);
     }
 
     /**

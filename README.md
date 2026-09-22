@@ -74,6 +74,24 @@ cd frontend && npm install && npm run dev
 - 테스트: `cd backend && ./gradlew test` (Docker가 켜져 있어야 한다), `cd frontend && npm run test -- --run`
 - 문서 검사: `python tools/spec-validator/validate.py`
 
+### 화면 흐름 시험 (E2E)
+
+Playwright가 실제로 떠 있는 구성을 브라우저로 본다. 여기서 서버를 띄우지 않으므로 컨테이너 구성이나 개발 서버를 먼저 올려 둔다.
+
+```bash
+cd frontend
+npx playwright install chromium   # 처음 한 번
+npm run e2e:login                 # 창이 열리면 사람이 GitHub로 로그인한다. 세션을 파일로 남긴다
+npm run e2e
+```
+
+- 대상 주소는 `SYNCDOC_E2E_BASE_URL`로 바꾼다. 기본값은 컨테이너 구성의 `http://localhost:8081`이다.
+- 로그인은 자동화하지 않는다. 세션 파일(`frontend/tests/.auth/session.json`, 형상관리 제외)이 없으면 로그인 이후 시험은 **건너뛴 것으로** 보고한다. 통과가 아니다. 세션 수명은 12시간이다.
+- `e2e:login`은 GitHub 로그인을 먼저 끝내게 하고 그 다음에 서비스 인증을 시작한다. 앱에서 바로 `GitHub로 계속`을 누르면 GitHub가 로그인 화면으로 보냈다가 원래 주소로 되돌리는데, 로그인 기록이 없는 새 브라우저에서는 그 되돌리기가 GitHub 404로 끝나는 것을 확인했다(2026-09-21).
+- 저장하는 것은 이 서비스의 쿠키뿐이다. GitHub 쿠키는 파일에 쓰지 않는다.
+- 세션 없이 도는 시험(로그인 강제, 초대되지 않은 계정 화면, 미인증 401)은 파일이 없어도 항상 돈다.
+- 확인한 결과와 남은 제한은 [MVP 실제 흐름 검증 기록](docs/04-tasks/mvp-verification-record.md)에 있다.
+
 ### 로그인 설정
 
 로그인을 켜려면 아래 값이 필요하다. `SYNCDOC_ADMIN_GITHUB_USER_ID`에 넣은 GitHub 사용자 ID가 최초 관리자이며, 그 계정은 초대 없이 로그인할 수 있다.

@@ -11,8 +11,11 @@ public final class DocumentVersions {
     /** commonmark-java 0.24.0 + GFM 표 + frontmatter, 제목 앵커·다이어그램 분리·첨부 주소 해소 포함. */
     public static final String RENDERER = "commonmark-0.24.0+2";
 
-    /** 허용 목록 정화 2판. 접기와 서비스 첨부 그림은 허용하고, 바깥 주소 그림과 script는 버린다. */
-    public static final String POLICY = "allowlist+2";
+    /**
+     * 허용 목록 정화 3판. 접기와 서비스 첨부 그림은 허용하고, 바깥 주소 그림과 script는 버린다.
+     * 3판에서 블록 중첩 깊이 상한을 더했다.
+     */
+    public static final String POLICY = "allowlist+3";
 
     private DocumentVersions() {
     }

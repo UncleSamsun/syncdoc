@@ -97,10 +97,16 @@ public class MarkdownRenderService {
         Collector collector = new Collector(projectId, snapshotId, documentPath, targets);
         document.accept(collector);
 
-        String html = policy.sanitize(rendererBuilder
+        HtmlPolicy.Sanitized sanitized = policy.sanitize(rendererBuilder
                 .attributeProviderFactory(context -> collector.headingIds())
                 .build()
                 .render(document));
+        String html = sanitized.html();
+        if (sanitized.truncated()) {
+            // 화면이 짧아진 이유를 문서 안에 남긴다. 조용히 자르지 않는다.
+            collector.warnings.add(new DocumentWarning("CONTENT_TOO_DEEP",
+                    "중첩이 " + NestingLimit.MAX_DEPTH + "단을 넘어 그 안쪽의 겹침을 풀었습니다."));
+        }
         String plainText = Jsoup.parse(html).text();
 
         return new RenderedDocument(
