@@ -1,6 +1,7 @@
 package io.github.unclesamsun.syncdoc.github;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 저장소 원문을 읽는 포트. 수집 전용이며 **설치 토큰**을 쓴다. 여기서 읽은 내용은
@@ -48,6 +49,16 @@ public interface RepositoryContentGateway {
      * @throws DocumentTooLargeException 상한을 넘는 문서일 때
      */
     String readText(RepositoryRef repository, String blobSha, int maxBytes);
+
+    /**
+     * revision에 고정된 경로 하나를 읽는다. 문서 경로 밖에 있는 규칙 파일을 읽는 데 쓴다.
+     *
+     * <p>목록에 없는 파일을 이름으로 직접 찾는 유일한 경로다. 프로젝트가 정한 문서 경로와 무관한
+     * 고정 위치(`rules/...`)를 읽어야 하기 때문이다.
+     *
+     * @return 그 revision에 파일이 없거나 읽을 수 없으면 비어 있다
+     */
+    Optional<String> readTextAt(RepositoryRef repository, String revision, String path, int maxBytes);
 
     /**
      * 문서 경로 아래의 첨부 후보를 모은다. 어떤 형식을 받아들일지는 부르는 쪽이 정한다.

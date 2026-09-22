@@ -8,8 +8,13 @@ package io.github.unclesamsun.syncdoc.document;
  */
 public final class DocumentVersions {
 
-    /** commonmark-java 0.24.0 + GFM 표 + frontmatter, 제목 앵커·다이어그램 분리·첨부 주소 해소 포함. */
-    public static final String RENDERER = "commonmark-0.24.0+2";
+    /**
+     * commonmark-java 0.24.0 + GFM 표 + frontmatter, 제목 앵커·다이어그램 분리·첨부 주소 해소 포함.
+     * 3판에서 산출물 체크리스트(API-025) 판정을 게시본에 함께 담는다. 판정은 원문을 봐야 하는데
+     * 게시본에는 변환 결과만 남으므로, 이미 만든 게시본에 나중에 채워 넣을 수 없다. 판을 올려
+     * 다음 수집에서 다시 만든다.
+     */
+    public static final String RENDERER = "commonmark-0.24.0+3";
 
     /**
      * 허용 목록 정화 3판. 접기와 서비스 첨부 그림은 허용하고, 바깥 주소 그림과 script는 버린다.

@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -125,6 +126,28 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
     @Override
     public String readText(RepositoryRef repository, String blobSha, int maxBytes) {
         return new String(readBytes(repository, blobSha, maxBytes), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public Optional<String> readTextAt(RepositoryRef repository, String revision, String path,
+                                       int maxBytes) {
+        String token = tokens.accessToken(repository.githubInstallationId());
+        Map<String, Object> file;
+        try {
+            file = getObject(properties.apiBaseUrl() + "/repos/" + repository.fullName()
+                    + "/contents/" + path + "?ref=" + revision, token);
+        } catch (GitHubLookupFailedException e) {
+            // 없는 파일도 여기로 온다. 규칙 파일이 없는 저장소는 흔하고 수집을 멈출 이유가 아니다.
+            return Optional.empty();
+        }
+        if (!"base64".equals(String.valueOf(file.get("encoding")))) {
+            return Optional.empty();
+        }
+        byte[] decoded = Base64.getMimeDecoder().decode(String.valueOf(file.get("content")));
+        if (decoded.length > maxBytes) {
+            return Optional.empty();
+        }
+        return Optional.of(new String(decoded, StandardCharsets.UTF_8));
     }
 
     @Override

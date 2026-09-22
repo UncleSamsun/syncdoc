@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -182,6 +183,14 @@ public class FakeRepositoryContentGateway implements RepositoryContentGateway {
         }
         return readText(repository, blobSha, maxBytes)
                 .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public Optional<String> readTextAt(RepositoryRef repository, String revision, String path,
+                                       int maxBytes) {
+        raise();
+        String text = filesByRevision.getOrDefault(revision, Map.of()).get(path);
+        return text == null || text.length() > maxBytes ? Optional.empty() : Optional.of(text);
     }
 
     @Override

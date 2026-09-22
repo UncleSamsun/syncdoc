@@ -56,7 +56,7 @@ MVP가 구현할 계약 25개 전부다. 이 표에 없는 엔드포인트는 �
 | API-022 | `GET /health/live` | 없음. 배포 확인용이며 근거 문서인 `tech-ops`가 보류다 | 없음 | 200 프로세스 생존 여부만. 의존성은 확인하지 않는다 |
 | API-023 | `GET /health/ready` | 없음. 배포 확인용이며 근거 문서인 `tech-ops`가 보류다 | 없음 | 200 DB 등 필수 의존성의 준비 여부만 |
 | API-024 | `GET /github/repositories/{githubRepositoryId}/branches` | REQ-002, REQ-007 | 없음 | 앱과 사용자 모두 접근 가능한 저장소의 브랜치 `{items:[{name,isDefault}]}`. 볼 수 없으면 404 |
-| API-025 | `GET /projects/{id}/spec-checklist` | REQ-008 | snapshotId 선택 | `{snapshotId,sourceRevision,status,uncheckedReason,truncated,types}`. 조건은 [API-025](#api-025-산출물-체크리스트) |
+| API-025 | `GET /projects/{id}/spec-checklist` | REQ-008 | snapshotId 선택 | `{snapshotId,sourceRevision,status,uncheckedReason,truncated,findings,types}`. 조건은 [API-025](#api-025-산출물-체크리스트) |
 
 API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 브랜치 스위처와 [UI-001](../02-ui-spec/ui-screens.md)의 연결 양식이 브랜치를 목록에서 고르는데 그 목록을 주는 계약이 없었다. 저장소 목록(API-008)에 브랜치를 함께 담지 않은 이유는 목록을 열 때마다 저장소 수만큼 GitHub를 더 부르게 되기 때문이다.
 
@@ -126,8 +126,9 @@ API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 
 |---|---|
 | `snapshotId`, `sourceRevision` | 결과가 속한 게시본 |
 | `status` | `pass`·`error`·`pending`·`unchecked`. [검증 규칙](../../rules/validation.md) §7의 통과·오류·미작성·미검사와 같다 |
-| `uncheckedReason` | `unchecked`일 때만 채운다. `DEFINITION_MISSING`·`APPLY_TABLE_MISSING` |
+| `uncheckedReason` | `unchecked`일 때만 채운다. `DEFINITION_MISSING`(정의 파일을 읽지 못함)·`APPLY_TABLE_MISSING`(적용 Spec 표를 읽지 못함)·`NO_DOCUMENTS`(게시본에 문서가 없음)·`NOT_COMPUTED`(판정을 넣기 전에 만든 게시본) |
 | `truncated` | 오류가 상한을 넘어 잘렸으면 참 |
+| `findings[]` | 어느 종류에도 속하지 않는 오류다. 문서 식별·분류 오류와 적용 Spec 표 자체의 오류가 여기 온다 |
 | `types[]` | 종류마다 `type`, `name`, `apply`(`적용`·`보류`·`미적용`), `reason`, `status`, `documents[]`, `findings[]` |
 | `types[].documents[]` | `documentId`, `path`, `specId` |
 | `types[].findings[]` | `documentId`(없는 문서면 null), `path`(없으면 null), `line`(없으면 null), `check`(`C1`·`C2`), `message` |

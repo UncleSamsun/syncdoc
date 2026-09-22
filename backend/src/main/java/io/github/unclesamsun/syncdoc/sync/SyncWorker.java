@@ -8,6 +8,11 @@ import io.github.unclesamsun.syncdoc.dashboard.domain.TaskRepository;
 import io.github.unclesamsun.syncdoc.document.AssetPolicy;
 import io.github.unclesamsun.syncdoc.document.DocumentVersions;
 import io.github.unclesamsun.syncdoc.document.MarkdownRenderService;
+import io.github.unclesamsun.syncdoc.spec.ApplySpecTable;
+import io.github.unclesamsun.syncdoc.spec.ChecklistChecker;
+import io.github.unclesamsun.syncdoc.spec.SpecChecklist;
+import io.github.unclesamsun.syncdoc.spec.SpecFormat;
+import io.github.unclesamsun.syncdoc.spec.SpecFormatReader;
 import io.github.unclesamsun.syncdoc.document.domain.AssetContentEntity;
 import io.github.unclesamsun.syncdoc.document.domain.AssetContentRepository;
 import io.github.unclesamsun.syncdoc.document.domain.AssetEntity;
@@ -26,6 +31,7 @@ import io.github.unclesamsun.syncdoc.project.domain.ProjectRepository;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -55,6 +61,9 @@ public class SyncWorker {
 
     /** 작업을 뽑을 문서 종류와 제목 단계. 규칙 파일이 정한 작업계획 문서의 형식이다. */
     private static final String TASKS_DOCUMENT_KIND = "tasks";
+    /** 규칙 파일은 저장소 루트의 고정 경로다. 프로젝트가 정한 문서 경로와 무관하다. */
+    private static final String SPEC_FORMAT_PATH = "rules/spec-format.json";
+    private static final String PROJECT_SETTINGS_PATH = "rules/project-settings.md";
     private static final int TASK_HEADING_LEVEL = 2;
 
     private final SyncQueue queue;
@@ -68,6 +77,8 @@ public class SyncWorker {
     private final MarkdownRenderService renderer;
     private final TaskRepository tasks;
     private final IssueCollector issueCollector;
+    private final SpecFormatReader specFormats;
+    private final ChecklistChecker checklistChecker;
     private final SyncProperties properties;
     private final ObjectMapper json;
     private final Clock clock;
@@ -76,8 +87,9 @@ public class SyncWorker {
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
                       DocumentRepository documents, AssetRepository assets,
                       AssetContentRepository assetContents, MarkdownRenderService renderer,
-                      TaskRepository tasks, IssueCollector issueCollector, SyncProperties properties,
-                      ObjectMapper json, Clock clock) {
+                      TaskRepository tasks, IssueCollector issueCollector,
+                      SpecFormatReader specFormats, ChecklistChecker checklistChecker,
+                      SyncProperties properties, ObjectMapper json, Clock clock) {
         this.queue = queue;
         this.projects = projects;
         this.installations = installations;
@@ -89,6 +101,8 @@ public class SyncWorker {
         this.renderer = renderer;
         this.tasks = tasks;
         this.issueCollector = issueCollector;
+        this.specFormats = specFormats;
+        this.checklistChecker = checklistChecker;
         this.properties = properties;
         this.json = json;
         this.clock = clock;
@@ -195,6 +209,8 @@ public class SyncWorker {
             }
         };
         Set<String> specIds = new HashSet<>();
+        // 규약 판정은 원문을 봐야 한다. 게시본에는 변환 결과만 남으므로 지금 모아 둔다.
+        List<ChecklistChecker.SourceDocument> forChecklist = new ArrayList<>();
 
         int stored = 0;
         for (RepositoryContentGateway.SourceFile file : files) {
@@ -207,6 +223,7 @@ public class SyncWorker {
             MarkdownRenderService.RenderedDocument rendered =
                     render(project.getId(), snapshot.getId(), file.path(), text, targets, specIds);
             documents.save(toEntity(documentId, snapshot.getId(), file.path(), text, rendered));
+            forChecklist.add(new ChecklistChecker.SourceDocument(documentId.toString(), file.path(), text));
             // 작업계획 문서의 제목이 작업 목록의 정본이다. 다른 종류의 문서에서는 뽑지 않는다.
             if (TASKS_DOCUMENT_KIND.equals(rendered.kind())) {
                 saveTasks(snapshot.getId(), documentId, rendered);
@@ -218,14 +235,38 @@ public class SyncWorker {
                 return;
             }
         }
+        SpecChecklist checklist = checklist(repository, revision, forChecklist);
+        snapshot.checklist(json.writeValueAsString(checklist));
+        snapshots.save(snapshot);
+
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("documents", stored);
+        summary.put("checklist", checklist.status());
         summary.put("issuesComplete", issuesComplete);
         summary.put("assets", assetIdsByPath.size());
         summary.put("revision", revision);
         if (!queue.publish(lease, snapshot.getId(), revision, diagnostics(summary))) {
             log.info("임대를 잃어 게시하지 않는다 project={} job={}", lease.projectId(), lease.jobId());
         }
+    }
+
+    /**
+     * 산출물 체크리스트(API-025)를 판정한다.
+     *
+     * <p>규칙 파일은 저장소 루트의 고정 경로에 있다. 프로젝트가 정한 문서 경로와 무관하다.
+     * 읽지 못하면 미검사로 담는다. 판정하지 못한 것을 통과로 보이게 하지 않는다.
+     */
+    private SpecChecklist checklist(RepositoryContentGateway.RepositoryRef repository, String revision,
+                                    List<ChecklistChecker.SourceDocument> sources) {
+        SpecFormat format = contents
+                .readTextAt(repository, revision, SPEC_FORMAT_PATH, properties.maxDocumentSize())
+                .flatMap(specFormats::read)
+                .orElse(null);
+        ApplySpecTable table = contents
+                .readTextAt(repository, revision, PROJECT_SETTINGS_PATH, properties.maxDocumentSize())
+                .flatMap(ApplySpecTable::read)
+                .orElse(null);
+        return checklistChecker.check(format, table, sources);
     }
 
     /**
