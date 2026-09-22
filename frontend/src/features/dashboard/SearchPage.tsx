@@ -5,6 +5,8 @@ import { AccessUnavailable, DocumentMissing } from "../documents/DocumentStates"
 import { useDocumentList } from "../documents/useDocument";
 import type { ProjectItem } from "../projects/types";
 import AppShell from "../shell/AppShell";
+import { errorCountOf } from "../spec/types";
+import { useChecklist } from "../spec/useChecklist";
 import { FirstSyncWaiting } from "../sync/SyncStates";
 import type { SearchResults } from "./types";
 
@@ -26,6 +28,8 @@ export default function SearchPage() {
   const [failure, setFailure] = useState<"missing" | "unavailable" | undefined>();
   const [input, setInput] = useState(query);
   const { list } = useDocumentList(projectId);
+  // 사이드바 건수는 어느 화면에서도 같아야 한다. 한 화면에만 두면 옮길 때마다 값이 사라진다.
+  const checklist = useChecklist(projectId);
 
   useEffect(() => {
     if (!projectId) {
@@ -75,7 +79,8 @@ export default function SearchPage() {
   };
 
   return (
-    <AppShell project={project} documents={documents} active="search">
+    <AppShell project={project} documents={documents} active="search"
+      checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}>
       {notCollected ? (
         <FirstSyncWaiting />
       ) : (

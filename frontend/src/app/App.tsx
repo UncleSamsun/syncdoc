@@ -4,6 +4,7 @@ import UninvitedPage from "../features/auth/UninvitedPage";
 import { useSession } from "../features/auth/useSession";
 import OverviewPage from "../features/dashboard/OverviewPage";
 import SearchPage from "../features/dashboard/SearchPage";
+import ChecklistPage from "../features/spec/ChecklistPage";
 import DiagramFixturePage from "../features/documents/DiagramFixturePage";
 import DocumentPage from "../features/documents/DocumentPage";
 import ProjectHomePage from "../features/projects/ProjectHomePage";
@@ -35,6 +36,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<ProjectHomePage csrfToken={session.me.csrfToken} />} />
       <Route path="/projects/:projectId" element={<OverviewPage csrfToken={session.me.csrfToken} />} />
+      <Route path="/projects/:projectId/checklist" element={<ChecklistPage />} />
       <Route path="/projects/:projectId/search" element={<SearchPage />} />
       <Route path="/projects/:projectId/documents/:documentId" element={<DocumentPage />} />
       <Route path="*" element={<ProjectHomePage csrfToken={session.me.csrfToken} />} />
