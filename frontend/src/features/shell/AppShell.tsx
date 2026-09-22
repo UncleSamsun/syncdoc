@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useSession } from "../auth/useSession";
 import DocumentTree from "../documents/DocumentTree";
 import type { DocumentItem } from "../documents/types";
 import type { ProjectItem, SyncStatus } from "../projects/types";
 import { formatMoment, syncLabelOf, syncToneOf } from "../sync/syncLabels";
+import AccountMenu from "./AccountMenu";
+import BranchSwitcher from "./BranchSwitcher";
 
 type Props = {
   project: ProjectItem;
@@ -38,8 +41,12 @@ export default function AppShell({
   active,
   children,
 }: Props) {
+  const session = useSession();
   const syncState = status?.state ?? project.syncState;
   const label = syncLabelOf({ syncState, currentSnapshotId: project.currentSnapshotId });
+  // 수집 중에는 어느 브랜치를 모으는 중인지 함께 보인다. 브랜치를 바꾼 직후 이전 게시본을
+  // 보고 있는 사람이 무엇을 기다리는지 알 수 있어야 한다.
+  const pill = syncState === "running" ? `${project.branch} ${label}` : label;
 
   return (
     <div className="shell">
@@ -50,15 +57,19 @@ export default function AppShell({
         <span className="sw" title="연결한 저장소">
           {project.fullName}
         </span>
-        <span className="sw sw--br" title="기준 브랜치">
-          {project.branch}
-        </span>
+        <BranchSwitcher
+          project={project}
+          csrfToken={session.state === "signed-in" ? session.me.csrfToken : ""}
+        />
         <span className="rootpath">{project.docsRoot}</span>
         <span className={`syncpill ${syncToneOf(syncState) === "fail" ? "stale" : ""}`}>
           <span className={`dot dot--${syncToneOf(syncState)}`} aria-hidden="true" />
-          {label}
+          {pill}
           {status?.lastSuccessAt && <span className="mono">{formatMoment(status.lastSuccessAt)}</span>}
         </span>
+        {session.state === "signed-in" && (
+          <AccountMenu login={session.me.login} csrfToken={session.me.csrfToken} />
+        )}
       </header>
 
       <div className="shell-body">

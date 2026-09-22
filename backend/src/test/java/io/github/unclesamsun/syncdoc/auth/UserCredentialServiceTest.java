@@ -8,6 +8,7 @@ import io.github.unclesamsun.syncdoc.auth.domain.UserCredentialRepository;
 import io.github.unclesamsun.syncdoc.auth.domain.UserEntity;
 import io.github.unclesamsun.syncdoc.auth.domain.UserRepository;
 import io.github.unclesamsun.syncdoc.crypto.TokenCipher;
+import io.github.unclesamsun.syncdoc.github.GitHubExchangeFailedException;
 import io.github.unclesamsun.syncdoc.github.GitHubOAuthGateway;
 import io.github.unclesamsun.syncdoc.github.GitHubTokens;
 import io.github.unclesamsun.syncdoc.support.PostgresContainerSupport;
@@ -55,6 +56,18 @@ class UserCredentialServiceTest extends PostgresContainerSupport {
 
     private String accessToken() {
         return transactions.execute(status -> service.accessTokenFor(userId));
+    }
+
+    @Test
+    void a_token_that_cannot_be_refreshed_asks_for_a_new_login_instead_of_failing() {
+        store("gho_old", "ghr_dead", NOW.plusSeconds(30));
+        oauth.refreshFailure = new GitHubExchangeFailedException("bad_refresh_token");
+
+        // 기다린다고 풀리지 않고 서버가 잘못한 것도 아니다. 다시 로그인하면 새 토큰을 받는다.
+        assertThatThrownBy(this::accessToken).isInstanceOf(ReauthRequiredException.class);
+        // 갱신에 실패했다고 저장한 토큰을 바꿔 두지 않는다. 다음 로그인이 덮어쓴다.
+        assertThat(cipher.decrypt(credentials.findById(userId).orElseThrow().getAccessTokenCiphertext()))
+                .isEqualTo("gho_old");
     }
 
     @Test
@@ -110,6 +123,7 @@ class UserCredentialServiceTest extends PostgresContainerSupport {
     static final class RecordingOAuth implements GitHubOAuthGateway {
         int refreshCalls;
         String lastRefreshToken;
+        RuntimeException refreshFailure;
 
         @Override
         public String authorizeUrl(String state, String codeChallenge) {
@@ -125,6 +139,9 @@ class UserCredentialServiceTest extends PostgresContainerSupport {
         public GitHubTokens refreshTokens(String refreshToken) {
             refreshCalls++;
             lastRefreshToken = refreshToken;
+            if (refreshFailure != null) {
+                throw refreshFailure;
+            }
             return new GitHubTokens("gho_new", "ghr_2", NOW.plusSeconds(28800), null);
         }
     }

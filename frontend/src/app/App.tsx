@@ -40,6 +40,7 @@ export default function App() {
       <Route path="/projects/:projectId/checklist" element={<ChecklistPage />} />
       <Route path="/projects/:projectId/tasks" element={<TaskListPage />} />
       <Route path="/projects/:projectId/search" element={<SearchPage />} />
+      <Route path="/projects/:projectId/documents" element={<DocumentPage />} />
       <Route path="/projects/:projectId/documents/:documentId" element={<DocumentPage />} />
       <Route path="*" element={<ProjectHomePage csrfToken={session.me.csrfToken} />} />
     </Routes>

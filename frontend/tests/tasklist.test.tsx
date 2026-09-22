@@ -15,7 +15,9 @@ function json(body: unknown, status = 200): Response {
 }
 
 function stubApi(handler: Handler) {
-  vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(handler(String(url)))));
+  // 같은 응답을 여러 번 읽을 수 있게 복제한다. 본문은 한 번만 읽히므로, 화면이 같은 계약을
+  // 두 번 부르면(예: 20초 감시) 두 번째가 빈손이 된다.
+  vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(handler(String(url)).clone())));
 }
 
 const project = {

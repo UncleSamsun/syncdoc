@@ -35,6 +35,18 @@ import org.springframework.context.annotation.Primary;
 @Import(SyncCollectionTest.Gateways.class)
 class SyncCollectionTest extends PostgresContainerSupport {
 
+    @Test
+    void the_status_carries_the_published_snapshot_so_the_screen_can_notice_a_new_one() {
+        ProjectEntity project = fixture.newProject("501");
+        fake().putFile("rev-1", "docs/guide.md", "# 안내서" + System.lineSeparator());
+        queue.request(project.getId(), true);
+        assertThat(worker.runOnce()).isTrue();
+
+        UUID published = projects.findById(project.getId()).orElseThrow().getCurrentSnapshotId();
+        // lastSuccessAt만으로는 바뀐 것이 없어 다시 게시하지 않은 수집과 구분할 수 없다.
+        assertThat(status.statusOf(project.getId()).snapshotId()).isEqualTo(published);
+    }
+
     @TestConfiguration
     static class Gateways {
 

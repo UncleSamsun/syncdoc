@@ -6,6 +6,7 @@ import AppShell from "../shell/AppShell";
 import { errorCountOf } from "../spec/types";
 import { useChecklist } from "../spec/useChecklist";
 import { FirstSyncWaiting, StaleBanner } from "../sync/SyncStates";
+import { useSnapshotWatch } from "../sync/useSnapshotWatch";
 import DocumentBody from "./DocumentBody";
 import {
   AccessUnavailable,
@@ -29,6 +30,10 @@ export default function DocumentPage() {
   const [project, setProject] = useState<ProjectItem | null>(null);
   const [status, setStatus] = useState<SyncStatus | undefined>();
   const [projectError, setProjectError] = useState<"missing" | "unavailable" | undefined>();
+
+  // 읽는 도중 새 게시본이 나와도 본문을 갈아치우지 않는다. 읽던 자리를 잃게 하지 않는다.
+  const [published, setPublished] = useState(false);
+  useSnapshotWatch(snapshotId ? undefined : projectId, () => setPublished(true));
 
   const { list } = useDocumentList(projectId, snapshotId);
   // 사이드바 건수는 어느 화면에서도 같아야 한다. 한 화면에만 두면 옮길 때마다 값이 사라진다.
@@ -89,6 +94,15 @@ export default function DocumentPage() {
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}
     >
       {status && <StaleBanner status={status} />}
+      {published && (
+        <p className="banner" role="status">
+          새 버전이 게시되었습니다
+          <button type="button" className="button button--quiet"
+            onClick={() => window.location.reload()}>
+            새로 고치기
+          </button>
+        </p>
+      )}
       {body()}
     </AppShell>
   );
