@@ -5,6 +5,8 @@ import { AccessUnavailable, DocumentMissing } from "../documents/DocumentStates"
 import { useDocumentList } from "../documents/useDocument";
 import type { ProjectItem, SyncStatus } from "../projects/types";
 import AppShell from "../shell/AppShell";
+import { errorCountOf } from "../spec/types";
+import { useChecklist } from "../spec/useChecklist";
 import { FirstSyncWaiting, StaleBanner } from "../sync/SyncStates";
 import { formatMoment } from "../sync/syncLabels";
 import TaskTable from "./TaskTable";
@@ -27,6 +29,8 @@ export default function OverviewPage({ csrfToken }: Props) {
   const [failure, setFailure] = useState<"missing" | "unavailable" | undefined>();
   const [syncing, setSyncing] = useState(false);
   const { list } = useDocumentList(projectId);
+  // 사이드바 건수는 어느 화면에서도 같아야 한다. 한 화면에만 두면 옮길 때마다 값이 사라진다.
+  const checklist = useChecklist(projectId);
 
   const load = () => {
     if (!projectId) {
@@ -81,6 +85,7 @@ export default function OverviewPage({ csrfToken }: Props) {
       status={status}
       documents={documents}
       taskCount={overview.taskTotal}
+      checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}
       active="overview"
     >
       {status && <StaleBanner status={status} />}

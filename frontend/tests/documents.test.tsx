@@ -76,8 +76,19 @@ const body = {
   warnings: [{ code: "LINK_TARGET_NOT_FOUND", detail: "../../AGENTS.md" }],
 };
 
+const checklist = {
+  snapshotId: "s1",
+  sourceRevision: "1549821e8d2c0a05",
+  status: "pass",
+  uncheckedReason: null,
+  truncated: false,
+  findings: [],
+  types: [],
+};
+
 function api(overrides: Partial<Record<string, Response>> = {}) {
   return (url: string) => {
+    if (url.includes("/spec-checklist")) return json(checklist);
     if (url.includes("/documents/")) {
       return overrides.document ?? json(body);
     }

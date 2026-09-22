@@ -82,8 +82,19 @@ const overview = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
+const checklist = {
+  snapshotId: "s1",
+  sourceRevision: "1549821e8d2c0a05",
+  status: "pass",
+  uncheckedReason: null,
+  truncated: false,
+  findings: [],
+  types: [],
+};
+
 function api(overrides: Partial<Record<string, Response>> = {}) {
   return (url: string) => {
+    if (url.includes("/spec-checklist")) return json(checklist);
     if (url.includes("/overview")) return overrides.overview ?? json(overview());
     if (url.includes("/search")) return overrides.search ?? json({ snapshotId: "s1", query: "", items: [], total: 0 });
     if (url.includes("/documents")) return json({ snapshotId: "s1", items: [], nextCursor: null });

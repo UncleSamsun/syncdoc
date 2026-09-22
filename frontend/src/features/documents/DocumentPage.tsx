@@ -3,6 +3,8 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { apiGet, isApiError } from "../../shared/api/client";
 import type { ProjectItem, SyncStatus } from "../projects/types";
 import AppShell from "../shell/AppShell";
+import { errorCountOf } from "../spec/types";
+import { useChecklist } from "../spec/useChecklist";
 import { FirstSyncWaiting, StaleBanner } from "../sync/SyncStates";
 import DocumentBody from "./DocumentBody";
 import {
@@ -29,6 +31,8 @@ export default function DocumentPage() {
   const [projectError, setProjectError] = useState<"missing" | "unavailable" | undefined>();
 
   const { list } = useDocumentList(projectId, snapshotId);
+  // 사이드바 건수는 어느 화면에서도 같아야 한다. 한 화면에만 두면 옮길 때마다 값이 사라진다.
+  const checklist = useChecklist(projectId);
   const document = useDocument(projectId, documentId, snapshotId);
 
   useEffect(() => {
@@ -82,6 +86,7 @@ export default function DocumentPage() {
       documents={items}
       currentDocumentId={documentId}
       currentPath={current?.path}
+      checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}
     >
       {status && <StaleBanner status={status} />}
       {body()}

@@ -149,6 +149,27 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     }
   });
 
+  test("산출물 체크리스트가 판정과 같은 것을 보여준다 (UI-013)", async ({ page }) => {
+    const projectId = await open(page);
+    await page.getByRole("link", { name: /산출물/ }).click();
+    await expect(page.getByRole("heading", { name: "산출물 체크리스트" })).toBeVisible();
+
+    const checklist = await (await page.request.get(
+        `${API}/projects/${projectId}/spec-checklist`)).json();
+    const errors = (checklist.findings?.length ?? 0)
+        + (checklist.types ?? []).reduce(
+            (total: number, type: { findings: unknown[] }) => total + type.findings.length, 0);
+
+    // 화면이 판정과 다른 수를 말하면 둘 중 하나는 틀린 것이다.
+    await expect(page.locator("table.chk-t tbody tr")).toHaveCount(checklist.types.length);
+    await expect(page.locator(".chk > p.n").first()).toContainText(`오류 ${errors}건`);
+    // 미검사를 통과로 바꾸지 않는다. 판정 값과 화면 문구가 어긋나지 않게 본다.
+    const chip = page.locator(".chk-h .chip");
+    const expected = { pass: "통과", error: `오류 ${errors}건`, pending: "미작성", unchecked: "미검사" };
+    await expect(chip).toHaveText(expected[checklist.status as keyof typeof expected]);
+    await expectNoSideScroll(page);
+  });
+
   test("게시본의 모든 문서가 열리고 가로로 밀리지 않는다 (UI-003)", async ({ page }) => {
     const projectId = await open(page);
     const list = await (await page.request.get(`${API}/projects/${projectId}/documents`)).json();
