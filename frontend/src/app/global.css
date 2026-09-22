@@ -1134,3 +1134,21 @@ main {
 .chk-f .x {
   color: var(--ink);
 }
+
+/* 작업 전체 목록 (UI-014) */
+.tasklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 34px 34px;
+}
+
+.tasklist select {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
