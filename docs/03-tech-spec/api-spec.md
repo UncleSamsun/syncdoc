@@ -126,7 +126,7 @@ API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 
 |---|---|
 | `snapshotId`, `sourceRevision` | 결과가 속한 게시본 |
 | `status` | `pass`·`error`·`pending`·`unchecked`. [검증 규칙](../../rules/validation.md) §7의 통과·오류·미작성·미검사와 같다 |
-| `uncheckedReason` | `unchecked`일 때만 채운다. `DEFINITION_MISSING`·`APPLY_TABLE_MISSING` |
+| `uncheckedReason` | `unchecked`일 때만 채운다. `DEFINITION_MISSING`(정의 파일을 읽지 못함)·`APPLY_TABLE_MISSING`(적용 Spec 표를 읽지 못함)·`NO_DOCUMENTS`(게시본에 문서가 없음)·`NOT_COMPUTED`(판정을 넣기 전에 만든 게시본) |
 | `truncated` | 오류가 상한을 넘어 잘렸으면 참 |
 | `types[]` | 종류마다 `type`, `name`, `apply`(`적용`·`보류`·`미적용`), `reason`, `status`, `documents[]`, `findings[]` |
 | `types[].documents[]` | `documentId`, `path`, `specId` |

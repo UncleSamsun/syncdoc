@@ -17,6 +17,10 @@ import java.util.UUID;
 @Table(name = "document_snapshots")
 public class DocumentSnapshotEntity {
 
+    /** 아직 판정하지 않은 게시본의 기본값. migration의 기본값과 같다. */
+    public static final String UNCHECKED = "{\"status\":\"unchecked\",\"uncheckedReason\":"
+            + "\"NOT_COMPUTED\",\"truncated\":false,\"findings\":[],\"types\":[]}";
+
     @Id
     private UUID id;
 
@@ -38,6 +42,10 @@ public class DocumentSnapshotEntity {
     @Column(nullable = false)
     private boolean complete;
 
+    /** 산출물 체크리스트(API-025)의 판정 결과. 수집할 때 채운다. */
+    @Column(name = "checklist_json", nullable = false)
+    private String checklistJson;
+
     protected DocumentSnapshotEntity() {
     }
 
@@ -50,10 +58,21 @@ public class DocumentSnapshotEntity {
         this.policyVersion = policyVersion;
         this.createdAt = createdAt;
         this.complete = false;
+        // 아직 판정하지 않았다. 판정하지 않은 것을 통과로 보이게 하지 않는다.
+        this.checklistJson = UNCHECKED;
     }
 
     public UUID getId() {
         return id;
+    }
+
+    public String getChecklistJson() {
+        return checklistJson;
+    }
+
+    /** 수집이 판정을 마친 뒤에 부른다. */
+    public void checklist(String json) {
+        this.checklistJson = json;
     }
 
     public UUID getProjectId() {

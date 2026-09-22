@@ -356,6 +356,8 @@ status: 확정
 
 - `DEFINITION_MISSING` — `규칙 정의 파일이 없어 검사하지 않았습니다` · `저장소 루트의 rules/spec-format.json을 읽지 못했습니다.`
 - `APPLY_TABLE_MISSING` — `적용 Spec 표가 없어 검사하지 않았습니다` · `저장소 루트의 rules/project-settings.md에서 적용 Spec 표를 읽지 못했습니다.`
+- `NO_DOCUMENTS` — `검사할 문서가 없어 검사하지 않았습니다` · `이 게시본에 문서가 없습니다.`
+- `NOT_COMPUTED` — `이 게시본은 규약 판정 전에 만들어졌습니다` · `다음 수집에서 다시 만들어집니다.`
 
 둘 다 `이 프로젝트는 규약 검사를 적용하지 않습니다`처럼 판정한 것처럼 쓰지 않는다. 읽지 못한 것과 지킨 것은 다르다.
 
