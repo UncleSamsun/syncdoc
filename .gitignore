@@ -19,3 +19,5 @@ frontend/coverage/
 frontend/tests/.auth/
 frontend/test-results/
 frontend/playwright-report/
+test-results/
+playwright-report/
