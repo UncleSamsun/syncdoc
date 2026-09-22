@@ -61,6 +61,22 @@
 
 이 PC의 Windows Application Control 정책이 서명·평판이 없는 네이티브 Node 모듈의 로드를 차단한다. `frontend/package.json`은 `overrides`로 `rolldown`을 1.2.6에 고정한다. 1.2.8 바인딩은 차단되어 Vite와 Vitest가 시작하지 못한다. 다른 PC에서 이 고정이 필요 없다면 그때 조정한다. Playwright는 같은 정책에 걸리지 않았다(2026-09-21 설치·실행 확인).
 
+### GitHub App
+
+로그인과 수집이 쓰는 App이다. 비밀값은 여기 적지 않는다. `deploy/.env`와 배포 환경에만 둔다.
+
+| 항목 | 값 |
+|---|---|
+| 이름 | SyncDoc Dev |
+| App ID | 4895456 |
+| 설치 범위 | 모든 계정 (2026-09-22 변경. 이전에는 소유 계정 전용이었다) |
+| 콜백 주소 | `http://localhost:5173/...`, `http://localhost:8080/...`, `http://localhost:8081/api/v1/auth/github/callback` |
+| 권한 | Contents·Metadata·Issues·Pull requests 읽기 |
+
+이름에 `Dev`를 남긴다. 아무 계정이나 설치할 수 있게 열어 두었으므로, 이름이 그냥 `SyncDoc`이면 설치하는 사람이 운영 중인 서비스로 읽는다. 실제로는 `localhost`를 가리키는 개발용이다.
+
+설치 범위를 연 이유는 두 번째 계정으로 권한 경계를 확인하기 위해서다. 소유 계정 전용이면 **다른 계정은 authorize 화면에서 GitHub 404를 받아** 우리 앱의 초대 화면까지 닿지도 못한다. 2026-09-21에 확인했다.
+
 ### 고정한 버전 (TASK-001, 2026-09-10)
 
 | 구성 | 버전 | 고정 위치 |
