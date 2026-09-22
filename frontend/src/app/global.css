@@ -1152,3 +1152,11 @@ main {
   color: var(--ink);
   font: inherit;
 }
+
+/* 수집 대상 밖 파일 링크 (UI-003). 서비스를 벗어난다는 것을 표식으로 알린다. */
+.doc-body a[data-link-kind="source"]::after {
+  content: "↗";
+  font-size: 0.85em;
+  margin-left: 2px;
+  color: var(--ink3);
+}

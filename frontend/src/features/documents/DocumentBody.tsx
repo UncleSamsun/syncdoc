@@ -50,6 +50,15 @@ export default function DocumentBody({ html, diagrams, title }: Props) {
       }
     }
 
+    // 수집 대상 밖 파일은 저장소에서 연다. 서비스를 벗어나므로 읽던 자리를 잃지 않게 새 탭이고,
+    // 어디로 가는지 누르기 전에 알 수 있게 주소를 붙인다.
+    root.querySelectorAll('a[data-link-kind="source"]').forEach((node) => {
+      const anchor = node as HTMLAnchorElement;
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+      anchor.title = `저장소에서 열기 · ${anchor.getAttribute("href") ?? ""}`;
+    });
+
     // 표는 자기 컨테이너에서 가로로 스크롤한다. 본문 전체가 가로로 밀리지 않게 한다.
     root.querySelectorAll("table").forEach((table) => {
       table.classList.add("mdtbl");

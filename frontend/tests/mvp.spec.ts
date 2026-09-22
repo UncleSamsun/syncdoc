@@ -202,6 +202,11 @@ test.describe("로그인한 사용자의 한 흐름", () => {
         if (overflow > 1) {
           broken.push(`${item.path}: 가로로 ${overflow}px 밀린다`);
         }
+        // 빈 링크는 눌리는데 아무 데도 가지 않는다. 어느 문서에도 남지 않아야 한다.
+        const dead = await page.locator('.doc-body a[href=""]').count();
+        if (dead > 0) {
+          broken.push(`${item.path}: 빈 링크 ${dead}개`);
+        }
       } catch (error) {
         broken.push(`${item.path}: 열지 못했다 (${String(error).slice(0, 60)})`);
       }

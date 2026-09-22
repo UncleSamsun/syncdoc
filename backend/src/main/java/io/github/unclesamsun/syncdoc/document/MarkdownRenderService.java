@@ -63,6 +63,9 @@ public class MarkdownRenderService {
      * @param kind document·asset·external·anchor·missing
      * @param href 서비스 경로 또는 원래 주소. missing이면 이동할 곳이 없다
      */
+    /** 수집 대상 밖 파일을 저장소에서 여는 링크. 서비스 안 이동과 구분한다. */
+    public static final String SOURCE = "source";
+
     public record DocumentLink(String kind, String href, String text) {
     }
 
@@ -82,6 +85,13 @@ public class MarkdownRenderService {
 
         /** @return 같은 게시본의 첨부 id. 그 경로에 받아들인 첨부가 없으면 null */
         UUID assetIdFor(String repositoryPath);
+
+        /**
+         * 수집 대상 밖 파일을 저장소에서 여는 주소.
+         *
+         * @return 수집 시점 revision에 고정한 GitHub 주소. 만들 수 없으면 null
+         */
+        String sourceUrlFor(String repositoryPath);
     }
 
     /**
@@ -135,6 +145,8 @@ public class MarkdownRenderService {
         private final List<DocumentDiagram> diagrams = new ArrayList<>();
         private final List<DocumentLink> links = new ArrayList<>();
         private final List<DocumentWarning> warnings = new ArrayList<>();
+        /** 표시를 다르게 하려고 모아 둔다. 서비스를 벗어난다는 것을 누르기 전에 알려야 한다. */
+        private final List<Link> sourceLinks = new ArrayList<>();
         private String firstHeading;
 
         private Collector(UUID projectId, UUID snapshotId, String documentPath, LinkTargets targets) {
@@ -177,8 +189,28 @@ public class MarkdownRenderService {
             String destination = link.getDestination() == null ? "" : link.getDestination().trim();
             DocumentLink resolved = resolve(destination, textOf(link));
             links.add(resolved);
-            link.setDestination(resolved.href());
             visitChildren(link);
+            if (resolved.href().isEmpty()) {
+                // 열 수 없는 링크다. 글자만 남긴다. 빈 href를 두면 눌렀을 때 현재 문서가 다시
+                // 열려, 링크처럼 보이는데 아무 데도 가지 않는다.
+                unwrap(link);
+                return;
+            }
+            link.setDestination(resolved.href());
+            if (SOURCE.equals(resolved.kind())) {
+                sourceLinks.add(link);
+            }
+        }
+
+        /** 링크 껍데기를 벗기고 안의 글자를 그 자리에 남긴다. */
+        private static void unwrap(Link link) {
+            Node child = link.getFirstChild();
+            while (child != null) {
+                Node next = child.getNext();
+                link.insertBefore(child);
+                child = next;
+            }
+            link.unlink();
         }
 
         @Override
@@ -235,6 +267,11 @@ public class MarkdownRenderService {
             }
             UUID targetId = targets.documentIdFor(repositoryPath);
             if (targetId == null) {
+                // 수집 대상 밖이다. 저장소에서 열 수 있으면 수집 시점 revision으로 이어 준다.
+                String sourceUrl = targets.sourceUrlFor(repositoryPath);
+                if (sourceUrl != null) {
+                    return new DocumentLink(SOURCE, sourceUrl + anchor, text);
+                }
                 warnings.add(new DocumentWarning("LINK_TARGET_NOT_FOUND", destination));
                 return new DocumentLink("missing", "", text);
             }
@@ -247,6 +284,9 @@ public class MarkdownRenderService {
                 String id = ids.get(node);
                 if (id != null) {
                     attributes.put("id", id);
+                }
+                if (node instanceof Link link && sourceLinks.contains(link)) {
+                    attributes.put("data-link-kind", SOURCE);
                 }
             };
         }

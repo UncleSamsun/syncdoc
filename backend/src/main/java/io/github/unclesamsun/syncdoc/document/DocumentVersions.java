@@ -13,8 +13,11 @@ public final class DocumentVersions {
      * 3판에서 산출물 체크리스트(API-025) 판정을 게시본에 함께 담는다. 판정은 원문을 봐야 하는데
      * 게시본에는 변환 결과만 남으므로, 이미 만든 게시본에 나중에 채워 넣을 수 없다. 판을 올려
      * 다음 수집에서 다시 만든다.
+     *
+     * <p>4판에서 수집 대상 밖 파일을 가리키는 링크를 수집 시점 revision의 저장소 주소로 잇고,
+     * 열 수 없는 링크는 링크로 내보내지 않는다.
      */
-    public static final String RENDERER = "commonmark-0.24.0+3";
+    public static final String RENDERER = "commonmark-0.24.0+4";
 
     /**
      * 허용 목록 정화 3판. 접기와 서비스 첨부 그림은 허용하고, 바깥 주소 그림과 script는 버린다.
