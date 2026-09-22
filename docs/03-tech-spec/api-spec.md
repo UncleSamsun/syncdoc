@@ -28,7 +28,7 @@ HTML과 검색 결과는 `Cache-Control: private, no-store`로 제공한다. 사
 
 ## 계약 일람
 
-MVP가 구현할 계약 24개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
+MVP가 구현할 계약 25개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
 
 | ID | 메서드·경로 | 연결 요구 | 입력 | 응답·조건 |
 |---|---|---|---|---|
@@ -56,6 +56,7 @@ MVP가 구현할 계약 24개 전부다. 이 표에 없는 엔드포인트는 �
 | API-022 | `GET /health/live` | 없음. 배포 확인용이며 근거 문서인 `tech-ops`가 보류다 | 없음 | 200 프로세스 생존 여부만. 의존성은 확인하지 않는다 |
 | API-023 | `GET /health/ready` | 없음. 배포 확인용이며 근거 문서인 `tech-ops`가 보류다 | 없음 | 200 DB 등 필수 의존성의 준비 여부만 |
 | API-024 | `GET /github/repositories/{githubRepositoryId}/branches` | REQ-002, REQ-007 | 없음 | 앱과 사용자 모두 접근 가능한 저장소의 브랜치 `{items:[{name,isDefault}]}`. 볼 수 없으면 404 |
+| API-025 | `GET /projects/{id}/spec-checklist` | REQ-008 | snapshotId 선택 | `{snapshotId,sourceRevision,status,uncheckedReason,truncated,types}`. 조건은 [API-025](#api-025-산출물-체크리스트) |
 
 API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 브랜치 스위처와 [UI-001](../02-ui-spec/ui-screens.md)의 연결 양식이 브랜치를 목록에서 고르는데 그 목록을 주는 계약이 없었다. 저장소 목록(API-008)에 브랜치를 함께 담지 않은 이유는 목록을 열 때마다 저장소 수만큼 GitHub를 더 부르게 되기 때문이다.
 
@@ -114,6 +115,32 @@ API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 
 **오류:** 서명이 맞지 않으면 401, 본문이 너무 크면 413이다.
 
 **부작용:** 동기화 작업을 예약한다. GitHub에는 쓰지 않는다.
+
+## API-025 산출물 체크리스트
+
+**입력:** `snapshotId` 선택이다. 없으면 마지막 정상 게시본을 본다.
+
+**출력:** 게시본을 만들 때 **그 revision의 규칙 파일로** 판정한 결과다. 조회 시점이 아니라 게시본 시점의 결과이며 다른 revision의 결과를 섞지 않는다.
+
+| 필드 | 의미 |
+|---|---|
+| `snapshotId`, `sourceRevision` | 결과가 속한 게시본 |
+| `status` | `pass`·`error`·`pending`·`unchecked`. [검증 규칙](../../rules/validation.md) §7의 통과·오류·미작성·미검사와 같다 |
+| `uncheckedReason` | `unchecked`일 때만 채운다. `DEFINITION_MISSING`·`APPLY_TABLE_MISSING` |
+| `truncated` | 오류가 상한을 넘어 잘렸으면 참 |
+| `types[]` | 종류마다 `type`, `name`, `apply`(`적용`·`보류`·`미적용`), `reason`, `status`, `documents[]`, `findings[]` |
+| `types[].documents[]` | `documentId`, `path`, `specId` |
+| `types[].findings[]` | `documentId`(없는 문서면 null), `path`(없으면 null), `line`(없으면 null), `check`(`C1`·`C2`), `message` |
+
+**검사 범위:** C1 필수 문서 존재와 C2 필수 항목 존재다. C0 정의 파일 검사는 하지 않는다. C0은 저장소에서 규칙 표를 고치는 사람을 위한 검사이고, 서비스가 읽는 정본은 정의 파일 하나다.
+
+**규칙 파일 위치:** 저장소 루트의 `rules/spec-format.json`과 `rules/project-settings.md`다. 프로젝트의 문서 경로 설정과 무관한 고정 경로다. 둘 중 하나라도 읽지 못하면 `unchecked`이며 그 이유를 `uncheckedReason`에 담는다. 오류 0건을 통과로 바꾸지 않는다.
+
+**크기 제한:** 오류는 종류당 50건, 전체 500건까지 담고 넘으면 자른 뒤 `truncated`를 참으로 둔다. cursor를 두지 않는다. 오류가 500건을 넘는 상태에서 필요한 것은 다음 쪽이 아니라 저장소에서 고치는 일이다.
+
+**오류:** 첫 동기화 전이면 409 `DOCUMENTS_NOT_READY`다. 빈 결과로 돌려주지 않는다. 결과가 없는 것과 미검사는 다르다. 회수된 snapshot을 지정하면 410이다.
+
+**접근 조건:** 다른 프로젝트 계약과 같다. 볼 수 없는 프로젝트는 없는 프로젝트와 같은 404다.
 
 ## 문서 수집과 snapshot
 

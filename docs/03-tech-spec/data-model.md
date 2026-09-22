@@ -22,7 +22,7 @@ SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스�
 | projects | id, github_repository_id, full_name, installation_id, created_by, branch, docs_root, github_project_node_id?, current_snapshot_id?, issues_observed_at?, issues_complete, version, created_at | repository ID unique, installation_id→github_installations, created_by→users. snapshot 복합 FK 아래 참고 |
 | sync_jobs | id, project_id, kind, state, attempt, due_at, lease_until?, lease_token?, target_revision?, rerun_requested, last_error_code?, created_at | project_id→projects. queued/running 활성 kind별 partial unique(project_id,kind). state CHECK |
 | sync_runs | id, project_id, job_id, started_at, finished_at?, outcome, source_revision?, error_code?, diagnostics_json | project_id→projects, job_id→sync_jobs. latest attempt와 latest success를 구분. diagnostics는 오류 경로/코드만 보존 |
-| document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id) |
+| document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete, checklist_json | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id). checklist_json은 그 revision의 규칙 파일로 판정한 산출물 체크리스트(API-025) |
 | documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, links_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
 | assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0. mime은 허용 목록 CHECK |
 | asset_contents | storage_key, bytes, byte_size, created_at | storage_key는 내용 해시다. assets.storage_key→asset_contents. 같은 그림이 여러 게시본에 나와도 바이트는 한 벌만 남는다 |
@@ -31,6 +31,14 @@ SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스�
 | webhook_deliveries | delivery_id, event, received_at, processed_at? | delivery_id PK. 서명 검증 후 저장. raw payload·토큰 미저장 |
 
 projects(project_id=id,current_snapshot_id)는 document_snapshots(project_id,id)를 참조해 다른 프로젝트 snapshot을 연결하지 못하게 한다. projects 생성 후 snapshots를 만들고 current_snapshot_id FK를 추가하는 migration 순서를 사용한다. documents에도 unique(snapshot_id,id)를 두고 tasks(snapshot_id,document_id)가 참조한다. 삭제는 명시적인 정리 작업으로 하며 프로젝트에서 무제한 cascade 삭제하지 않는다.
+
+### 산출물 체크리스트
+
+판정은 수집할 때 한 번 하고 게시본에 함께 둔다. 별도 표를 두지 않는다. 조회 단위가 게시본 하나이고 항목별로 질의할 요구가 없다.
+
+수집 중에는 문서 원문이 손에 있지만 게시본에는 변환 결과만 남는다. 조회 시점에 다시 판정하려면 원문을 따로 저장해야 하고, 같은 게시본이 때에 따라 다른 판정을 내게 된다. 게시본은 불변이므로 판정도 그 revision에 고정한다.
+
+규칙 파일은 저장소 루트의 `rules/spec-format.json`과 `rules/project-settings.md`다. 문서 경로 설정과 무관한 고정 경로이며, 읽지 못하면 그 사실을 미검사로 담는다. 판정을 비워 두고 통과로 보이게 하지 않는다.
 
 ## 소유와 파생 데이터
 
