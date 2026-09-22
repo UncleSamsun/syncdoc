@@ -37,8 +37,10 @@ export default function OverviewPage({ csrfToken }: Props) {
       .catch((error) =>
         setFailure(isApiError(error) && error.status === 404 ? "missing" : "unavailable"),
       );
-    apiGet<OverviewView>(`/projects/${projectId}/overview`).then(setOverview).catch(() => {
-      setFailure("unavailable");
+    apiGet<OverviewView>(`/projects/${projectId}/overview`).then(setOverview).catch((error) => {
+      // 볼 수 없는 프로젝트는 없는 프로젝트와 같은 404다. 여기서 둘을 가르면 화면이
+      // "권한을 확인할 수 없다"고 말하게 되고, 그건 없는 것과 구분되는 정보가 된다.
+      setFailure(isApiError(error) && error.status === 404 ? "missing" : "unavailable");
     });
     apiGet<SyncStatus>(`/projects/${projectId}/sync`).then(setStatus).catch(() => {
       // 수집 상태를 못 읽는다고 현황까지 막지 않는다.

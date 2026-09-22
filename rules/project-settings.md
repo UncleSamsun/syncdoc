@@ -67,13 +67,13 @@
 
 | 항목 | 값 |
 |---|---|
-| 이름 | SyncDoc Dev |
+| 이름 | syncdoc-dev-unclesamsun |
 | App ID | 4895456 |
 | 설치 범위 | 모든 계정 (2026-09-22 변경. 이전에는 소유 계정 전용이었다) |
 | 콜백 주소 | `http://localhost:5173/...`, `http://localhost:8080/...`, `http://localhost:8081/api/v1/auth/github/callback` |
 | 권한 | Contents·Metadata·Issues·Pull requests 읽기 |
 
-이름에 `Dev`를 남긴다. 아무 계정이나 설치할 수 있게 열어 두었으므로, 이름이 그냥 `SyncDoc`이면 설치하는 사람이 운영 중인 서비스로 읽는다. 실제로는 `localhost`를 가리키는 개발용이다.
+이름은 아직 바꾸지 않았다. 아무 계정이나 설치할 수 있게 열어 두었으므로 이름에 개발용이라는 표시는 남겨 둔다. 실제로는 `localhost`를 가리킨다. `syncdoc-dev`는 같은 이름의 계정이 이미 있어 App 이름으로 쓸 수 없다(GitHub은 계정과 App이 같은 이름 공간을 쓴다).
 
 설치 범위를 연 이유는 두 번째 계정으로 권한 경계를 확인하기 위해서다. 소유 계정 전용이면 **다른 계정은 authorize 화면에서 GitHub 404를 받아** 우리 앱의 초대 화면까지 닿지도 못한다. 2026-09-21에 확인했다.
 

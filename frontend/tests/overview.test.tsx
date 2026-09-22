@@ -100,6 +100,11 @@ function api(overrides: Partial<Record<string, Response>> = {}) {
   };
 }
 
+/** 볼 수 없는 프로젝트는 모든 계약이 404로 답한다. 없는 프로젝트와 구분되지 않아야 한다. */
+function notFoundApi() {
+  return () => json({ code: "RESOURCE_NOT_FOUND", message: "대상을 찾을 수 없습니다." }, 404);
+}
+
 function openOverview() {
   render(
     <MemoryRouter initialEntries={["/projects/p1"]}>
@@ -122,6 +127,16 @@ function openSearch(query = "") {
 
 describe("UI-002 현황", () => {
   afterEach(() => vi.unstubAllGlobals());
+
+  it("shows an invisible project exactly like a missing one", async () => {
+    stubApi(notFoundApi());
+    openOverview();
+
+    // 권한이 없다는 말을 화면에 두지 않는다. 그 문구 자체가 프로젝트의 존재를 알려 준다.
+    await waitFor(() => expect(screen.getByText("이 문서를 찾을 수 없습니다")).toBeInTheDocument());
+    expect(screen.queryByText(/권한을 확인할 수 없습니다/)).toBeNull();
+  });
+
 
   it("writes the completion as a fraction with the basis under it", async () => {
     stubApi(api());
