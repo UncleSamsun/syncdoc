@@ -207,6 +207,18 @@ public class SyncWorker {
             public UUID assetIdFor(String repositoryPath) {
                 return assetIdsByPath.get(repositoryPath);
             }
+
+            @Override
+            public String sourceUrlFor(String repositoryPath) {
+                if (repositoryPath.startsWith(project.getDocsRoot() + "/")) {
+                    // 수집 대상 안이다. 여기 없는 파일은 저장소에도 없다. 깨진 링크로 남긴다.
+                    return null;
+                }
+                // 수집 시점 revision에 고정한다. 그 게시본이 가리키던 내용이 나중에 바뀌어도
+                // 링크가 다른 것을 가리키지 않는다.
+                return "https://github.com/" + repository.fullName() + "/blob/" + revision + "/"
+                        + repositoryPath;
+            }
         };
         Set<String> specIds = new HashSet<>();
         // 규약 판정은 원문을 봐야 한다. 게시본에는 변환 결과만 남으므로 지금 모아 둔다.

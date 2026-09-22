@@ -39,6 +39,14 @@ class DocumentRenderingTest {
         public UUID assetIdFor(String repositoryPath) {
             return assets.get(repositoryPath);
         }
+
+        @Override
+        public String sourceUrlFor(String repositoryPath) {
+            // 수집 대상 안에 없는 파일은 저장소에도 없다. 수집이 하는 판정을 여기서도 그대로 쓴다.
+            return repositoryPath.startsWith("docs/")
+                    ? null
+                    : "https://github.com/owner/repo/blob/rev-1/" + repositoryPath;
+        }
     };
 
     private RenderedDocument render(String markdown) {
@@ -109,6 +117,35 @@ class DocumentRenderingTest {
         assertThat(rendered.warnings()).extracting(DocumentWarning::code)
                 .contains("LINK_TARGET_NOT_FOUND");
         assertThat(rendered.html()).doesNotContain("missing.md");
+    }
+
+    @Test
+    void a_link_outside_the_collected_root_opens_the_file_at_the_collected_revision() {
+        RenderedDocument rendered = render("docs/01-prd/brief.md", "[검증 규칙](../../rules/validation.md)");
+
+        assertThat(rendered.links()).singleElement().satisfies(link -> {
+            assertThat(link.kind()).isEqualTo("source");
+            // revision을 고정한다. 그 게시본이 가리키던 내용이 나중에 바뀌어도 링크가 다른 것을
+            // 가리키지 않는다.
+            assertThat(link.href()).isEqualTo(
+                    "https://github.com/owner/repo/blob/rev-1/rules/validation.md");
+        });
+        // 열리는 링크다. 깨졌다고 알리지 않는다.
+        assertThat(rendered.warnings()).extracting(DocumentWarning::code)
+                .doesNotContain("LINK_TARGET_NOT_FOUND");
+        // 서비스 안 이동과 구분되도록 표시한다.
+        assertThat(rendered.html()).contains("data-link-kind=\"source\"");
+    }
+
+    @Test
+    void a_link_that_cannot_be_opened_does_not_come_back_as_a_link() {
+        RenderedDocument rendered = render("docs/a.md", "앞 [없는 문서](./missing.md) 뒤");
+
+        // 빈 href를 남기면 눌렀을 때 현재 문서가 다시 열린다. 링크처럼 보이는데 아무 데도
+        // 가지 않는 것이 가장 나쁘다.
+        assertThat(rendered.html()).doesNotContain("<a").doesNotContain("href=\"\"");
+        // 글자는 남긴다. 본문이 조용히 줄어들지 않는다.
+        assertThat(rendered.html()).contains("앞 없는 문서 뒤");
     }
 
     @Test

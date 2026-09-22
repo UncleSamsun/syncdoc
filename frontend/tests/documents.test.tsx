@@ -164,6 +164,24 @@ describe("UI-003 문서 본문", () => {
     expect(document.getElementById("api-계약")).not.toBeNull();
   });
 
+  it("opens a file outside the collected root in a new tab and says where it goes", async () => {
+    const outside = {
+      ...body,
+      html: '<p><a href="https://github.com/o/r/blob/abc/rules/validation.md" '
+        + 'data-link-kind="source">검증 규칙</a></p>',
+      diagrams: [],
+    };
+    stubApi(api({ document: json(outside) }));
+    open("/projects/p1/documents/d2");
+
+    await waitFor(() => expect(screen.getByRole("link", { name: /검증 규칙/ })).toBeInTheDocument());
+    const link = screen.getByRole("link", { name: /검증 규칙/ });
+    // 서비스를 벗어난다. 읽던 자리를 잃지 않게 새 탭이고 어디로 가는지 미리 알린다.
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    expect(link.getAttribute("title")).toContain("github.com/o/r/blob/abc/rules/validation.md");
+  });
+
   it("collects warnings next to the table of contents instead of in the body", async () => {
     stubApi(api());
     open("/projects/p1/documents/d2");
