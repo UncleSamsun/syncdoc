@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { apiGet, apiPatch, isApiError } from "../../shared/api/client";
+import { apiDelete, apiGet, apiPatch, isApiError } from "../../shared/api/client";
 import { useSession } from "../auth/useSession";
 import { AccessUnavailable, DocumentMissing } from "../documents/DocumentStates";
 import { useDocumentList } from "../documents/useDocument";
@@ -30,6 +30,9 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [fieldError, setFieldError] = useState<{ field: string; message: string }>();
   const [conflict, setConflict] = useState(false);
+  const [confirmName, setConfirmName] = useState("");
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [disconnectError, setDisconnectError] = useState<string>();
   const { list } = useDocumentList(projectId);
   const checklist = useChecklist(projectId);
 
@@ -92,6 +95,22 @@ export default function SettingsPage() {
       setFieldError(field ?? { field: "docsRoot", message: "저장하지 못했습니다." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const disconnect = async () => {
+    if (!project.manageable || disconnecting) {
+      return;
+    }
+    setDisconnecting(true);
+    setDisconnectError(undefined);
+    try {
+      await apiDelete(`/projects/${project.id}`, { fullName: confirmName }, csrfToken);
+      // 없는 프로젝트의 주소에 남겨 두지 않는다.
+      window.location.assign("/");
+    } catch (error) {
+      setDisconnecting(false);
+      setDisconnectError(isApiError(error) ? error.message : "연결을 끊지 못했습니다.");
     }
   };
 
@@ -164,6 +183,33 @@ export default function SettingsPage() {
           )}
           {saved && <span className="n" role="status">저장했습니다</span>}
         </form>
+
+        {project.manageable && (
+          <section className="danger">
+            <h2>연결 해제</h2>
+            <p className="n">
+              수집한 문서·첨부·작업·Issue 사본을 모두 지웁니다. GitHub 저장소는 건드리지 않습니다.
+            </p>
+            <label htmlFor="confirmName">
+              끊으려면 <span className="mono">{project.fullName}</span>을 그대로 입력하세요
+            </label>
+            <input
+              id="confirmName"
+              value={confirmName}
+              onChange={(event) => setConfirmName(event.target.value)}
+            />
+            {disconnectError && <p className="n" role="alert">{disconnectError}</p>}
+            <button
+              type="button"
+              className="button button--danger"
+              /* 이름이 맞기 전에는 누를 수 없다. 되돌릴 수 없는 일을 단추 하나로 만들지 않는다. */
+              disabled={confirmName !== project.fullName || disconnecting}
+              onClick={disconnect}
+            >
+              연결 끊기
+            </button>
+          </section>
+        )}
       </section>
     </AppShell>
   );

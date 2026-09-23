@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -90,6 +91,18 @@ public class ProjectController {
                                              @RequestBody ProjectService.UpdateCommand command,
                                              HttpServletRequest request) {
         return projects.update(user(request), id, command);
+    }
+
+    public record DisconnectRequest(String fullName) {
+    }
+
+    /** API-026. 되돌릴 수 없으므로 저장소 전체이름을 확인 값으로 받는다. */
+    @DeleteMapping("/projects/{id}")
+    public ResponseEntity<Void> disconnect(@PathVariable UUID id,
+                                           @RequestBody(required = false) DisconnectRequest request,
+                                           HttpServletRequest servletRequest) {
+        projects.disconnect(user(servletRequest), id, request == null ? null : request.fullName());
+        return ResponseEntity.noContent().build();
     }
 
     private static CurrentUser user(HttpServletRequest request) {

@@ -142,17 +142,53 @@ describe("UI-015 연결 설정", () => {
     // 누를 수 있게 보이는데 거절당하는 단추를 두지 않는다.
     expect(screen.queryByRole("button", { name: "저장" })).toBeNull();
     expect(screen.getByLabelText("문서 경로")).toHaveAttribute("readonly");
+    // 끊는 구획 자체를 보이지 않는다.
+    expect(screen.queryByRole("heading", { name: "연결 해제" })).toBeNull();
   });
 
-  it("has no way to disconnect the repository", async () => {
+  it("will not disconnect until the name matches exactly", async () => {
     stubApi(api());
     open();
 
-    await waitFor(() => expect(screen.getByRole("heading", { name: "연결 설정" })).toBeInTheDocument());
-    // 그 계약이 없다. 되돌릴 수 없는 일을 단추 하나로 만들지 않는다.
-    const labels = screen.queryAllByRole("button").map((button) => button.textContent ?? "");
-    expect(labels.some((label) => /해제|끊기|삭제|연결 끊/.test(label))).toBe(false);
-    expect(screen.getByText(/연결한 저장소는 바꾸지 않습니다/)).toBeInTheDocument();
+    const confirm = await screen.findByLabelText(/그대로 입력하세요/);
+    const button = screen.getByRole("button", { name: "연결 끊기" });
+    // 되돌릴 수 없는 일을 단추 하나로 만들지 않는다.
+    expect(button).toBeDisabled();
+
+    await userEvent.type(confirm, "UncleSamsun/다른것");
+    expect(button).toBeDisabled();
+
+    await userEvent.clear(confirm);
+    await userEvent.type(confirm, "UncleSamsun/syncdoc");
+    expect(button).toBeEnabled();
+  });
+
+  it("says what disappears before asking to confirm", async () => {
+    stubApi(api());
+    open();
+
+    await waitFor(() => expect(screen.getByRole("heading", { name: "연결 해제" })).toBeInTheDocument());
+    // 무엇이 사라지는지 먼저 알린다. GitHub 저장소를 지운다는 오해를 남기지 않는다.
+    expect(screen.getByText(/수집한 문서·첨부·작업·Issue 사본을 모두 지웁니다/)).toBeInTheDocument();
+    expect(screen.getByText(/GitHub 저장소는 건드리지 않습니다/)).toBeInTheDocument();
+  });
+
+  it("sends the name as the confirmation when disconnecting", async () => {
+    vi.stubGlobal("location", { ...window.location, assign: vi.fn(), reload: vi.fn() });
+    stubApi(api());
+    open();
+
+    const confirm = await screen.findByLabelText(/그대로 입력하세요/);
+    await userEvent.type(confirm, "UncleSamsun/syncdoc");
+    await userEvent.click(screen.getByRole("button", { name: "연결 끊기" }));
+
+    await waitFor(() => {
+      const removed = calls.find((call) => call.init?.method === "DELETE");
+      expect(removed).toBeDefined();
+      expect(JSON.parse(String(removed!.init?.body))).toEqual({ fullName: "UncleSamsun/syncdoc" });
+      expect(new Headers(removed!.init?.headers).get("X-CSRF-Token")).toBe("csrf-1");
+    });
+    expect(window.location.assign).toHaveBeenCalledWith("/");
   });
 
   it("says the branch is changed somewhere else", async () => {

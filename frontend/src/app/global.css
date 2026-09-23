@@ -1263,3 +1263,52 @@ main {
   border: 1px solid var(--line2);
   border-radius: 6px;
 }
+
+/* 연결 해제 (UI-015). 다른 설정과 섞지 않는다. */
+.danger {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 26px;
+  padding: 16px;
+  border: 1px solid var(--st-fail);
+  border-radius: 8px;
+  background: var(--sf-fail);
+}
+
+.danger h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--fail-ink);
+}
+
+.danger label {
+  font-size: 13.5px;
+  color: var(--ink2);
+  margin-top: 8px;
+}
+
+.danger input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.button--danger {
+  align-self: flex-start;
+  margin-top: 10px;
+  border-color: var(--st-fail);
+  background: var(--bg);
+  color: var(--fail-ink);
+}
+
+.button--danger:disabled {
+  border-color: var(--line2);
+  color: var(--ink3);
+  cursor: not-allowed;
+}
