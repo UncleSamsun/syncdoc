@@ -49,8 +49,12 @@ export async function apiPatch<T>(path: string, body: unknown, csrfToken: string
   return send<T>("PATCH", path, body, csrfToken);
 }
 
+export async function apiDelete<T>(path: string, body: unknown, csrfToken: string): Promise<T | null> {
+  return send<T>("DELETE", path, body, csrfToken);
+}
+
 async function send<T>(
-  method: "POST" | "PATCH",
+  method: "POST" | "PATCH" | "DELETE",
   path: string,
   body: unknown,
   csrfToken: string,

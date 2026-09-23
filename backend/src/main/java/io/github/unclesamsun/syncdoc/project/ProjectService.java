@@ -41,12 +41,14 @@ public class ProjectService {
     private final DocumentRepository documents;
     private final SyncQueue queue;
     private final SyncStatusReader syncStatus;
+    private final ProjectRemover remover;
     private final TransactionTemplate transactions;
     private final Clock clock;
 
     public ProjectService(ProjectRepository projects, InstallationRepository installations,
                           RepositoryAccessGateway repositories, UserCredentialService credentials,
                           DocumentRepository documents, SyncQueue queue, SyncStatusReader syncStatus,
+                          ProjectRemover remover,
                           TransactionTemplate transactions, Clock clock) {
         this.projects = projects;
         this.installations = installations;
@@ -55,6 +57,7 @@ public class ProjectService {
         this.documents = documents;
         this.queue = queue;
         this.syncStatus = syncStatus;
+        this.remover = remover;
         this.transactions = transactions;
         this.clock = clock;
     }
@@ -159,6 +162,25 @@ public class ProjectService {
         repositories.findRepository(token, project.getGithubRepositoryId())
                 .orElseThrow(ProjectNotFoundException::new);
         return toView(project, isManageable(project, user));
+    }
+
+    /**
+     * API-026. 연결을 끊고 그 프로젝트가 수집해 둔 자료를 지운다.
+     *
+     * @param fullName 확인 값. 지금 연결된 저장소의 전체이름과 정확히 같아야 실행한다.
+     *                 되돌릴 수 없는 일이라 한 번 더 확인받는다
+     */
+    public void disconnect(CurrentUser user, UUID projectId, String fullName) {
+        ProjectEntity project = projects.findById(projectId).orElseThrow(ProjectNotFoundException::new);
+        if (!isManageable(project, user)) {
+            // 끊을 수 없는 사람에게는 있는지조차 알리지 않는다.
+            throw new ProjectNotFoundException();
+        }
+        if (fullName == null || !project.getFullName().equals(fullName.trim())) {
+            throw new InvalidConnectionException("fullName",
+                    "저장소 이름이 다릅니다. " + project.getFullName() + "을 그대로 입력하세요.");
+        }
+        remover.remove(projectId);
     }
 
     /** API-012. 연결자 또는 서비스 관리자만 바꿀 수 있고, 그 외에는 존재를 알리지 않는다. */

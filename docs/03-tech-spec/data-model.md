@@ -40,6 +40,14 @@ projects(project_id=id,current_snapshot_id)는 document_snapshots(project_id,id)
 
 규칙 파일은 저장소 루트의 `rules/spec-format.json`과 `rules/project-settings.md`다. 문서 경로 설정과 무관한 고정 경로이며, 읽지 못하면 그 사실을 미검사로 담는다. 판정을 비워 두고 통과로 보이게 하지 않는다.
 
+### 연결 해제의 삭제 순서
+
+외래키가 가리키는 반대 방향으로 지운다. `tasks` → `documents` → `assets` → `github_issue_snapshots` → `sync_runs` → `sync_jobs` → `projects.current_snapshot_id`를 비움 → `document_snapshots` → `projects` 순이다. 이력이 작업을 가리키므로(`sync_runs.job_id`) 이력을 먼저 지운다. `projects`가 `document_snapshots`를 가리키고 `document_snapshots`가 `projects`를 가리키므로 게시본을 지우기 전에 현재 게시본 참조를 먼저 끊는다.
+
+`asset_contents`는 내용 해시가 열쇠라 여러 게시본이 같은 행을 가리킨다. 프로젝트 하나를 끊는다고 지우면 다른 프로젝트의 그림이 깨진다. 가리키는 `assets`가 하나도 남지 않은 행만 지운다.
+
+`webhook_deliveries`는 프로젝트에 매이지 않는다. 중복 delivery를 막는 기록이므로 남긴다.
+
 ## 소유와 파생 데이터
 
 서비스 고유 정본은 초대·세션·연결 설정이다. MD와 GitHub 원문은 GitHub에 남고, 문서/작업/Issue snapshot은 다시 만들 수 있다. 원문 조회는 source_revision과 path로 식별한다. 서비스에서 MD를 편집하거나 파생 결과로 원문을 덮어쓰지 않는다.
