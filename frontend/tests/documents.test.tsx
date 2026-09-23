@@ -159,12 +159,11 @@ describe("UI-003 문서 본문", () => {
     stubApi(api({ document: json(titled) }));
     open("/projects/p1/documents/d2");
 
-    await waitFor(() => expect(document.querySelector(".doc-body")).toBeInTheDocument());
+    // 본문은 효과에서 그려진다. 그릇이 생긴 것만 보고 단언하면 그리기 전에 판정하게 된다.
+    await waitFor(() => expect(document.getElementById("api-계약")).not.toBeNull());
     const docBody = document.querySelector(".doc-body") as HTMLElement;
     // 제목은 화면 위에 이미 있다. 본문에서 한 번 더 읽게 하지 않는다.
     expect(docBody.querySelector("h1")).toBeNull();
-    // 검색 결과와 목차가 이 id로 찾아온다. 제목을 뺀다고 앵커까지 없애면 그 링크가 죽는다.
-    expect(document.getElementById("api-계약")).not.toBeNull();
   });
 
   it("opens a file outside the collected root in a new tab and says where it goes", async () => {

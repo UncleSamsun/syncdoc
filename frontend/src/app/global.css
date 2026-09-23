@@ -1193,3 +1193,73 @@ main {
   border-style: dashed;
   color: var(--ink3);
 }
+
+/* 연결 설정 (UI-015) */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px 34px 34px;
+  max-width: 720px;
+}
+
+.settings .fixed {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.settings .fixed dt {
+  color: var(--ink2);
+  font-size: 13.5px;
+}
+
+.settings .fixed dd {
+  margin: 0;
+}
+
+.sform {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sform label {
+  font-size: 13.5px;
+  color: var(--ink2);
+  margin-top: 8px;
+}
+
+.sform input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* 바꿀 수 없는 사람에게는 입력이 잠겨 보여야 한다. */
+.sform input[readonly] {
+  background: var(--sunk);
+  color: var(--ink2);
+}
+
+.sform .button {
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
+.gear {
+  font-size: 13px;
+  color: var(--ink2);
+  text-decoration: none;
+  padding: 4px 8px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+}

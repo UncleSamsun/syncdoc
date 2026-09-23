@@ -149,6 +149,22 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     }
   });
 
+  test("연결 설정에서 바꿀 수 있는 것과 없는 것이 갈린다 (UI-015)", async ({ page }) => {
+    await open(page);
+    await page.getByRole("link", { name: "설정", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "연결 설정" })).toBeVisible();
+
+    // 저장소와 브랜치는 여기서 바꾸지 않는다. 왜 그런지 화면이 말한다.
+    await expect(page.locator(".settings .fixed")).toContainText("연결한 저장소는 바꾸지 않습니다");
+    await expect(page.locator(".settings .fixed")).toContainText("상단바에서 바꿉니다");
+    await expect(page.locator("#docsRoot")).toHaveValue(/\S/);
+
+    // 연결을 끊는 수단을 두지 않는다. 그 계약이 없다.
+    const labels = await page.locator(".settings button").allTextContents();
+    expect(labels.some((label) => /해제|끊기|삭제/.test(label))).toBe(false);
+    await expectNoSideScroll(page);
+  });
+
   test("작업 전체 목록이 집계와 같은 수를 보여준다 (UI-014)", async ({ page }) => {
     const projectId = await open(page);
     await page.getByRole("link", { name: /작업/ }).first().click();
