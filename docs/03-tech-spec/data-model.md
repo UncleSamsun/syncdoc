@@ -1,6 +1,12 @@
+---
+id: DOC-011
+type: tech-data
+status: 확정
+---
+
 # MVP 데이터 모델
 
-상태: 사용자 확정 · 2026-09-09 · SQL migration 미구현
+SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스키마다.
 
 근거: [API 계약](api-spec.md), [MVP 요구](../01-prd/mvp-scope.md). PostgreSQL 사용. ID는 UUID PK, 외부 GitHub ID는 text unique, 시각은 timestamptz. 아래 필드는 `?`만 NULL 허용하며 나머지는 NOT NULL이다. enum 값은 애플리케이션과 DB CHECK를 맞춘다.
 
@@ -13,17 +19,34 @@
 | user_credentials | user_id, access_token_ciphertext, refresh_token_ciphertext?, expires_at?, refresh_expires_at?, key_version, version | user_id PK/FK→users. 토큰 암호화키는 DB 밖. refresh는 낙관적 잠금으로 중복 회전 방지 |
 | sessions | id, user_id, token_hash, expires_at, created_at | user_id→users, token_hash unique. 원시 쿠키값 미저장 |
 | github_installations | id, github_installation_id, owner_github_id, status, updated_at | 외부 installation ID unique. 실제 private key는 배포 secret에 저장 |
-| projects | id, github_repository_id, full_name, installation_id, created_by, branch, docs_root, github_project_node_id?, current_snapshot_id?, version, created_at | repository ID unique, installation_id→github_installations, created_by→users. snapshot 복합 FK 아래 참고 |
+| projects | id, github_repository_id, full_name, installation_id, created_by, branch, docs_root, github_project_node_id?, current_snapshot_id?, issues_observed_at?, issues_complete, version, created_at | repository ID unique, installation_id→github_installations, created_by→users. snapshot 복합 FK 아래 참고 |
 | sync_jobs | id, project_id, kind, state, attempt, due_at, lease_until?, lease_token?, target_revision?, rerun_requested, last_error_code?, created_at | project_id→projects. queued/running 활성 kind별 partial unique(project_id,kind). state CHECK |
 | sync_runs | id, project_id, job_id, started_at, finished_at?, outcome, source_revision?, error_code?, diagnostics_json | project_id→projects, job_id→sync_jobs. latest attempt와 latest success를 구분. diagnostics는 오류 경로/코드만 보존 |
-| document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id) |
-| documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
-| assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0 |
+| document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete, checklist_json | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id). checklist_json은 그 revision의 규칙 파일로 판정한 산출물 체크리스트(API-025) |
+| documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, links_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
+| assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0. mime은 허용 목록 CHECK |
+| asset_contents | storage_key, bytes, byte_size, created_at | storage_key는 내용 해시다. assets.storage_key→asset_contents. 같은 그림이 여러 게시본에 나와도 바이트는 한 벌만 남는다 |
 | tasks | id, snapshot_id, task_spec_id, document_id, anchor, confirmed, source_refs_json, validation_refs_json, github_issue_node_id? | snapshot_id→document_snapshots. document는 동일 snapshot 복합 FK. unique(snapshot_id,task_spec_id) |
 | github_issue_snapshots | id, project_id, github_issue_node_id, number, title, state, state_reason?, assignees_json, labels_json, linked_prs_json, observed_at | project_id→projects. unique(project_id,github_issue_node_id). GitHub가 정본인 파생 정보 |
 | webhook_deliveries | delivery_id, event, received_at, processed_at? | delivery_id PK. 서명 검증 후 저장. raw payload·토큰 미저장 |
 
 projects(project_id=id,current_snapshot_id)는 document_snapshots(project_id,id)를 참조해 다른 프로젝트 snapshot을 연결하지 못하게 한다. projects 생성 후 snapshots를 만들고 current_snapshot_id FK를 추가하는 migration 순서를 사용한다. documents에도 unique(snapshot_id,id)를 두고 tasks(snapshot_id,document_id)가 참조한다. 삭제는 명시적인 정리 작업으로 하며 프로젝트에서 무제한 cascade 삭제하지 않는다.
+
+### 산출물 체크리스트
+
+판정은 수집할 때 한 번 하고 게시본에 함께 둔다. 별도 표를 두지 않는다. 조회 단위가 게시본 하나이고 항목별로 질의할 요구가 없다.
+
+수집 중에는 문서 원문이 손에 있지만 게시본에는 변환 결과만 남는다. 조회 시점에 다시 판정하려면 원문을 따로 저장해야 하고, 같은 게시본이 때에 따라 다른 판정을 내게 된다. 게시본은 불변이므로 판정도 그 revision에 고정한다.
+
+규칙 파일은 저장소 루트의 `rules/spec-format.json`과 `rules/project-settings.md`다. 문서 경로 설정과 무관한 고정 경로이며, 읽지 못하면 그 사실을 미검사로 담는다. 판정을 비워 두고 통과로 보이게 하지 않는다.
+
+### 연결 해제의 삭제 순서
+
+외래키가 가리키는 반대 방향으로 지운다. `tasks` → `documents` → `assets` → `github_issue_snapshots` → `sync_runs` → `sync_jobs` → `projects.current_snapshot_id`를 비움 → `document_snapshots` → `projects` 순이다. 이력이 작업을 가리키므로(`sync_runs.job_id`) 이력을 먼저 지운다. `projects`가 `document_snapshots`를 가리키고 `document_snapshots`가 `projects`를 가리키므로 게시본을 지우기 전에 현재 게시본 참조를 먼저 끊는다.
+
+`asset_contents`는 내용 해시가 열쇠라 여러 게시본이 같은 행을 가리킨다. 프로젝트 하나를 끊는다고 지우면 다른 프로젝트의 그림이 깨진다. 가리키는 `assets`가 하나도 남지 않은 행만 지운다.
+
+`webhook_deliveries`는 프로젝트에 매이지 않는다. 중복 delivery를 막는 기록이므로 남긴다.
 
 ## 소유와 파생 데이터
 
@@ -31,13 +54,19 @@ projects(project_id=id,current_snapshot_id)는 document_snapshots(project_id,id)
 
 GitHub Project 상태·목표일·숨겨진 다른 저장소 항목은 공용 테이블에 복제하지 않는다. 첫 MVP는 사용자 자격증명으로 요청 시 조회한다. 성능 측정 뒤 사용자+Project별 캐시를 도입할 수 있지만 별도 권한 철회 설계가 필요하다.
 
-작업-Issue 연결은 Issue 본문의 서비스 관리 메타데이터 영역(작업 ID·명세 경로·기준 revision) 한 곳을 외부 정본으로 제안한다. tasks.github_issue_node_id는 이를 읽은 파생값이다. 한 작업 ID에 여러 Issue가 주장되면 mapping_conflict로 표시하고 임의 선택하지 않는다. Issue 번호와 TASK ID는 분리한다.
+작업-Issue 연결은 **Issue 제목의 `TASK-NNN:` 접두사**로 한다(2026-09-21 사용자 확정). 이 저장소의 Issue가 이미 쓰는 형식이라 추가 규약 없이 동작하고, 사람이 Issue 목록에서도 어느 작업인지 바로 읽는다. tasks.github_issue_node_id는 이를 읽은 파생값이다. 한 작업 ID에 여러 Issue가 주장되면 mapping_conflict로 표시하고 임의 선택하지 않는다. Issue 번호와 TASK ID는 분리한다.
+
+검토했지만 채택하지 않은 안: Issue 본문에 서비스 관리 메타데이터 영역(작업 ID·명세 경로·기준 revision)을 두는 방식. 제목을 고쳐도 연결이 유지되고 기준 revision까지 묶을 수 있지만, 기존 Issue를 모두 고쳐야 하고 블록 형식을 규칙 파일에 새로 확정해야 한다. 제목 규칙이 실제로 부족해지면 그때 다시 본다.
 
 ## 저장과 갱신
+
+links_json은 문서 안의 링크를 서비스 경로로 바꾼 결과다. 링크 해소는 같은 snapshot의 다른 문서를 알아야 가능하므로 변환 시점에 한 번 만들어 보관하고 조회 때 다시 계산하지 않는다.
 
 동기화가 전체 문서를 준비한 뒤 complete=true인 snapshot으로 current_snapshot_id를 한 트랜잭션에서 교체한다. 파싱/정화/중복 ID 오류가 있으면 새 게시본으로 전환하지 않고 실패 기록을 남긴다. 최초 오류도 빈 성공으로 처리하지 않는다.
 
 worker는 SKIP LOCKED로 due 작업 하나를 잡고 임대 token을 부여한다. 30초 heartbeat, 2분 임대를 제안한다. 완료 시 같은 lease_token인지 검사하고 재시도 작업의 결과를 오래된 worker가 덮어쓰지 못하게 한다. 활성 작업 중 이벤트는 rerun_requested로 합치고 완료 후 최신 revision 재확인 작업을 예약한다. 최소 재시도60초/최대15분,429는 GitHub 재시도 시각을 우선한다.
+
+첨부 내용의 저장 배치는 2026-09-21 사용자 승인으로 DB에 둔다(`asset_contents`). 자산당 10MB 제안값이면 감당되고 백업·권한 검사가 한 곳에 모인다. 부하를 확인한 뒤 파일·객체 저장소로 옮길 수 있으며 그때 `storage_key`의 뜻만 바뀐다.
 
 첨부는 실행 불가한 데이터로 취급한다. 최초 지원은 PNG/JPEG/WebP/GIF, 자산당10MB, 문서당1MB·최대1,000문서를 제안한다. SVG/HTML 자산·symlink·경로 이탈은 제한한다. 이 수치는 제안값이며 부하 검증 후 조정한다.
 

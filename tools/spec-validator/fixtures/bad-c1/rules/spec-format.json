@@ -1,0 +1,123 @@
+{
+  "types": [
+    {
+      "type": "prd-overview",
+      "name": "프로젝트 개요",
+      "spec": true,
+      "condition": "모든 프로젝트",
+      "required": ["문제", "대상 사용자", "목표", "성공 판단", "포함 범위", "제외 범위", "제약", "적용 Spec", "용어"],
+      "labels": ["문제", "대상 사용자", "목표", "성공 판단", "포함 범위", "제외 범위", "제약", "적용 Spec", "용어"],
+      "checks": [
+        { "unit": "document", "labels": ["문제", "대상 사용자", "목표", "성공 판단", "포함 범위", "제외 범위", "제약", "적용 Spec", "용어"] }
+      ]
+    },
+    {
+      "type": "prd-requirements",
+      "name": "기능·품질 요구",
+      "spec": true,
+      "condition": "모든 프로젝트",
+      "required": ["요구 ID", "사용자 필요", "기대 동작과 품질 조건", "예외", "인수 기준", "근거"],
+      "labels": ["사용자 필요", "기대 동작", "예외", "인수 기준", "근거"],
+      "checks": [
+        { "unit": "section", "idPrefix": "REQ", "labels": ["예외", "인수 기준", "근거"] }
+      ]
+    },
+    {
+      "type": "ui-conventions",
+      "name": "공통 UI 규칙",
+      "spec": true,
+      "condition": "사용자 화면이 있으면",
+      "required": ["색·글자·간격 토큰", "공통 컴포넌트", "탐색", "접근성", "공통 상태 표현"],
+      "labels": [],
+      "checks": []
+    },
+    {
+      "type": "ui-screens",
+      "name": "화면 명세",
+      "spec": true,
+      "condition": "사용자 화면이 있으면",
+      "required": ["화면 ID", "연결 요구", "진입·종료 경로", "레이아웃", "사용자 행동", "로딩·빈 상태·오류·권한 상태", "화면 고유 검증"],
+      "labels": ["연결 요구", "진입", "종료", "레이아웃", "사용자 행동", "상태", "검증", "관련 작업"],
+      "checks": [
+        { "unit": "section", "idPrefix": "UI", "labels": ["연결 요구", "검증"] }
+      ]
+    },
+    {
+      "type": "tech-overview",
+      "name": "기술 개요",
+      "spec": true,
+      "condition": "모든 프로젝트",
+      "required": ["시스템 경계", "모듈 책임·의존성", "외부 연동", "주요 흐름", "기술 선택과 이유", "검증 전략"],
+      "labels": [],
+      "checks": []
+    },
+    {
+      "type": "tech-interface",
+      "name": "인터페이스 계약",
+      "spec": true,
+      "condition": "API·이벤트·파일 경계가 있으면",
+      "required": ["계약 ID", "연결 요구", "입력", "출력", "오류", "접근 조건", "부작용", "재시도·중복 처리"],
+      "labels": ["연결 요구", "입력", "출력", "오류", "접근 조건", "부작용", "재시도"],
+      "checks": [
+        { "unit": "table", "heading": "계약 일람", "columns": ["ID", "연결 요구"], "idPrefix": "API" },
+        { "unit": "document", "labels": ["접근 조건", "부작용", "재시도"] }
+      ]
+    },
+    {
+      "type": "tech-data",
+      "name": "데이터 설계",
+      "spec": true,
+      "condition": "영속 데이터가 있으면",
+      "required": ["엔티티", "필드 의미", "키·관계·제약", "수명", "변경·마이그레이션"],
+      "labels": [],
+      "checks": []
+    },
+    {
+      "type": "tech-ops",
+      "name": "실행·운영",
+      "spec": true,
+      "condition": "배포·호스팅 또는 지속 실행 작업이 있으면",
+      "required": ["실행 환경", "설정·비밀값 주입", "배포", "상태 확인", "장애·복구", "백업 대상 또는 불필요 사유"],
+      "labels": [],
+      "checks": []
+    },
+    {
+      "type": "tasks",
+      "name": "작업 정의",
+      "spec": true,
+      "condition": "구현 대상으로 정한 기능",
+      "required": ["작업 ID", "목적", "연결 요구·설계", "포함·제외 범위", "선행 작업", "산출물", "검증 방법", "완료 조건"],
+      "labels": ["목적", "근거", "범위", "선행", "산출물", "검증", "완료"],
+      "checks": [
+        { "unit": "section", "idPrefix": "TASK", "labels": ["근거", "선행", "산출물", "검증", "완료"] }
+      ]
+    },
+    {
+      "type": "proposal",
+      "name": "검토 초안",
+      "spec": false,
+      "condition": "확정 전 대안을 정리할 때",
+      "required": ["무엇을 제안하는지와 확정되지 않은 항목"],
+      "labels": [],
+      "checks": []
+    },
+    {
+      "type": "record",
+      "name": "경과 기록",
+      "spec": false,
+      "condition": "결정 경위를 남길 때",
+      "required": ["결정한 내용과 근거", "어느 문서가 정본인지"],
+      "labels": [],
+      "checks": []
+    },
+    {
+      "type": "guide",
+      "name": "안내",
+      "spec": false,
+      "condition": "읽는 방법·착수 방법을 알릴 때",
+      "required": ["대상과 먼저 읽을 문서"],
+      "labels": [],
+      "checks": []
+    }
+  ]
+}

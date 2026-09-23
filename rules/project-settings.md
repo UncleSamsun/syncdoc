@@ -9,7 +9,87 @@
 - 작업 브랜치: `dev`에서 파생, `<type>/<issue-number>-<short-description>`
 - 초기 저장소 등록은 현재 문서와 규칙을 main/dev에 동일하게 올린다. 후속 변경은 협업 규칙을 따른다.
 
+## 적용 규칙 버전
+
+[REQ-008](../docs/01-prd/mvp-scope.md)이 요구하는 "프로젝트가 기록하는 적용 규칙 버전"을 이 표 한 곳에서 관리한다. 문서마다 수동으로 복사하지 않는다. 검증기와 산출물 체크리스트는 이 값을 근거로 검사 대상을 정한다.
+
+| 규칙 | 버전 | 상태 |
+|---|---|---|
+| [GitHub 협업](github-collaboration.md) | 2026-09-09 | 활성 |
+| [ID와 문서 참조](identity-and-references.md) | 2026-09-09 | 활성 (ID 발급 형식·메타데이터 스키마 미확정) |
+| [SDD 역할과 승인 범위](sdd-workflow.md) | 2026-09-09 | 활성 |
+| [공통 UI 규칙](../docs/02-ui-spec/ui-conventions.md) | 2026-09-10 | 활성 |
+| [화면 명세](../docs/02-ui-spec/ui-screens.md) | 2026-09-10 | 활성 |
+| [문서 작성 규칙](spec-writing.md) | 2026-09-10 | 활성 |
+| [포맷 정의](spec-format.json) | 2026-09-10 | 활성 (검사기와 SyncDoc이 읽는 기계 정본) |
+| [검증 규칙](validation.md) | 2026-09-10 | 활성 (검증기 [`tools/spec-validator/`](../tools/spec-validator/README.md) 구현) |
+
+버전은 해당 규칙이 확정된 날짜다. 규칙을 고치면 이 표의 날짜도 함께 올린다. 미작성 규칙을 활성으로 표시하지 않는다.
+
+산출물 목록과 산출물별 필수 내용의 기계 정본은 [포맷 정의](spec-format.json)이고, 사람이 읽는 설명은 [문서 작성 규칙](spec-writing.md) §3·§5다. 검사기 C0이 둘의 일치를 확인한다. [공통 Spec 구성안](../docs/01-prd/spec-standard-proposal.md)의 해당 절은 승격 후 링크만 남겼다.
+
+## 적용 Spec
+
+이 프로젝트가 적용하는 문서 종류다. 종류와 필수 내용의 정의는 [문서 작성 규칙](spec-writing.md) §3에 있다. [검증 규칙](validation.md) C1이 이 표를 읽어 필수 문서 존재를 판정하므로 표의 형식을 바꾸지 않는다.
+
+| type | 적용 | 사유 |
+|---|---|---|
+| prd-overview | 적용 | |
+| prd-requirements | 적용 | |
+| ui-conventions | 적용 | |
+| ui-screens | 적용 | |
+| tech-overview | 적용 | |
+| tech-interface | 적용 | |
+| tech-data | 적용 | |
+| tech-ops | 적용 | |
+| tasks | 적용 | |
+| proposal | 적용 | |
+| record | 적용 | |
+| guide | 적용 | |
+
 ## 현재 상태
+
+### 로컬 실행 환경
+
+| 항목 | 값 |
+|---|---|
+| JDK 25 | `C:\Program Files\Microsoft\jdk-25.0.4.101-hotspot` (Microsoft OpenJDK 25.0.4.1 LTS, 2026-09-10 설치) |
+| 문서 검증기 | `python tools/spec-validator/validate.py` (Python 3.11, 표준 라이브러리만) |
+| 화면 흐름 시험 | `cd frontend && npm run e2e` (Playwright, Chromium만 내려받음) |
+
+셸의 기본 `java`는 Temurin 17이다. Gradle toolchain이 JDK 25를 요구하므로 `JAVA_HOME`을 JDK 25로 두고 실행한다. TASK-001에서 확인했다.
+
+이 PC의 Windows Application Control 정책이 서명·평판이 없는 네이티브 Node 모듈의 로드를 차단한다. `frontend/package.json`은 `overrides`로 `rolldown`을 1.2.6에 고정한다. 1.2.8 바인딩은 차단되어 Vite와 Vitest가 시작하지 못한다. 다른 PC에서 이 고정이 필요 없다면 그때 조정한다. Playwright는 같은 정책에 걸리지 않았다(2026-09-21 설치·실행 확인).
+
+### GitHub App
+
+로그인과 수집이 쓰는 App이다. 비밀값은 여기 적지 않는다. `deploy/.env`와 배포 환경에만 둔다.
+
+| 항목 | 값 |
+|---|---|
+| 이름 | syncdoc-dev-unclesamsun |
+| App ID | 4895456 |
+| 설치 범위 | 모든 계정 (2026-09-22 변경. 이전에는 소유 계정 전용이었다) |
+| 저장소 접근 | 모든 저장소 (2026-09-23 변경. 이전에는 `syncdoc` 하나만 골라 두어 연결 후보가 1개였다) |
+| 콜백 주소 | `http://localhost:5173/...`, `http://localhost:8080/...`, `http://localhost:8081/api/v1/auth/github/callback` |
+| 권한 | Contents·Metadata·Issues·Pull requests 읽기 |
+
+이름은 아직 바꾸지 않았다. 아무 계정이나 설치할 수 있게 열어 두었으므로 이름에 개발용이라는 표시는 남겨 둔다. 실제로는 `localhost`를 가리킨다. `syncdoc-dev`는 같은 이름의 계정이 이미 있어 App 이름으로 쓸 수 없다(GitHub은 계정과 App이 같은 이름 공간을 쓴다).
+
+설치 범위를 연 이유는 두 번째 계정으로 권한 경계를 확인하기 위해서다. 소유 계정 전용이면 **다른 계정은 authorize 화면에서 GitHub 404를 받아** 우리 앱의 초대 화면까지 닿지도 못한다. 2026-09-21에 확인했다.
+
+### 고정한 버전 (TASK-001, 2026-09-10)
+
+| 구성 | 버전 | 고정 위치 |
+|---|---|---|
+| Spring Boot | 4.1.1 | `backend/build.gradle.kts` |
+| Gradle | 9.7.1 | `backend/gradle/wrapper/gradle-wrapper.properties` |
+| Java toolchain | 25 | `backend/build.gradle.kts` |
+| PostgreSQL | 17 | `deploy/compose.yaml`, 테스트 컨테이너 |
+| React·Vite·Vitest·rolldown | `frontend/package-lock.json` | lock 파일과 `overrides` |
+| Playwright | `frontend/package-lock.json` | lock 파일 (2026-09-21 도입, Chromium만 설치) |
+
+실제 실행·검증 명령은 [README](../README.md)의 로컬 실행 절에 있다.
 
 ### 확정 기술 구성
 
@@ -17,13 +97,15 @@
 
 화면 흐름은 프로젝트 선택 → 현황·문서 목록 → 문서 선택 시 React 문서 화면으로 유지한다. VitePress 비교 화면은 읽기 스타일 참고이며 제품 기능으로 그대로 이식하지 않는다. 추가 목업은 요청하지 않았다.
 
-문서·협업 규칙을 정의하는 단계다. 애플리케이션, 실행 가능한 빌드·테스트·링크 검증기, GitHub Project, 보호 규칙, 배포 파이프라인은 아직 구성하지 않았다. 검증 명령을 임의로 만들거나 검증 통과로 표시하지 않는다.
+빌드·테스트가 도는 실행 골격까지 만든 단계다. GitHub App 연동, GitHub Project, 보호 규칙, 배포 파이프라인은 아직 구성하지 않았다. 검증 명령을 임의로 만들거나 검증 통과로 표시하지 않는다.
+
+검증기 CI 연결은 2026-09-21에 끝났다. `dev`·`main`으로 가는 PR과 `dev` push에서 [`.github/workflows/verify.yml`](../.github/workflows/verify.yml)이 백엔드 테스트·프런트 테스트와 빌드·문서 검사를 돌린다. 실제 흐름 검증에서 확인한 사실과 남은 제한은 [MVP 실제 흐름 검증 기록](../docs/04-tasks/mvp-verification-record.md)에 있다.
 
 ## 추가로 정할 설정
 
 - 로그인·초대·저장소 접근 방식
 - 기준 GitHub Project와 담당 영역
-- 의존성 세부 버전·ORM 및 실제 빌드·검증 명령
+- 세션 수명과 `state` 쿠키 수명 (TASK-002에서 12시간·10분으로 채택. 운영 기준은 미확정)
 - 클라우드/사내 서버 배포 환경과 릴리스 절차
 
 공통 동작은 [GitHub 협업 규칙](github-collaboration.md)을 참조한다. 저장소의 공개 여부와 향후 호스팅 서비스의 공개 가입 여부는 별개다.

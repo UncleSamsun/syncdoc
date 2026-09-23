@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: syncdoc
+  datasource:
+    url: ${SYNCDOC_DB_URL:jdbc:postgresql://localhost:5433/syncdoc}
+    username: ${SYNCDOC_DB_USER:syncdoc}
+    password: ${SYNCDOC_DB_PASSWORD:syncdoc}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+syncdoc:
+  auth:
+    admin-github-user-id: ${SYNCDOC_ADMIN_GITHUB_USER_ID:}
+    session-ttl: ${SYNCDOC_SESSION_TTL:12h}
+    state-ttl: ${SYNCDOC_STATE_TTL:10m}
+    cookie-secure: ${SYNCDOC_COOKIE_SECURE:true}
+    csrf-key: ${SYNCDOC_CSRF_KEY:}
+    uninvited-path: /uninvited
+  github:
+    client-id: ${SYNCDOC_GITHUB_CLIENT_ID:}
+    client-secret: ${SYNCDOC_GITHUB_CLIENT_SECRET:}
+    app-id: ${SYNCDOC_GITHUB_APP_ID:}
+    private-key: ${SYNCDOC_GITHUB_PRIVATE_KEY:}
+    redirect-uri: ${SYNCDOC_GITHUB_REDIRECT_URI:http://localhost:5173/api/v1/auth/github/callback}
+  sync:
+    worker-enabled: ${SYNCDOC_SYNC_WORKER_ENABLED:true}
+    poll-interval: ${SYNCDOC_SYNC_POLL_INTERVAL:60s}
+    lease-duration: ${SYNCDOC_SYNC_LEASE:2m}
+    min-retry-delay: ${SYNCDOC_SYNC_MIN_RETRY:60s}
+    max-retry-delay: ${SYNCDOC_SYNC_MAX_RETRY:15m}
+    max-documents: ${SYNCDOC_SYNC_MAX_DOCUMENTS:1000}
+    webhook-secret: ${SYNCDOC_GITHUB_WEBHOOK_SECRET:}
+  crypto:
+    token-key: ${SYNCDOC_TOKEN_KEY:}
+    key-version: ${SYNCDOC_TOKEN_KEY_VERSION:1}
+server:
+  port: ${SYNCDOC_PORT:8080}

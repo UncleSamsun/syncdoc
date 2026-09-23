@@ -1,0 +1,1314 @@
+/*
+ * 색·크기 값은 공통 UI 규칙(docs/02-ui-spec/ui-conventions.md)과 화면 정의 페이지에서 가져왔다.
+ * 값을 바꾸려면 그 문서를 먼저 고친다.
+ */
+:root {
+  font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --sunk: #f7f7f5;
+  --hover: #f1f1ee;
+  --line: #e7e7e4;
+  --line2: #d5d5d0;
+  --ink: #0d0d0d;
+  --ink2: #5b5b57;
+  --ink3: #8c8c86;
+  --act: #0d0d0d;
+  --st-todo-ink: #5f656b;
+  --st-prog-ink: #0a64ac;
+  --st-rev-ink: #8a5d04;
+  --st-done-ink: #127036;
+  --warn-ink: #b85408;
+  --st-fail: #d0392a;
+  --fail-ink: #d0392a;
+  --sf-fail: #fff4f3;
+  --sf-ok: #f0faf4;
+  --f-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  padding: 24px;
+}
+
+.mono {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+.centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-top: 15vh;
+  text-align: center;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 6px;
+  background: var(--act);
+  color: #fff;
+  text-decoration: none;
+}
+
+/* 셸 (UI-000) */
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.sh-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 50px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sh-top .brand {
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.sw {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.rootpath {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+.syncpill {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--st-done-ink);
+  color: var(--st-done-ink);
+  background: var(--sf-ok);
+  font-size: 13px;
+}
+
+.syncpill.stale {
+  border-color: var(--st-fail);
+  background: var(--sf-fail);
+  color: var(--fail-ink);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.shell-body {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  flex: 1;
+}
+
+.sh-side {
+  border-right: 1px solid var(--line);
+  background: var(--sunk);
+  padding: 10px 8px;
+  overflow-y: auto;
+}
+
+.nav-grp {
+  display: flex;
+  font-family: var(--f-mono);
+  font-size: 13px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  padding: 14px 9px 5px;
+}
+
+.nav-grp .cnt {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.shell-main {
+  min-width: 0;
+  padding: 0;
+}
+
+/* 문서 트리 (UI-003) */
+.tree {
+  display: flex;
+  flex-direction: column;
+}
+
+.fold-h {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 30px;
+  padding: 0 7px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink2);
+}
+
+.fold-h .fname {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.fold-h .n {
+  font-size: 12px;
+  color: var(--ink3);
+  font-variant-numeric: tabular-nums;
+}
+
+.fold--cur > .fold-h {
+  color: var(--ink);
+}
+
+.fold-b {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 1px 0 7px 13px;
+  padding-left: 8px;
+  border-left: 1px solid var(--line);
+}
+
+.fold-b a {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: 14px;
+  color: var(--ink2);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fold-b a:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.fold-b a[aria-current] {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 500;
+  border: 1px solid var(--line);
+}
+
+/* 문서 본문 (UI-003) */
+.doc-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 196px;
+}
+
+.doc {
+  padding: 26px 34px 34px;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+  /* 본문에 들어온 긴 주소도 같다. 넓은 것은 표·코드·다이어그램처럼 자기 상자에서 스크롤한다. */
+  overflow-wrap: anywhere;
+}
+
+.doc h1 {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.028em;
+}
+
+.dmeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 9px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+.doc-body {
+  /* 깊게 겹친 목록은 들여쓰기만으로 본문보다 넓어진다. 페이지를 밀지 말고 여기서 스크롤한다. */
+  overflow-x: auto;
+}
+
+.doc-body p,
+.doc-body li {
+  font-size: 16.5px;
+  line-height: 1.78;
+  max-width: 68ch;
+}
+
+.doc-body h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 26px 0 0;
+}
+
+.doc-body code {
+  font-family: var(--f-mono);
+  font-size: 14px;
+  background: var(--sunk);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+
+.doc-body img {
+  max-width: 100%;
+}
+
+/* 표는 자기 컨테이너에서만 가로로 스크롤한다. */
+.tblwrap {
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+.mdtbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  border: 1px solid var(--line);
+}
+
+.mdtbl th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink2);
+  background: var(--sunk);
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.mdtbl td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink2);
+}
+
+/* 다이어그램 */
+.dgm,
+.dgm-err {
+  margin: 18px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dgm-err {
+  border-color: var(--st-fail);
+}
+
+.dgm .bar,
+.dgm-err .bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 11px;
+  background: var(--sunk);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--ink3);
+}
+
+.dgm-err .bar {
+  background: var(--sf-fail);
+  border-bottom-color: var(--st-fail);
+  color: var(--fail-ink);
+}
+
+.dgm .bar .r,
+.dgm-err .bar .r {
+  margin-left: auto;
+  color: var(--ink);
+  border: 1px solid var(--line2);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 3px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dgm svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 14px 12px;
+}
+
+.dgm-err .bd {
+  padding: 12px;
+  font-size: 14px;
+  color: var(--ink2);
+}
+
+.dgm-err .bd b {
+  display: block;
+  color: var(--ink);
+  font-size: 14.5px;
+  margin-bottom: 3px;
+}
+
+.dgm pre,
+.dgm-err pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font-family: var(--f-mono);
+  font-size: 13px;
+  background: var(--sunk);
+}
+
+/* 목차와 경고 */
+.toc {
+  padding: 26px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  /* 경고에 붙는 링크 주소처럼 띄어쓰기 없는 긴 값이 들어온다. 칸을 넓히지 말고 줄을 바꾼다.
+     칸이 넓어지면 페이지 전체가 가로로 밀린다. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.toc .h {
+  font-size: 12px;
+  font-family: var(--f-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 8px;
+}
+
+.toc a {
+  font-size: 13px;
+  color: var(--ink2);
+  text-decoration: none;
+  padding: 3px 0 3px 10px;
+  border-left: 1px solid var(--line);
+}
+
+.toc a[data-level="3"] {
+  padding-left: 18px;
+}
+
+.toc .wz {
+  margin-top: 18px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+
+.toc .wz p {
+  font-size: 12.5px;
+  color: var(--warn-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 5px 0 0;
+}
+
+/* 상태 화면 (UI-007·008·011·012) */
+.state {
+  padding: 34px;
+  max-width: 68ch;
+}
+
+.state h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.banner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.banner--fail {
+  background: var(--sf-fail);
+  border: 1px solid var(--st-fail);
+  color: var(--fail-ink);
+}
+
+.banner-h {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.banner-h .mono {
+  margin-left: auto;
+}
+
+.banner p {
+  margin: 0;
+  color: var(--ink2);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.skeleton span {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--hover);
+}
+
+/* 좁은 화면 */
+@media (max-width: 720px) {
+  .shell-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sh-side {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .doc-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .doc {
+    border-right: 0;
+    padding: 20px;
+  }
+
+  .toc {
+    position: static;
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* 프로젝트 홈 (UI-001) */
+.home {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 34px 26px;
+}
+
+.home-h {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.home-h h1 {
+  flex: 1;
+  font-size: 26px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.home .lead {
+  color: var(--ink2);
+  margin: 8px 0 20px;
+}
+
+.plist {
+  list-style: none;
+  margin: 0 0 26px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pcard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+/* 상태는 색만으로 전달하지 않는다. 점과 글자를 함께 둔다. */
+.st {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 92px;
+  font-size: 13px;
+}
+
+.st--ok {
+  color: var(--st-done-ink);
+}
+
+.st--fail {
+  color: var(--fail-ink);
+}
+
+.st--review {
+  color: var(--st-rev-ink);
+}
+
+.st--todo {
+  color: var(--st-todo-ink);
+}
+
+.pcard .nm {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pcard .nm b {
+  font-family: var(--f-mono);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pcard .rr {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--ink2);
+  white-space: nowrap;
+}
+
+.chip--fail {
+  border-color: var(--st-fail);
+  background: var(--sf-fail);
+  color: var(--fail-ink);
+}
+
+.button--quiet {
+  background: var(--bg);
+  border: 1px solid var(--line2);
+  color: var(--ink);
+  padding: 7px 14px;
+}
+
+.connect {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.connect h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.connect form {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 10px 14px;
+  align-items: center;
+  max-width: 620px;
+}
+
+.connect label {
+  font-size: 14px;
+  color: var(--ink2);
+}
+
+.connect select,
+.connect input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.connect p {
+  grid-column: 2;
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.connect p[role="alert"] {
+  color: var(--fail-ink);
+}
+
+.connect button[type="submit"] {
+  grid-column: 2;
+  justify-self: start;
+  height: 32px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--act);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.connect button[type="submit"]:disabled {
+  background: var(--line2);
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .pcard {
+    flex-wrap: wrap;
+  }
+
+  .connect form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .connect p,
+  .connect button[type="submit"] {
+    grid-column: 1;
+  }
+}
+
+/* 사이드바 이동 항목 (UI-000) */
+.nav-a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 34px;
+  padding: 0 9px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--ink2);
+  text-decoration: none;
+}
+
+.nav-a .cnt {
+  margin-left: auto;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--ink3);
+  font-variant-numeric: tabular-nums;
+}
+
+.nav-a:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.nav-a[aria-current] {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 500;
+  border: 1px solid var(--line);
+}
+
+/* 현황 (UI-002) */
+.ov {
+  padding: 26px 30px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ov-h {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ov-h h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ov-h .button {
+  margin-left: auto;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.card--fail {
+  border-color: var(--st-fail);
+  background: var(--sf-fail);
+  color: var(--fail-ink);
+}
+
+/* 조회할 수 없는 값은 점선으로 둔다. 0%나 빈 막대를 그리지 않는다. */
+.card--dashed {
+  border-style: dashed;
+}
+
+.card .k {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--ink3);
+}
+
+.card .v {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.card .n,
+.panel .n {
+  font-size: 12.5px;
+  color: var(--ink2);
+  line-height: 1.5;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.panel h2 .n {
+  margin-left: auto;
+  font-weight: 400;
+}
+
+/* 상태 스택바 */
+.bar {
+  display: flex;
+  gap: 3px;
+  height: 10px;
+  margin-bottom: 10px;
+}
+
+.seg {
+  border-radius: 999px;
+  min-width: 6px;
+}
+
+.seg--prog {
+  background: var(--st-prog-ink);
+}
+
+.seg--done {
+  background: var(--st-done-ink);
+}
+
+.seg--todo {
+  background: var(--st-todo-ink);
+}
+
+.seg--off {
+  background: var(--line2);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.swatch--prog {
+  background: var(--st-prog-ink);
+}
+
+.swatch--done {
+  background: var(--st-done-ink);
+}
+
+.swatch--todo {
+  background: var(--st-todo-ink);
+}
+
+.swatch--off {
+  background: var(--line2);
+}
+
+/* 작업 표 */
+.tasks td {
+  vertical-align: top;
+}
+
+.row--canceled td {
+  color: var(--ink3);
+  text-decoration: line-through;
+}
+
+.row--canceled .chip {
+  text-decoration: none;
+}
+
+.chip--dashed {
+  border-style: dashed;
+}
+
+.chip--off {
+  background: var(--sunk);
+  color: var(--ink3);
+}
+
+.chip--rev {
+  border-color: var(--warn-ink);
+  color: var(--warn-ink);
+}
+
+/* 최근 변경 */
+.changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.changes li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.changes a {
+  color: var(--ink);
+}
+
+.changes .mono {
+  margin-left: auto;
+}
+
+/* 검색 (UI-004) */
+.search {
+  padding: 26px 30px 34px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sfield {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sfield input {
+  flex: 1;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line2);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 15px;
+}
+
+.sfield .n {
+  white-space: nowrap;
+}
+
+.hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.hit .t {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.hit .x {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink2);
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* 산출물 체크리스트 (UI-013) */
+.chk {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 34px 34px;
+  max-width: 1100px;
+}
+
+.chk-h {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chk-h h1 {
+  font-size: 22px;
+  font-weight: 650;
+  margin: 0;
+}
+
+.chk-h .mono {
+  font-size: 12.5px;
+  color: var(--ink3);
+}
+
+/* 상태는 색만으로 전달하지 않는다. 글자를 함께 둔다. */
+.chip--ok {
+  border-color: var(--st-done-ink);
+  background: var(--sf-ok);
+  color: var(--st-done-ink);
+}
+
+.chip--todo {
+  border-style: dashed;
+  color: var(--st-todo-ink);
+}
+
+.chip--review {
+  border-color: var(--st-rev-ink);
+  color: var(--st-rev-ink);
+}
+
+.chk-t td {
+  vertical-align: top;
+}
+
+/* 미적용 종류는 검사하지 않았다. 통과처럼 읽히지 않게 흐리게 둔다. */
+.chk-t .row--muted td {
+  color: var(--ink3);
+}
+
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--act);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.chk-docs,
+.chk-f {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.chk-f li {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+}
+
+.chk-f .mono {
+  font-size: 12.5px;
+  color: var(--ink2);
+}
+
+.chk-f .x {
+  color: var(--ink);
+}
+
+/* 작업 전체 목록 (UI-014) */
+.tasklist {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 34px 34px;
+}
+
+.tasklist select {
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+}
+
+/* 수집 대상 밖 파일 링크 (UI-003). 서비스를 벗어난다는 것을 표식으로 알린다. */
+.doc-body a[data-link-kind="source"]::after {
+  content: "↗";
+  font-size: 0.85em;
+  margin-left: 2px;
+  color: var(--ink3);
+}
+
+/* 상단바 계정과 브랜치 (UI-000) */
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.account .who {
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.account .button {
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+
+.sw--br select {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* 바꿀 수 없는 사람에게는 열리지 않는다는 것이 보여야 한다. */
+.sw--locked {
+  border-style: dashed;
+  color: var(--ink3);
+}
+
+/* 연결 설정 (UI-015) */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 26px 34px 34px;
+  max-width: 720px;
+}
+
+.settings .fixed {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.settings .fixed dt {
+  color: var(--ink2);
+  font-size: 13.5px;
+}
+
+.settings .fixed dd {
+  margin: 0;
+}
+
+.sform {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sform label {
+  font-size: 13.5px;
+  color: var(--ink2);
+  margin-top: 8px;
+}
+
+.sform input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* 바꿀 수 없는 사람에게는 입력이 잠겨 보여야 한다. */
+.sform input[readonly] {
+  background: var(--sunk);
+  color: var(--ink2);
+}
+
+.sform .button {
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
+.gear {
+  font-size: 13px;
+  color: var(--ink2);
+  text-decoration: none;
+  padding: 4px 8px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+}
+
+/* 연결 해제 (UI-015). 다른 설정과 섞지 않는다. */
+.danger {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 26px;
+  padding: 16px;
+  border: 1px solid var(--st-fail);
+  border-radius: 8px;
+  background: var(--sf-fail);
+}
+
+.danger h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--fail-ink);
+}
+
+.danger label {
+  font-size: 13.5px;
+  color: var(--ink2);
+  margin-top: 8px;
+}
+
+.danger input {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font: inherit;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.button--danger {
+  align-self: flex-start;
+  margin-top: 10px;
+  border-color: var(--st-fail);
+  background: var(--bg);
+  color: var(--fail-ink);
+}
+
+.button--danger:disabled {
+  border-color: var(--line2);
+  color: var(--ink3);
+  cursor: not-allowed;
+}
