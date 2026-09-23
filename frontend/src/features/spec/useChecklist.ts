@@ -22,7 +22,7 @@ export type ChecklistState =
  */
 const cache = new Map<string, ChecklistView>();
 
-export function useChecklist(projectId: string | undefined): ChecklistState {
+export function useChecklist(projectId: string | undefined, reloadKey = 0): ChecklistState {
   const [state, setState] = useState<ChecklistState>(() => {
     const remembered = projectId ? cache.get(projectId) : undefined;
     return remembered ? { state: "ready", checklist: remembered } : { state: "loading" };
@@ -36,6 +36,10 @@ export function useChecklist(projectId: string | undefined): ChecklistState {
     const remembered = cache.get(projectId);
     if (remembered) {
       setState({ state: "ready", checklist: remembered });
+    }
+    if (reloadKey > 0) {
+      // 새 게시본이 나왔다. 기억한 판정은 이전 게시본의 것이다.
+      cache.delete(projectId);
     }
     apiGet<ChecklistView>(`/projects/${projectId}/spec-checklist`)
       .then((checklist) => {
@@ -52,7 +56,7 @@ export function useChecklist(projectId: string | undefined): ChecklistState {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, reloadKey]);
 
   return state;
 }

@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import DocumentPage from "../src/features/documents/DocumentPage";
+import { WATCH_INTERVAL_MS } from "../src/features/sync/useSnapshotWatch";
 
 const renderMermaid = vi.fn();
 
@@ -27,7 +28,9 @@ function error(code: string, status: number): Response {
 }
 
 function stubApi(handler: Handler) {
-  vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(handler(String(url)))));
+  // 같은 응답을 여러 번 읽을 수 있게 복제한다. 본문은 한 번만 읽히므로, 화면이 같은 계약을
+  // 두 번 부르면(예: 20초 감시) 두 번째가 빈손이 된다.
+  vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(handler(String(url)).clone())));
 }
 
 const project = {
@@ -180,6 +183,44 @@ describe("UI-003 문서 본문", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
     expect(link.getAttribute("title")).toContain("github.com/o/r/blob/abc/rules/validation.md");
+  });
+
+  it("opens the list state when no document is chosen", async () => {
+    stubApi(api());
+    render(
+      <MemoryRouter initialEntries={["/projects/p1/documents"]}>
+        <Routes>
+          <Route path="/projects/:projectId/documents" element={<DocumentPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // 경로 표가 가리키는 UI-003의 목록 상태다. 프로젝트 홈으로 떨어지면 안 된다.
+    await waitFor(() =>
+      expect(screen.getByText("왼쪽 목록에서 문서를 선택하세요.")).toBeInTheDocument());
+  });
+
+  it("tells the reader a new version exists instead of swapping the body", async () => {
+    vi.useFakeTimers();
+    let snapshot = "s1";
+    stubApi((url: string) => {
+      if (url.endsWith("/sync")) {
+        return json({ snapshotId: snapshot, state: "succeeded", lastAttemptAt: null,
+          lastSuccessAt: "2026-09-21T01:00:00Z", errorCode: null, nextRetryAt: null, pending: false });
+      }
+      return api()(url);
+    });
+    open("/projects/p1/documents/d2");
+    await vi.waitFor(() => expect(screen.getByRole("heading", { name: "API 계약" })).toBeInTheDocument());
+
+    snapshot = "s2";
+    await vi.advanceTimersByTimeAsync(WATCH_INTERVAL_MS + 100);
+
+    // 읽던 자리를 잃게 하지 않는다. 본문은 그대로 두고 알리기만 한다.
+    await vi.waitFor(() => expect(screen.getByText("새 버전이 게시되었습니다")).toBeInTheDocument());
+    expect(screen.getByRole("heading", { name: "API 계약" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "새로 고치기" })).toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it("collects warnings next to the table of contents instead of in the body", async () => {

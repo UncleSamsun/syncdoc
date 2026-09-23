@@ -8,6 +8,7 @@ import AppShell from "../shell/AppShell";
 import { errorCountOf } from "../spec/types";
 import { useChecklist } from "../spec/useChecklist";
 import { FirstSyncWaiting, StaleBanner } from "../sync/SyncStates";
+import { useSnapshotWatch } from "../sync/useSnapshotWatch";
 import { formatMoment } from "../sync/syncLabels";
 import TaskTable from "./TaskTable";
 import type { OverviewView } from "./types";
@@ -52,6 +53,8 @@ export default function OverviewPage({ csrfToken }: Props) {
   };
 
   useEffect(load, [projectId]);
+  // 새 게시본이 나오면 조용히 다시 읽는다. 현황은 읽던 자리가 없어 배너로 막을 이유가 없다.
+  useSnapshotWatch(projectId, load);
 
   const requestSync = async () => {
     if (!projectId || !csrfToken || syncing) {

@@ -24,6 +24,8 @@ status: 확정
 
 **오류:** 형식은 `{ "code":"RESOURCE_NOT_FOUND", "message":"대상을 찾을 수 없습니다.", "requestId":"...", "details":{} }`다. 권한 없는 비공개 대상과 없는 대상은 구분하지 않고 같은 404로 답한다. 미로그인 401, 초대·관리 작업 거절 403, 충돌 409, 입력 오류 422, 요청 제한 429, GitHub 확인 불가 503이다. `details`에 비공개 이름이나 토큰을 넣지 않는다.
 
+저장한 GitHub 토큰을 더 이상 쓸 수 없고 갱신도 실패하면 **401 `GITHUB_REAUTH_REQUIRED`**로 답하고 세션을 끊는다. 세션은 살아 있는데 GitHub 자격증명만 죽은 상태이며, 기다린다고 풀리지 않으므로 503이 아니다. 서버 오류도 아니다 — 사용자가 다시 로그인하면 새 토큰을 받는다. 2026-09-22에 이 경우가 500으로 나가는 것을 확인하고 정했다.
+
 HTML과 검색 결과는 `Cache-Control: private, no-store`로 제공한다. 사용자 GitHub 토큰·설치 토큰·원시 OAuth 응답은 어느 계약에서도 반환하지 않는다. 관리 대상 임의 URL은 받지 않는다. 상세 상태와 관리 actuator는 외부에 공개하지 않는다.
 
 ## 계약 일람
@@ -45,7 +47,7 @@ MVP가 구현할 계약 25개 전부다. 이 표에 없는 엔드포인트는 �
 | API-011 | `GET /projects/{id}` | REQ-002 | 없음 | 연결 설정, 현재 snapshotId, sync 상태·시각. 권한이 없으면 404 |
 | API-012 | `PATCH /projects/{id}` | REQ-002, REQ-007 | `{branch?,docsRoot?,githubProjectNodeId?,expectedVersion}` | 200 새 version과 동기화 예약. 버전 충돌 409. 현재 GitHub 접근도 필요하다 |
 | API-013 | `POST /projects/{id}/sync` | REQ-006 | 없음 | 202 `{jobId,reused}`. 활성 작업이 있으면 합친다 |
-| API-014 | `GET /projects/{id}/sync` | REQ-006 | 없음 | `{state,lastAttemptAt,lastSuccessAt,errorCode,nextRetryAt,pending}`. 토큰과 내부 경로는 제외한다 |
+| API-014 | `GET /projects/{id}/sync` | REQ-006 | 없음 | `{snapshotId,state,lastAttemptAt,lastSuccessAt,errorCode,nextRetryAt,pending}`. 토큰과 내부 경로는 제외한다. 화면이 20초마다 이 계약으로 새 게시본을 알아본다(UI-000). `lastSuccessAt`만으로는 바뀐 것이 없어 다시 게시하지 않은 수집과 구분할 수 없어 `snapshotId`를 함께 준다 |
 | API-015 | `GET /projects/{id}/overview` | REQ-003 | 없음 | `{snapshotId,repositoryObservedAt,projectObservedAt,projectAccess,counts,progress,recentChanges,tasks,partial}`. 조건은 [API-015](#api-015-현황-집계) |
 | API-016 | `GET /projects/{id}/tasks` | REQ-003 | cursor, status, assignee | 확정 작업 전체 목록과 작업마다의 Issue 연결 상태·담당자. API-015의 `tasks` 첫 20개를 잇는 계약이다 |
 | API-017 | `GET /projects/{id}/documents` | REQ-004 | snapshotId 선택, cursor | `{snapshotId,items:[{id,path,title,kind}],nextCursor}` |
@@ -53,8 +55,8 @@ MVP가 구현할 계약 25개 전부다. 이 표에 없는 엔드포인트는 �
 | API-019 | `GET /projects/{id}/search` | REQ-004 | q 1~200자, cursor, snapshotId 선택 | 문서 제목·본문에서 찾은 `{documentId,title,excerpt,anchor}`. HTML snippet은 escape 처리한다 |
 | API-020 | `GET /projects/{id}/assets/{assetId}` | REQ-004, REQ-007 | snapshotId 필수 | 권한 확인 후 이미지 bytes. 허용된 MIME과 nosniff를 적용한다 |
 | API-021 | `POST /webhooks/github` | REQ-006 | GitHub delivery·event·signature 헤더와 raw body | 202. 조건은 [API-021](#api-021-github-webhook) |
-| API-022 | `GET /health/live` | 없음. 배포 확인용이며 근거 문서인 `tech-ops`가 보류다 | 없음 | 200 프로세스 생존 여부만. 의존성은 확인하지 않는다 |
-| API-023 | `GET /health/ready` | 없음. 배포 확인용이며 근거 문서인 `tech-ops`가 보류다 | 없음 | 200 DB 등 필수 의존성의 준비 여부만 |
+| API-022 | `GET /health/live` | 없음. 배포 확인용이며 근거는 [실행과 운영](ops.md)이다 | 없음 | 200 프로세스 생존 여부만. 의존성은 확인하지 않는다 |
+| API-023 | `GET /health/ready` | 없음. 배포 확인용이며 근거는 [실행과 운영](ops.md)이다 | 없음 | 200 DB 등 필수 의존성의 준비 여부만 |
 | API-024 | `GET /github/repositories/{githubRepositoryId}/branches` | REQ-002, REQ-007 | 없음 | 앱과 사용자 모두 접근 가능한 저장소의 브랜치 `{items:[{name,isDefault}]}`. 볼 수 없으면 404 |
 | API-025 | `GET /projects/{id}/spec-checklist` | REQ-008 | snapshotId 선택 | `{snapshotId,sourceRevision,status,uncheckedReason,truncated,findings,types}`. 조건은 [API-025](#api-025-산출물-체크리스트) |
 

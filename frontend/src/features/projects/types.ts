@@ -36,6 +36,8 @@ export type ProjectItem = {
 
 /** API-014의 수집 상태. */
 export type SyncStatus = {
+  /** 지금 게시된 것. 이 값이 바뀌면 새 게시본이다. 첫 수집 전에는 null이다. */
+  snapshotId: string | null;
   state: SyncState;
   lastAttemptAt: string | null;
   lastSuccessAt: string | null;

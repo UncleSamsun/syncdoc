@@ -1160,3 +1160,36 @@ main {
   margin-left: 2px;
   color: var(--ink3);
 }
+
+/* 상단바 계정과 브랜치 (UI-000) */
+.account {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 10px;
+}
+
+.account .who {
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.account .button {
+  padding: 5px 10px;
+  font-size: 12.5px;
+}
+
+.sw--br select {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* 바꿀 수 없는 사람에게는 열리지 않는다는 것이 보여야 한다. */
+.sw--locked {
+  border-style: dashed;
+  color: var(--ink3);
+}

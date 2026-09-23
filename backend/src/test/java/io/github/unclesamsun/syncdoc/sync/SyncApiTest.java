@@ -191,4 +191,14 @@ class SyncApiTest extends PostgresContainerSupport {
                 .doesNotContain("lease")
                 .doesNotContain("C:\\\\");
     }
+
+    @Test
+    void the_status_says_no_snapshot_is_published_before_the_first_collection() {
+        Actor owner = actor("6008", "gho_owner8");
+        ProjectEntity project = projectConnectedBy(owner, "607");
+        visibleTo("gho_owner8", project);
+
+        // 화면은 이 값이 바뀌는 것으로 새 게시본을 알아본다. 아직 게시된 것이 없다.
+        assertThat(readStatus(owner, project.getId()).getBody()).contains("\"snapshotId\":null");
+    }
 }

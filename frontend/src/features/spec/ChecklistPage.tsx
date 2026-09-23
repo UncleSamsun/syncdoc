@@ -6,6 +6,7 @@ import { useDocumentList } from "../documents/useDocument";
 import type { ProjectItem } from "../projects/types";
 import AppShell from "../shell/AppShell";
 import { FirstSyncWaiting } from "../sync/SyncStates";
+import { useSnapshotWatch } from "../sync/useSnapshotWatch";
 import type { ChecklistFinding, ChecklistStatus, ChecklistType, ChecklistView,
   UncheckedReason } from "./types";
 import { errorCountOf } from "./types";
@@ -25,7 +26,10 @@ export default function ChecklistPage() {
   const [project, setProject] = useState<ProjectItem | null>(null);
   const [failure, setFailure] = useState<"missing" | "unavailable" | undefined>();
   const { list } = useDocumentList(projectId);
-  const checklist = useChecklist(projectId);
+  const [published, setPublished] = useState(0);
+  const checklist = useChecklist(projectId, published);
+  // 새 게시본이 나오면 조용히 다시 읽는다. 이전 게시본의 판정을 계속 보여주지 않는다.
+  useSnapshotWatch(projectId, () => setPublished((count) => count + 1));
 
   useEffect(() => {
     if (!projectId) {

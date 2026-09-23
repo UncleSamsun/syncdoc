@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { apiGet, isApiError } from "../../shared/api/client";
 import { AccessUnavailable, DocumentMissing } from "../documents/DocumentStates";
@@ -8,6 +8,7 @@ import AppShell from "../shell/AppShell";
 import { errorCountOf } from "../spec/types";
 import { useChecklist } from "../spec/useChecklist";
 import { FirstSyncWaiting } from "../sync/SyncStates";
+import { useSnapshotWatch } from "../sync/useSnapshotWatch";
 import TaskRows from "./TaskRows";
 import type { TaskStatus, TaskView } from "./types";
 import { STATUS_LABELS } from "./types";
@@ -47,7 +48,7 @@ export default function TaskListPage() {
   const { list } = useDocumentList(projectId);
   const checklist = useChecklist(projectId);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!projectId) {
       return;
     }
@@ -61,6 +62,10 @@ export default function TaskListPage() {
       .then(setAll)
       .catch(() => setFailure("unavailable"));
   }, [projectId]);
+
+  useEffect(load, [load]);
+  // 새 게시본이 나오면 조용히 다시 읽는다. 거른 조건과 읽던 자리를 잃지 않는다.
+  useSnapshotWatch(projectId, load);
 
   if (failure === "missing") {
     return <DocumentMissing projectId={projectId ?? ""} />;

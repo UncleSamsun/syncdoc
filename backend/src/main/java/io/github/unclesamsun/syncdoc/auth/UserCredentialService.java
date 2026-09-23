@@ -44,7 +44,14 @@ public class UserCredentialService {
         if (!needsRefresh(credential)) {
             return cipher.decrypt(credential.getAccessTokenCiphertext());
         }
-        GitHubTokens refreshed = oauth.refreshTokens(cipher.decrypt(credential.getRefreshTokenCiphertext()));
+        GitHubTokens refreshed;
+        try {
+            refreshed = oauth.refreshTokens(cipher.decrypt(credential.getRefreshTokenCiphertext()));
+        } catch (RuntimeException e) {
+            // 갱신에 실패한 토큰은 다시 쓸 수 없다. 여기서 지우지는 않는다 — 이 예외가 트랜잭션을
+            // 되돌리므로 남지 않고, 되풀이는 세션을 끊어서 막는다. 다음 로그인이 덮어쓴다.
+            throw new ReauthRequiredException();
+        }
         credential.replaceTokens(
                 cipher.encrypt(refreshed.accessToken()),
                 refreshed.refreshToken() == null ? null : cipher.encrypt(refreshed.refreshToken()),

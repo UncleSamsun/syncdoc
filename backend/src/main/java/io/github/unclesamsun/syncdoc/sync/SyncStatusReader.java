@@ -1,5 +1,7 @@
 package io.github.unclesamsun.syncdoc.sync;
 
+import io.github.unclesamsun.syncdoc.project.domain.ProjectEntity;
+import io.github.unclesamsun.syncdoc.project.domain.ProjectRepository;
 import io.github.unclesamsun.syncdoc.sync.domain.SyncJobEntity;
 import io.github.unclesamsun.syncdoc.sync.domain.SyncRunEntity;
 import java.time.Instant;
@@ -17,18 +19,23 @@ import org.springframework.stereotype.Component;
 public class SyncStatusReader {
 
     private final SyncQueue queue;
+    private final ProjectRepository projects;
 
-    public SyncStatusReader(SyncQueue queue) {
+    public SyncStatusReader(SyncQueue queue, ProjectRepository projects) {
         this.queue = queue;
+        this.projects = projects;
     }
 
     /**
+     * @param snapshotId  지금 게시된 것. 화면이 20초마다 이 값을 보고 새 게시본을 알아본다.
+     *                    `lastSuccessAt`만으로는 바뀐 것이 없어 다시 게시하지 않은 수집과
+     *                    구분할 수 없다
      * @param state       queued·running·succeeded·failed
      * @param nextRetryAt 다음 시도 예정 시각. 실패 후 기다리는 중일 때만 값이 있다
      * @param pending     진행 중이거나 예정된 수집이 있다
      */
-    public record SyncStatus(String state, Instant lastAttemptAt, Instant lastSuccessAt, String errorCode,
-                             Instant nextRetryAt, boolean pending) {
+    public record SyncStatus(UUID snapshotId, String state, Instant lastAttemptAt, Instant lastSuccessAt,
+                             String errorCode, Instant nextRetryAt, boolean pending) {
     }
 
     public SyncStatus statusOf(UUID projectId) {
@@ -58,6 +65,7 @@ public class SyncStatusReader {
                 .orElse(null);
 
         return new SyncStatus(
+                projects.findById(projectId).map(ProjectEntity::getCurrentSnapshotId).orElse(null),
                 state,
                 last.map(SyncRunEntity::getStartedAt).orElse(null),
                 success.map(SyncRunEntity::getFinishedAt).orElse(null),
