@@ -67,6 +67,9 @@ export default function AppShell({
           {pill}
           {status?.lastSuccessAt && <span className="mono">{formatMoment(status.lastSuccessAt)}</span>}
         </span>
+        <Link className="gear" to={`/projects/${project.id}/settings`} title="연결 설정">
+          설정
+        </Link>
         {session.state === "signed-in" && (
           <AccountMenu login={session.me.login} csrfToken={session.me.csrfToken} />
         )}
