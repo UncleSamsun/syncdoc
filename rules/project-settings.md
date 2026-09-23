@@ -70,6 +70,7 @@
 | 이름 | syncdoc-dev-unclesamsun |
 | App ID | 4895456 |
 | 설치 범위 | 모든 계정 (2026-09-22 변경. 이전에는 소유 계정 전용이었다) |
+| 저장소 접근 | 모든 저장소 (2026-09-23 변경. 이전에는 `syncdoc` 하나만 골라 두어 연결 후보가 1개였다) |
 | 콜백 주소 | `http://localhost:5173/...`, `http://localhost:8080/...`, `http://localhost:8081/api/v1/auth/github/callback` |
 | 권한 | Contents·Metadata·Issues·Pull requests 읽기 |
 
