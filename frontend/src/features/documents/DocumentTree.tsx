@@ -5,6 +5,7 @@ import { buildTree, foldersOf } from "./types";
 
 type Props = {
   projectId: string;
+  snapshotId?: string;
   items: DocumentItem[];
   currentDocumentId?: string;
   currentPath?: string;
@@ -36,7 +37,7 @@ function saveCollapsed(projectId: string, collapsed: Set<string>) {
  * <p>폴더를 화면에서 임의로 묶거나 펼쳐서 한 줄로 만들지 않는다. 열고 있는 문서가 든 폴더는
  * 접혀 있어도 항상 펼친다 — 링크를 따라 들어왔을 때 어디에 있는지 보이지 않으면 길을 잃는다.
  */
-export default function DocumentTree({ projectId, items, currentDocumentId, currentPath }: Props) {
+export default function DocumentTree({ projectId, snapshotId, items, currentDocumentId, currentPath }: Props) {
   const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed(projectId));
 
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function DocumentTree({ projectId, items, currentDocumentId, curr
         openPath={openPath}
         onToggle={toggle}
         projectId={projectId}
+        snapshotId={snapshotId}
         currentDocumentId={currentDocumentId}
       />
     </div>
@@ -84,6 +86,7 @@ type FolderProps = {
   openPath: Set<string>;
   onToggle: (path: string) => void;
   projectId: string;
+  snapshotId?: string;
   currentDocumentId?: string;
 };
 
@@ -94,6 +97,7 @@ function Folder({
   openPath,
   onToggle,
   projectId,
+  snapshotId,
   currentDocumentId,
 }: FolderProps) {
   const children = (
@@ -107,13 +111,14 @@ function Folder({
           openPath={openPath}
           onToggle={onToggle}
           projectId={projectId}
+          snapshotId={snapshotId}
           currentDocumentId={currentDocumentId}
         />
       ))}
       {folder.documents.map((document) => (
         <Link
           key={document.id}
-          to={`/projects/${projectId}/documents/${document.id}`}
+          to={`/projects/${projectId}/documents/${document.id}${snapshotId ? `?snapshotId=${encodeURIComponent(snapshotId)}` : ""}`}
           aria-current={document.id === currentDocumentId ? "page" : undefined}
         >
           {document.title}

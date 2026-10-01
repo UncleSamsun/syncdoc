@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OverviewPage from "../src/features/dashboard/OverviewPage";
+import AppShell from "../src/features/shell/AppShell";
 import { forgetChecklist } from "../src/features/spec/useChecklist";
 
 type Handler = (url: string, init?: RequestInit) => Response;
@@ -168,5 +169,39 @@ describe("UI-000 공통 셸의 조작", () => {
 
     // 브랜치를 바꾼 직후 이전 게시본을 보는 사람이 무엇을 기다리는지 알 수 있어야 한다.
     await waitFor(() => expect(screen.getByText(/main 수집 중/)).toBeInTheDocument());
+  });
+
+  it("does not present zero checklist errors as zero deliverables", async () => {
+    stubApi(api());
+    render(<MemoryRouter><AppShell project={project()} documents={[]} checklistErrors={0}>
+      <p>본문</p>
+    </AppShell></MemoryRouter>);
+    expect(screen.getByRole("link", { name: /^산출물$/ })).not.toHaveTextContent("0");
+  });
+
+  it("does not classify an old document list using today's type names", async () => {
+    const base = api();
+    stubApi((url) => url.includes("/spec-checklist") ? json({ snapshotId: "s2", sourceRevision: "new",
+      status: "pass", uncheckedReason: null, truncated: false, findings: [], types: [{ type: "custom",
+        name: "오늘의 종류 이름", apply: "적용", reason: "", status: "pass", documents: [], findings: [] }] }) : base(url));
+    render(<MemoryRouter><AppShell project={project({ currentSnapshotId: "s2" })}
+      documentSnapshotId="s1" documents={[{ id: "old", path: "docs/old.md", title: "이전 문서", kind: "custom" }]}>
+      <p>본문</p>
+    </AppShell></MemoryRouter>);
+    await screen.findByText("이 게시본과 종류 정의가 달라 폴더로 표시합니다.");
+    expect(screen.queryByText("오늘의 종류 이름")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "이전 문서" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "이전 문서" })).toHaveAttribute("href", "/projects/p1/documents/old?snapshotId=s1");
+  });
+
+  it("remembers the chosen document view for the next visit", async () => {
+    localStorage.removeItem("syncdoc:document-view:p1");
+    stubApi(api());
+    const first = render(<MemoryRouter><AppShell project={project()} documents={[]}><p>본문</p></AppShell></MemoryRouter>);
+    await userEvent.click(screen.getByRole("button", { name: "폴더별" }));
+    first.unmount();
+    render(<MemoryRouter><AppShell project={project()} documents={[]}><p>본문</p></AppShell></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "폴더별" })).toHaveAttribute("aria-pressed", "true");
+    localStorage.removeItem("syncdoc:document-view:p1");
   });
 });

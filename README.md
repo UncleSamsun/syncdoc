@@ -12,7 +12,11 @@ SDD 방식으로 작성한 명세와 GitHub 협업 현황을 연결하는 프로
 
 명세와 규칙을 먼저 쓰고 그에 맞춰 구현한다. MVP 구현은 [구현계획](docs/04-tasks/implementation-plan.md)의 작업 단위로 진행한다.
 
+다음 확장 준비: [REQ–TASK 추적성 설계](docs/03-tech-spec/traceability-proposal.md)와 [구현 준비 계획](docs/04-tasks/traceability-plan.md). 검토 상태이며 설계·작업계획 확인 후 정본 승격부터 진행한다.
+
 ## 문서
+
+- [산출물별 현재 기준](docs/README.md) · [새 프로젝트 작성 하네스](rules/project-harness.md) · [작성 템플릿](templates/README.md)
 
 - [MVP 기능과 인수 기준](docs/01-prd/mvp-scope.md)
 - [API 계약](docs/03-tech-spec/api-spec.md) · [데이터 모델](docs/03-tech-spec/data-model.md)

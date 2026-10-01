@@ -30,16 +30,27 @@ type Render =
 let loader: Promise<typeof import("mermaid").default> | null = null;
 let queue: Promise<unknown> = Promise.resolve();
 
+/** Trusted product theme; a repository document cannot override these fields. */
+export const DIAGRAM_CONFIG = {
+  startOnLoad: false,
+  securityLevel: "strict" as const,
+  htmlLabels: false,
+  suppressErrorRendering: true,
+  theme: "base" as const,
+  fontFamily: "inherit",
+  secure: ["secure", "securityLevel", "startOnLoad", "maxTextSize", "suppressErrorRendering", "maxEdges",
+    "htmlLabels", "theme", "themeVariables", "themeCSS", "fontFamily", "altFontFamily", "darkMode"],
+  themeVariables: {
+    darkMode: true, background: "#1e1e1e", primaryColor: "#282828", primaryTextColor: "#e6e6e6",
+    primaryBorderColor: "#777777", secondaryColor: "#242424", secondaryTextColor: "#e6e6e6",
+    secondaryBorderColor: "#777777", tertiaryColor: "#303030", tertiaryTextColor: "#e6e6e6",
+    lineColor: "#b8b8b8", textColor: "#e6e6e6", fontFamily: "inherit",
+  },
+};
+
 async function draw(id: string, source: string, timeoutMs: number): Promise<string> {
   loader ??= import("mermaid").then(({ default: mermaid }) => {
-    mermaid.initialize({
-      startOnLoad: false,
-      // 원문이 HTML이나 스크립트로 해석되지 않게 가장 엄격한 설정만 쓴다.
-      securityLevel: "strict",
-      htmlLabels: false,
-      theme: "neutral",
-      fontFamily: "inherit",
-    });
+    mermaid.initialize(DIAGRAM_CONFIG);
     return mermaid;
   });
   const mermaid = await loader;

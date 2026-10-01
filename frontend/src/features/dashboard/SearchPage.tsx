@@ -79,7 +79,7 @@ export default function SearchPage() {
   };
 
   return (
-    <AppShell project={project} documents={documents} active="search"
+    <AppShell project={project} documents={documents} documentSnapshotId={list.state === "ready" ? list.list.snapshotId : null} active="search"
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}>
       {notCollected ? (
         <FirstSyncWaiting />

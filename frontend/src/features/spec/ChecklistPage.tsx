@@ -55,7 +55,7 @@ export default function ChecklistPage() {
   const documents = list.state === "ready" ? list.list.items : [];
 
   return (
-    <AppShell project={project} documents={documents} active="checklist"
+    <AppShell project={project} documents={documents} documentSnapshotId={list.state === "ready" ? list.list.snapshotId : null} active="checklist"
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}>
       {checklist.state === "loading" && <p className="centered">불러오는 중입니다.</p>}
       {checklist.state === "waiting" && <FirstSyncWaiting />}
