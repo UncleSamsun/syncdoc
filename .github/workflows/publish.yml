@@ -1,0 +1,98 @@
+name: publish-test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 이미지를 올리는 중 실행을 취소하지 않고, 오래된 promotion은 HEAD 검사로 막는다.
+concurrency:
+  group: syncdoc-test-publish
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/verify.yml
+
+  backend:
+    needs: verify
+    uses: ./.github/workflows/build-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      component: backend
+
+  web:
+    needs: verify
+    uses: ./.github/workflows/build-image.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      component: web
+
+  promote:
+    needs: [backend, web]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Render and promote the complete release
+        env:
+          BACKEND_DIGEST: ${{ needs.backend.outputs.digest }}
+          WEB_DIGEST: ${{ needs.web.outputs.digest }}
+        run: |
+          set -euo pipefail
+          main_head=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$main_head" != "$GITHUB_SHA" ]; then
+            echo 'Superseded by a newer main revision; deployment request skipped.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          output="$RUNNER_TEMP/syncdoc-release"
+          python tools/deployment/render.py \
+            --repository "${GITHUB_REPOSITORY,,}" \
+            --backend-digest "$BACKEND_DIGEST" --web-digest "$WEB_DIGEST" \
+            --revision "$GITHUB_SHA" --output "$output"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          branch=syncdoc-test-deploy
+          parent=$(git ls-remote origin "refs/heads/$branch" | cut -f1)
+          # 별도 index로 배포 파일 두 개만 담는다. 소스와 secret을 복제하지 않는다.
+          export GIT_INDEX_FILE="$RUNNER_TEMP/syncdoc-release.index"
+          git read-tree --empty
+          for name in workloads.json kustomization.yaml; do
+            blob=$(git hash-object -w "$output/$name")
+            git update-index --add --cacheinfo "100644,$blob,kubernetes/$name"
+          done
+          tree=$(git write-tree)
+          if [ -n "$parent" ]; then
+            git fetch origin "$branch"
+            if [ "$tree" = "$(git rev-parse "$parent^{tree}")" ]; then
+              echo 'Deployment request already matches these image digests.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            commit=$(printf 'deploy: SyncDoc %s\n' "$GITHUB_SHA" | git commit-tree "$tree" -p "$parent")
+          else
+            commit=$(printf 'deploy: SyncDoc %s\n' "$GITHUB_SHA" | git commit-tree "$tree")
+          fi
+          if [ "$(git ls-remote origin refs/heads/main | cut -f1)" != "$GITHUB_SHA" ]; then
+            echo 'Main advanced during promotion; deployment request skipped.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git push origin "$commit:refs/heads/$branch"
+          {
+            echo "Deployment request: $commit"
+            echo "Source: $GITHUB_SHA"
+            echo "Backend: $BACKEND_DIGEST"
+            echo "Web: $WEB_DIGEST"
+            echo "Server verification: bash deploy/flux/check.sh $commit"
+          } >> "$GITHUB_STEP_SUMMARY"

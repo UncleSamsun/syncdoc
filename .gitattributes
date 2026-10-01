@@ -1,0 +1,2 @@
+# Server scripts must retain Linux line endings when prepared on Windows.
+*.sh text eol=lf

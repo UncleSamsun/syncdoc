@@ -3,15 +3,19 @@
 name: verify
 
 on:
+  workflow_call:
   pull_request:
     branches: [dev, main]
   push:
     branches: [dev]
 
-# 같은 브랜치에 새 커밋이 오면 이전 실행을 멈춘다. 오래된 결과를 기다리지 않는다.
+# publish의 재사용 호출과 PR/dev 검증이 서로 취소되지 않게 구분한다.
 concurrency:
-  group: verify-${{ github.ref }}
+  group: verify-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   backend:
@@ -83,3 +87,6 @@ jobs:
 
       - name: 문서 검사
         run: python tools/spec-validator/validate.py
+
+      - name: 배포 renderer 회귀 시험
+        run: python -m unittest discover -s tools/deployment -v
