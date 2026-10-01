@@ -195,7 +195,7 @@ test.describe("로그인한 사용자의 한 흐름", () => {
 
   test("산출물 체크리스트가 판정과 같은 것을 보여준다 (UI-013)", async ({ page }) => {
     const projectId = await open(page);
-    await page.getByRole("link", { name: /산출물/ }).click();
+    await page.getByRole("navigation", { name: "프로젝트" }).getByRole("link", { name: /^산출물(?: 오류 \d+)?$/ }).click();
     await expect(page.getByRole("heading", { name: "산출물 체크리스트" })).toBeVisible();
 
     const checklist = await (await page.request.get(
