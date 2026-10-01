@@ -1,0 +1,478 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "PersistentVolumeClaim",
+      "metadata": {
+        "name": "postgres-data",
+        "namespace": "syncdoc-test",
+        "annotations": {
+          "kustomize.toolkit.fluxcd.io/prune": "disabled"
+        }
+      },
+      "spec": {
+        "accessModes": [
+          "ReadWriteOnce"
+        ],
+        "storageClassName": "local-path",
+        "resources": {
+          "requests": {
+            "storage": "10Gi"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "syncdoc-config",
+        "namespace": "syncdoc-test"
+      },
+      "data": {
+        "SYNCDOC_DB_URL": "jdbc:postgresql://postgres:5432/syncdoc",
+        "SYNCDOC_DB_USER": "syncdoc",
+        "SYNCDOC_PORT": "8080",
+        "SYNCDOC_GITHUB_REDIRECT_URI": "http://localhost:8081/api/v1/auth/github/callback",
+        "SYNCDOC_COOKIE_SECURE": "false",
+        "SYNCDOC_SYNC_WORKER_ENABLED": "true",
+        "SYNCDOC_SYNC_POLL_INTERVAL": "60s"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "postgres",
+        "namespace": "syncdoc-test"
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app": "postgres"
+        },
+        "ports": [
+          {
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "postgres",
+        "namespace": "syncdoc-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "Recreate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app": "postgres"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "postgres"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "postgres:17-alpine",
+                "ports": [
+                  {
+                    "containerPort": 5432
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "POSTGRES_DB",
+                    "value": "syncdoc"
+                  },
+                  {
+                    "name": "POSTGRES_USER",
+                    "value": "syncdoc"
+                  },
+                  {
+                    "name": "POSTGRES_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_DB_PASSWORD"
+                      }
+                    }
+                  },
+                  {
+                    "name": "PGDATA",
+                    "value": "/var/lib/postgresql/data/pgdata"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/postgresql/data"
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "100m",
+                    "memory": "128Mi"
+                  },
+                  "limits": {
+                    "cpu": "1",
+                    "memory": "512Mi"
+                  }
+                },
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "syncdoc",
+                      "-d",
+                      "syncdoc"
+                    ]
+                  },
+                  "periodSeconds": 5
+                },
+                "livenessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "syncdoc",
+                      "-d",
+                      "syncdoc"
+                    ]
+                  },
+                  "initialDelaySeconds": 30,
+                  "periodSeconds": 10
+                },
+                "startupProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "syncdoc",
+                      "-d",
+                      "syncdoc"
+                    ]
+                  },
+                  "failureThreshold": 60,
+                  "periodSeconds": 5
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "data",
+                "persistentVolumeClaim": {
+                  "claimName": "postgres-data"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "backend",
+        "namespace": "syncdoc-test"
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app": "backend"
+        },
+        "ports": [
+          {
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "backend",
+        "namespace": "syncdoc-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "RollingUpdate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app": "backend"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "backend"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "backend",
+                "image": "ghcr.io/unclesamsun/syncdoc-backend:unpublished",
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "configMapRef": {
+                      "name": "syncdoc-config"
+                    }
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "250m",
+                    "memory": "512Mi"
+                  },
+                  "limits": {
+                    "cpu": "2",
+                    "memory": "2Gi"
+                  }
+                },
+                "securityContext": {
+                  "allowPrivilegeEscalation": false,
+                  "runAsNonRoot": true,
+                  "runAsUser": 10001,
+                  "capabilities": {
+                    "drop": [
+                      "ALL"
+                    ]
+                  }
+                },
+                "startupProbe": {
+                  "httpGet": {
+                    "path": "/api/v1/health/live",
+                    "port": 8080
+                  },
+                  "failureThreshold": 60,
+                  "periodSeconds": 5
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/api/v1/health/ready",
+                    "port": 8080
+                  },
+                  "periodSeconds": 10
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/api/v1/health/live",
+                    "port": 8080
+                  },
+                  "periodSeconds": 15
+                },
+                "env": [
+                  {
+                    "name": "SYNCDOC_DB_PASSWORD",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_DB_PASSWORD"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_GITHUB_APP_ID",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_GITHUB_APP_ID"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_GITHUB_CLIENT_ID",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_GITHUB_CLIENT_ID"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_GITHUB_CLIENT_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_GITHUB_CLIENT_SECRET"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_GITHUB_PRIVATE_KEY",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_GITHUB_PRIVATE_KEY"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_ADMIN_GITHUB_USER_ID",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_ADMIN_GITHUB_USER_ID"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_TOKEN_KEY",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_TOKEN_KEY"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_CSRF_KEY",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_CSRF_KEY"
+                      }
+                    }
+                  },
+                  {
+                    "name": "SYNCDOC_GITHUB_WEBHOOK_SECRET",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "syncdoc-secrets",
+                        "key": "SYNCDOC_GITHUB_WEBHOOK_SECRET",
+                        "optional": true
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web",
+        "namespace": "syncdoc-test"
+      },
+      "spec": {
+        "type": "ClusterIP",
+        "selector": {
+          "app": "web"
+        },
+        "ports": [
+          {
+            "port": 80,
+            "targetPort": 80
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "namespace": "syncdoc-test"
+      },
+      "spec": {
+        "replicas": 1,
+        "strategy": {
+          "type": "RollingUpdate"
+        },
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web"
+            }
+          },
+          "spec": {
+            "automountServiceAccountToken": false,
+            "containers": [
+              {
+                "name": "web",
+                "image": "ghcr.io/unclesamsun/syncdoc-web:unpublished",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "32Mi"
+                  },
+                  "limits": {
+                    "cpu": "500m",
+                    "memory": "128Mi"
+                  }
+                },
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 80
+                  },
+                  "periodSeconds": 5
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 80
+                  },
+                  "initialDelaySeconds": 15,
+                  "periodSeconds": 15
+                }
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "ghcr-pull"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

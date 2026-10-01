@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: syncdoc-test
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: syncdoc-cd
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: syncdoc-deployer
+  namespace: syncdoc-cd
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: syncdoc-deployer
+  namespace: syncdoc-test
+rules:
+  - apiGroups: ['']
+    resources: [services, configmaps, persistentvolumeclaims]
+    verbs: [get, list, watch, create, update, patch]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, list, watch, create, update, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: syncdoc-deployer
+  namespace: syncdoc-test
+subjects:
+  - kind: ServiceAccount
+    name: syncdoc-deployer
+    namespace: syncdoc-cd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: syncdoc-deployer
