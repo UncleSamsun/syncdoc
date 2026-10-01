@@ -229,7 +229,7 @@
               "app": "backend"
             },
             "annotations": {
-              "syncdoc/source-revision": "fabb189e8045bbca84a77ecdaa3c14211ea12f8e"
+              "syncdoc/source-revision": "5fc9f0bc9060030e1258914efbd8cd41929e8d42"
             }
           },
           "spec": {
@@ -237,7 +237,7 @@
             "containers": [
               {
                 "name": "backend",
-                "image": "ghcr.io/unclesamsun/syncdoc-backend@sha256:109b5b52e429f9b883b7c2dce1e0dcab209ac4d92050c43d62de6bdbb4275bdc",
+                "image": "ghcr.io/unclesamsun/syncdoc-backend@sha256:89866d21a81b313a3a3e3c66162448f765976996ccde16eabc1479109e28a4de",
                 "ports": [
                   {
                     "containerPort": 8080
@@ -430,7 +430,7 @@
               "app": "web"
             },
             "annotations": {
-              "syncdoc/source-revision": "fabb189e8045bbca84a77ecdaa3c14211ea12f8e"
+              "syncdoc/source-revision": "5fc9f0bc9060030e1258914efbd8cd41929e8d42"
             }
           },
           "spec": {
@@ -438,7 +438,7 @@
             "containers": [
               {
                 "name": "web",
-                "image": "ghcr.io/unclesamsun/syncdoc-web@sha256:fe415f30bebe6a3b9a696ce44510d7d12712e707835048643561af8cae6eebe0",
+                "image": "ghcr.io/unclesamsun/syncdoc-web@sha256:9eb3892f2ba885bbe63d1eb86b8082c0fb2bfd4f8115756f1af1bfed4fbf215e",
                 "ports": [
                   {
                     "containerPort": 80
