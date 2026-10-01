@@ -186,6 +186,7 @@ describe("UI-000 공통 셸의 조작", () => {
       <p>본문</p>
     </AppShell></MemoryRouter>);
     expect(screen.getByRole("button", { name: /01-prd/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^docs / })).toBeNull();
     expect(screen.queryByRole("button", { name: "종류별" })).toBeNull();
     expect(screen.queryByRole("button", { name: "폴더별" })).toBeNull();
     expect(screen.getByRole("link", { name: "이전 문서" })).toHaveAttribute("href", "/projects/p1/documents/old?snapshotId=s1");

@@ -7,6 +7,7 @@ import type { ProjectItem, SyncStatus } from "../projects/types";
 import { formatMoment, syncLabelOf, syncToneOf } from "../sync/syncLabels";
 import AccountMenu from "./AccountMenu";
 import BranchSwitcher from "./BranchSwitcher";
+import ResizableShellBody from "./ResizableShellBody";
 
 type Props = {
   project: ProjectItem;
@@ -79,8 +80,7 @@ export default function AppShell({
         )}
       </header>
 
-      <div className="shell-body">
-        <nav className="sh-side" aria-label="프로젝트">
+      <ResizableShellBody sidebar={<nav id="project-sidebar" className="sh-side" aria-label="프로젝트">
           <NavLink
             className="nav-a"
             to={`/projects/${project.id}`}
@@ -121,14 +121,15 @@ export default function AppShell({
           </div>
           <DocumentTree
             projectId={project.id}
+            rootPath={project.docsRoot}
             snapshotId={shownSnapshotId && shownSnapshotId !== project.currentSnapshotId ? shownSnapshotId : undefined}
             items={documents}
             currentDocumentId={currentDocumentId}
             currentPath={currentPath}
           />
-        </nav>
+        </nav>}>
         <main className="shell-main">{children}</main>
-      </div>
+      </ResizableShellBody>
     </div>
   );
 }

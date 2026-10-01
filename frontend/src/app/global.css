@@ -187,8 +187,9 @@ main {
 }
 
 .shell-body {
+  position: relative;
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width, 248px) minmax(0, 1fr);
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -280,6 +281,22 @@ main {
   padding-left: 8px;
   border-left: 1px solid var(--line);
 }
+
+.sidebar-resizer {
+  position: absolute;
+  left: calc(var(--sidebar-width, 248px) - 4px);
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 3;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sidebar-resizer:hover,
+.sidebar-resizer:focus-visible,
+.shell-body--resizing .sidebar-resizer { background: var(--line2); }
+.shell-body--resizing,
+.shell-body--resizing * { cursor: col-resize; user-select: none; }
 
 .tree > .fold-b {
   margin-left: 0;
@@ -636,6 +653,7 @@ main {
 
 /* 좁은 화면 */
 @media (max-width: 720px) {
+  .sidebar-resizer { display: none; }
   .sh-top {
     height: auto;
     min-height: 50px;
