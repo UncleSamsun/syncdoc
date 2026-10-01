@@ -20,7 +20,7 @@ GitHub-hosted Ubuntu runner에서 Java 25·Node 22·Python 3.12 검증과 Docker
 
 GHCR 이미지를 공개로 설정하거나, 읽기 전용 registry 자격증명으로 `ghcr-pull` imagePullSecret을 namespace에 등록해야 한다. Actions 게시에는 `GITHUB_TOKEN`의 packages write 권한을 쓴다. 서버는 GitHub 관리 토큰·SSH 비밀번호를 받지 않는다.
 
-Flux Kustomization은 `syncdoc-deployer` ServiceAccount를 impersonate한다. namespace 범위의 Deployment·Service·ConfigMap·PVC만 관리하고 Namespace·RBAC·Secret은 초기 운영자가 준비한다. Flux controller 설치 자체에는 cluster 권한이 필요하다.
+Flux Kustomization은 `syncdoc-deployer` ServiceAccount를 impersonate한다. namespace 범위의 Deployment·Service·ConfigMap·PVC만 관리하고 health 판정에 필요한 ReplicaSet은 읽기만 허용한다. Namespace·RBAC·Secret은 초기 운영자가 준비한다. Flux controller 설치 자체에는 cluster 권한이 필요하다.
 
 ## 배포
 
