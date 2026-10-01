@@ -4,7 +4,7 @@ type: tasks
 status: 초안
 ---
 
-# 구현 작업계획
+# 작업 정의
 
 ## TASK-NNN 작업 이름
 

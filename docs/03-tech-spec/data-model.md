@@ -4,7 +4,7 @@ type: tech-data
 status: 확정
 ---
 
-# MVP 데이터 모델
+# 데이터 설계
 
 SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스키마다.
 

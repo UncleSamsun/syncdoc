@@ -1,9 +1,7 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useSession } from "../auth/useSession";
 import DocumentTree from "../documents/DocumentTree";
-import DocumentCatalog from "../documents/DocumentCatalog";
-import { useChecklist } from "../spec/useChecklist";
 import type { DocumentItem } from "../documents/types";
 import type { ProjectItem, SyncStatus } from "../projects/types";
 import { formatMoment, syncLabelOf, syncToneOf } from "../sync/syncLabels";
@@ -14,7 +12,7 @@ type Props = {
   project: ProjectItem;
   status?: SyncStatus;
   documents: DocumentItem[];
-  /** The list may be historical; classification must use the same snapshot. */
+  /** Historical document links retain the displayed snapshot. */
   documentSnapshotId?: string | null;
   currentDocumentId?: string;
   currentPath?: string;
@@ -25,11 +23,6 @@ type Props = {
   active?: "overview" | "tasks" | "search" | "documents" | "checklist";
   children: ReactNode;
 };
-
-function savedDocumentView(projectId: string): "types" | "folders" {
-  try { return localStorage.getItem(`syncdoc:document-view:${projectId}`) === "folders" ? "folders" : "types"; }
-  catch { return "types"; }
-}
 
 /**
  * UI-000 공통 셸. 상단바와 사이드바는 화면이 바뀌어도 같은 자리에 그대로 있다.
@@ -52,16 +45,7 @@ export default function AppShell({
   children,
 }: Props) {
   const session = useSession();
-  const [viewPreference, setViewPreference] = useState(() => ({ projectId: project.id, view: savedDocumentView(project.id) }));
-  const documentView = viewPreference.projectId === project.id ? viewPreference.view : savedDocumentView(project.id);
-  const setDocumentView = (view: "types" | "folders") => {
-    setViewPreference({ projectId: project.id, view });
-    try { localStorage.setItem(`syncdoc:document-view:${project.id}`, view); } catch { /* UI still works without storage. */ }
-  };
-  const catalog = useChecklist(project.id, project.version);
   const shownSnapshotId = documentSnapshotId === undefined ? project.currentSnapshotId : documentSnapshotId;
-  const types = catalog.state === "ready" && catalog.checklist.snapshotId === shownSnapshotId
-    ? catalog.checklist.types : [];
   const syncState = status?.state ?? project.syncState;
   const label = syncLabelOf({ syncState, currentSnapshotId: project.currentSnapshotId });
   // 수집 중에는 어느 브랜치를 모으는 중인지 함께 보인다. 브랜치를 바꾼 직후 이전 게시본을
@@ -135,20 +119,6 @@ export default function AppShell({
             문서
             <span className="cnt">{documents.length}</span>
           </div>
-          <div className="document-views" aria-label="문서 탐색 방식">
-            <button type="button" aria-pressed={documentView === "types"} onClick={() => setDocumentView("types")}>종류별</button>
-            <button type="button" aria-pressed={documentView === "folders"} onClick={() => setDocumentView("folders")}>폴더별</button>
-          </div>
-          {documentView === "types" && types.length > 0 ? (
-            <DocumentCatalog key={project.id} projectId={project.id}
-              snapshotId={shownSnapshotId && shownSnapshotId !== project.currentSnapshotId ? shownSnapshotId : undefined}
-              documents={documents} types={types} currentDocumentId={currentDocumentId} />
-          ) : <>
-          {documentView === "types" && catalog.state === "ready" && types.length === 0 && (
-            <p className="catalog-note">{catalog.checklist.snapshotId !== shownSnapshotId
-              ? "이 게시본과 종류 정의가 달라 폴더로 표시합니다."
-              : "종류 정의를 확인할 수 없어 폴더로 표시합니다."}</p>
-          )}
           <DocumentTree
             projectId={project.id}
             snapshotId={shownSnapshotId && shownSnapshotId !== project.currentSnapshotId ? shownSnapshotId : undefined}
@@ -156,7 +126,6 @@ export default function AppShell({
             currentDocumentId={currentDocumentId}
             currentPath={currentPath}
           />
-          </>}
         </nav>
         <main className="shell-main">{children}</main>
       </div>

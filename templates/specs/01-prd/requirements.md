@@ -4,7 +4,7 @@ type: prd-requirements
 status: 초안
 ---
 
-# 기능과 품질 요구
+# 기능·품질 요구
 
 ## REQ-NNN 요구 이름
 

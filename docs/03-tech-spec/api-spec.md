@@ -4,7 +4,7 @@ type: tech-interface
 status: 확정
 ---
 
-# MVP API 계약
+# 인터페이스 계약
 
 아직 서버가 없다. 이 계약은 구현 대상이며 동작하는 엔드포인트가 아니다.
 

@@ -179,29 +179,16 @@ describe("UI-000 공통 셸의 조작", () => {
     expect(screen.getByRole("link", { name: /^산출물$/ })).not.toHaveTextContent("0");
   });
 
-  it("does not classify an old document list using today's type names", async () => {
-    const base = api();
-    stubApi((url) => url.includes("/spec-checklist") ? json({ snapshotId: "s2", sourceRevision: "new",
-      status: "pass", uncheckedReason: null, truncated: false, findings: [], types: [{ type: "custom",
-        name: "오늘의 종류 이름", apply: "적용", reason: "", status: "pass", documents: [], findings: [] }] }) : base(url));
+  it("keeps folder navigation and historical document links without a view switch", async () => {
+    stubApi(api());
     render(<MemoryRouter><AppShell project={project({ currentSnapshotId: "s2" })}
-      documentSnapshotId="s1" documents={[{ id: "old", path: "docs/old.md", title: "이전 문서", kind: "custom" }]}>
+      documentSnapshotId="s1" documents={[{ id: "old", path: "docs/01-prd/old.md", title: "이전 문서", kind: "custom" }]}>
       <p>본문</p>
     </AppShell></MemoryRouter>);
-    await screen.findByText("이 게시본과 종류 정의가 달라 폴더로 표시합니다.");
-    expect(screen.queryByText("오늘의 종류 이름")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "이전 문서" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /01-prd/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "종류별" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "폴더별" })).toBeNull();
     expect(screen.getByRole("link", { name: "이전 문서" })).toHaveAttribute("href", "/projects/p1/documents/old?snapshotId=s1");
-  });
-
-  it("remembers the chosen document view for the next visit", async () => {
-    localStorage.removeItem("syncdoc:document-view:p1");
-    stubApi(api());
-    const first = render(<MemoryRouter><AppShell project={project()} documents={[]}><p>본문</p></AppShell></MemoryRouter>);
-    await userEvent.click(screen.getByRole("button", { name: "폴더별" }));
-    first.unmount();
-    render(<MemoryRouter><AppShell project={project()} documents={[]}><p>본문</p></AppShell></MemoryRouter>);
-    expect(screen.getByRole("button", { name: "폴더별" })).toHaveAttribute("aria-pressed", "true");
-    localStorage.removeItem("syncdoc:document-view:p1");
+    expect(calls.some(call => call.url.includes("spec-checklist"))).toBe(false);
   });
 });

@@ -233,22 +233,6 @@ main {
   flex-direction: column;
 }
 
-.document-views { display: flex; gap: 4px; padding: 4px 8px 12px; }
-.document-views button {
-  flex: 1;
-  border: 1px solid var(--line2);
-  border-radius: 5px;
-  background: var(--sunk);
-  color: var(--ink2);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px;
-  cursor: pointer;
-}
-.document-views button[aria-pressed="true"] { background: var(--bg); color: var(--ink); border-color: var(--ink2); }
-.catalog .fold-h { text-transform: none; letter-spacing: 0; }
-.catalog-note { color: var(--ink2); font-size: 13px; padding: 0 9px; }
-
 .fold-h {
   display: flex;
   align-items: center;
@@ -262,8 +246,8 @@ main {
   font-family: var(--f-ui);
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink2);
 }
 

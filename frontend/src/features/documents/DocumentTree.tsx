@@ -145,7 +145,7 @@ function Folder({
         <span className="chev" aria-hidden="true">
           {open ? "▾" : "▸"}
         </span>
-        <span className="fname">{folder.name}</span>
+        <span className="fname" title={folder.path}>{folder.name}</span>
         <span className="n">{folder.count}</span>
       </button>
       {open && <div className="fold-b">{children}</div>}
