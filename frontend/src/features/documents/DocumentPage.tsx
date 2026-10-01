@@ -89,6 +89,7 @@ export default function DocumentPage() {
       project={project}
       status={status}
       documents={items}
+      documentSnapshotId={list.list.snapshotId}
       currentDocumentId={documentId}
       currentPath={current?.path}
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}

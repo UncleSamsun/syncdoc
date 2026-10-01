@@ -2,29 +2,58 @@
  * 색·크기 값은 공통 UI 규칙(docs/02-ui-spec/ui-conventions.md)과 화면 정의 페이지에서 가져왔다.
  * 값을 바꾸려면 그 문서를 먼저 고친다.
  */
+@font-face {
+  font-family: "Pretendard Variable";
+  src: url("/fonts/PretendardVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/JetBrainsMono-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
 :root {
-  font-family: "Pretendard Variable", Pretendard, system-ui, sans-serif;
-  color-scheme: light;
+  --f-ui: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+  font-family: var(--f-ui);
+  color-scheme: dark;
 
-  --bg: #ffffff;
-  --sunk: #f7f7f5;
-  --hover: #f1f1ee;
-  --line: #e7e7e4;
-  --line2: #d5d5d0;
-  --ink: #0d0d0d;
-  --ink2: #5b5b57;
-  --ink3: #8c8c86;
-  --act: #0d0d0d;
-  --st-todo-ink: #5f656b;
-  --st-prog-ink: #0a64ac;
-  --st-rev-ink: #8a5d04;
-  --st-done-ink: #127036;
-  --warn-ink: #b85408;
-  --st-fail: #d0392a;
-  --fail-ink: #d0392a;
-  --sf-fail: #fff4f3;
-  --sf-ok: #f0faf4;
-  --f-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --bg: #1e1e1e;
+  --sunk: #181818;
+  --hover: #2b2b2b;
+  --line: #333333;
+  --line2: #454545;
+  --ink: #e6e6e6;
+  --ink2: #b8b8b8;
+  --ink3: #a6a6a6;
+  --act: #e6e6e6;
+  --on-act: #181818;
+  --code-bg: #282828;
+  --ring: #9ec6e8;
+  --st-todo-ink: #a6adb5;
+  --st-prog-ink: #85c4f4;
+  --st-rev-ink: #edc76c;
+  --st-done-ink: #80d79d;
+  --warn-ink: #edbd83;
+  --st-fail: #f1968e;
+  --fail-ink: #f1968e;
+  --sf-fail: #352422;
+  --sf-ok: #1b2c22;
+  --f-mono: "JetBrains Mono", "Pretendard Variable", Consolas, ui-monospace, monospace;
 
   background: var(--bg);
   color: var(--ink);
@@ -36,13 +65,20 @@ body {
   margin: 0;
 }
 
+button, input, select, textarea { font-family: var(--f-ui); }
+h1, h2, h3, h4, h5, h6, strong, b { font-weight: 600; }
+a { color: var(--ink); text-underline-offset: 3px; }
+button:disabled { opacity: 0.6; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+
 main {
   padding: 24px;
 }
 
 .mono {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink3);
 }
 
@@ -60,7 +96,7 @@ main {
   padding: 10px 18px;
   border-radius: 6px;
   background: var(--act);
-  color: #fff;
+  color: var(--on-act);
   text-decoration: none;
 }
 
@@ -68,15 +104,23 @@ main {
 .shell {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .sh-top {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 50px;
-  padding: 0 14px;
+  height: auto;
+  min-height: 50px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  background: var(--bg);
+  z-index: 10;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -95,12 +139,20 @@ main {
   border: 1px solid var(--line2);
   border-radius: 6px;
   font-size: 14px;
+  max-width: min(480px, 40vw);
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .rootpath {
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink3);
+  max-width: 160px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .syncpill {
@@ -108,7 +160,11 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 28px;
+  min-height: 28px;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid var(--st-done-ink);
@@ -131,9 +187,12 @@ main {
 }
 
 .shell-body {
+  position: relative;
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width, 248px) minmax(0, 1fr);
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .sh-side {
@@ -141,25 +200,32 @@ main {
   background: var(--sunk);
   padding: 10px 8px;
   overflow-y: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
 }
 
 .nav-grp {
   display: flex;
-  font-family: var(--f-mono);
+  font-family: var(--f-ui);
   font-size: 13px;
-  letter-spacing: 0.09em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--ink3);
+  color: var(--ink2);
   padding: 14px 9px 5px;
 }
 
 .nav-grp .cnt {
   margin-left: auto;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
 }
 
 .shell-main {
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   padding: 0;
 }
 
@@ -175,14 +241,15 @@ main {
   gap: 6px;
   width: 100%;
   height: 30px;
-  padding: 0 7px;
+  padding: 0 9px 0 7px;
   border: 0;
   background: none;
   cursor: pointer;
-  font-family: var(--f-mono);
-  font-size: 12px;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ink2);
 }
 
@@ -196,8 +263,9 @@ main {
 }
 
 .fold-h .n {
-  font-size: 12px;
-  color: var(--ink3);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink2);
   font-variant-numeric: tabular-nums;
 }
 
@@ -212,6 +280,28 @@ main {
   margin: 1px 0 7px 13px;
   padding-left: 8px;
   border-left: 1px solid var(--line);
+}
+
+.sidebar-resizer {
+  position: absolute;
+  left: calc(var(--sidebar-width, 248px) - 4px);
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 3;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sidebar-resizer:hover,
+.sidebar-resizer:focus-visible,
+.shell-body--resizing .sidebar-resizer { background: var(--line2); }
+.shell-body--resizing,
+.shell-body--resizing * { cursor: col-resize; user-select: none; }
+
+.tree > .fold-b {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
 }
 
 .fold-b a {
@@ -266,7 +356,8 @@ main {
   padding-bottom: 16px;
   border-bottom: 1px solid var(--line);
   font-family: var(--f-mono);
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink3);
 }
 
@@ -283,18 +374,62 @@ main {
 }
 
 .doc-body h2 {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
-  margin: 26px 0 0;
+  line-height: 1.4;
+  margin: 48px 0 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line2);
+}
+
+.doc-body h3 {
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 32px 0 14px;
+}
+
+.doc-body h4 {
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 24px 0 10px;
+  color: var(--ink2);
+}
+
+.doc-body > :first-child { margin-top: 20px; }
+.doc-body :is(h2, h3, h4, h5, h6, [id]) { scroll-margin-top: 20px; }
+.doc-body :is(h2, h3, h4) + :is(p, ul, ol) { margin-top: 0; }
+.doc-body a { color: var(--ink); text-underline-offset: 3px; }
+.doc-body strong { color: var(--ink); font-weight: 600; }
+
+.doc-body pre {
+  padding: 16px 18px;
+  overflow-x: auto;
+  background: var(--sunk);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  font-family: var(--f-mono);
+  font-size: 14px;
+  line-height: 1.7;
 }
 
 .doc-body code {
   font-family: var(--f-mono);
   font-size: 14px;
-  background: var(--sunk);
-  border: 1px solid var(--line);
+  font-weight: 400;
+  color: var(--ink);
+  background: var(--code-bg);
+  border: 1px solid var(--line2);
   border-radius: 4px;
-  padding: 0 4px;
+  padding: 2px 5px;
+  font-variant-ligatures: none;
+}
+
+.doc-body pre code {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-weight: 400;
 }
 
 .doc-body img {
@@ -422,9 +557,10 @@ main {
 }
 
 .toc .h {
-  font-size: 12px;
-  font-family: var(--f-mono);
-  letter-spacing: 0.08em;
+  font-size: 13px;
+  font-family: var(--f-ui);
+  font-weight: 500;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--ink3);
   margin-bottom: 8px;
@@ -441,6 +577,9 @@ main {
 .toc a[data-level="3"] {
   padding-left: 18px;
 }
+.toc a[data-level="4"] { padding-left: 26px; }
+.toc a[data-level="5"] { padding-left: 34px; }
+.toc a[data-level="6"] { padding-left: 42px; }
 
 .toc .wz {
   margin-top: 18px;
@@ -514,8 +653,21 @@ main {
 
 /* 좁은 화면 */
 @media (max-width: 720px) {
+  .sidebar-resizer { display: none; }
+  .sh-top {
+    height: auto;
+    min-height: 50px;
+    flex-basis: auto;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+  .sh-top .sw { max-width: calc(100vw - 110px); overflow: hidden; }
+  .sh-top .rootpath { display: none; }
+  .syncpill { margin-left: 0; }
   .shell-body {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, min(240px, 30dvh)) minmax(0, 1fr);
   }
 
   .sh-side {
@@ -705,7 +857,7 @@ main {
   border: 0;
   border-radius: 6px;
   background: var(--act);
-  color: #fff;
+  color: var(--on-act);
   font: inherit;
   font-size: 14px;
   cursor: pointer;
@@ -713,6 +865,8 @@ main {
 
 .connect button[type="submit"]:disabled {
   background: var(--line2);
+  color: var(--ink2);
+  opacity: 1;
   cursor: default;
 }
 
@@ -746,8 +900,9 @@ main {
 
 .nav-a .cnt {
   margin-left: auto;
-  font-family: var(--f-mono);
-  font-size: 12px;
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 500;
   color: var(--ink3);
   font-variant-numeric: tabular-nums;
 }
@@ -1062,7 +1217,7 @@ main {
 
 .chk-h h1 {
   font-size: 22px;
-  font-weight: 650;
+  font-weight: 600;
   margin: 0;
 }
 
@@ -1312,3 +1467,14 @@ main {
   color: var(--ink3);
   cursor: not-allowed;
 }
+
+.traceability { margin: 24px; min-width: 0; }
+.panel.traceability h2 { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 600; }
+.traceability .mdtbl td { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.traceability ul { padding-left: 20px; }
+.traceability li { margin-bottom: 8px; }
+.traceability select { max-width: 100%; padding: 6px 10px; }
+.trace-pages { display: flex; gap: 12px; align-items: center; margin: 12px 0 24px; flex-wrap: wrap; }
+.trace-pages button { padding: 6px 10px; }
+
+@media (max-width: 720px) { .traceability .mdtbl { min-width: 640px; } }

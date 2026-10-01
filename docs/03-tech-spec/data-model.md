@@ -4,7 +4,7 @@ type: tech-data
 status: 확정
 ---
 
-# MVP 데이터 모델
+# 데이터 설계
 
 SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스키마다.
 
@@ -73,3 +73,44 @@ worker는 SKIP LOCKED로 due 작업 하나를 잡고 임대 token을 부여한�
 ## 보관
 
 초대 취소는 세션과 자격증명을 즉시 무효화한다. snapshots는 현재본+최근 성공2개를 기본 보관 제안으로 하고, 지워진 revision 요청은410. 세션은 만료 후24시간, delivery는7일, sync_runs는30일 후 정리한다. 현재본을 정리 작업이 지우지 않도록 트랜잭션/참조 검사를 한다. 백업은 서비스 고유 정보·암호화키의 별도 보관을 포함하며 파생 캐시 백업은 선택이다.
+
+## 요구–작업 관계 보고서
+
+[REQ-009](../01-prd/mvp-scope.md)의 revision별 파생 결과다.
+
+### 분석 입력과 규약
+
+#### 입력
+
+동일 revision에서 성공적으로 수집한 문서의 documentId, 저장소 경로, 원문 Markdown, frontmatter, 렌더러 headings를 입력으로 받는다. 원문은 분석 후 메모리에서 버리고 기존 저장 정책을 바꾸지 않는다. 코드 블록·인라인 코드·HTML·예시 문서의 ID는 관계로 세지 않는다.
+
+확정 `prd-requirements`에서 `## REQ-NNN 제목`, 확정 `tasks`에서 `## TASK-NNN 제목`을 정의로 읽는다. 초안·검토·폐기 및 proposal/guide/record는 정의와 관계 추출에서 제외한다. 문서 ID는 DOC, 항목 ID는 REQ/TASK로 별도 취급한다. 문서 자체의 기존 C0/C1/C2 검사 결과는 바꾸지 않는다.
+
+#### 관계 추출
+
+TASK 섹션의 `**근거:**` 문단에서 일반 텍스트의 REQ-NNN, REQ ID를 담은 링크 글자, 목록과 같은 접두어의 범위를 읽는다. `REQ-001 ~ REQ-008`은 양끝 포함, 오름차순, 동일 접두어, 세 자리 ID일 때만 펼친다. REQ-000·역순·접두어 혼합·네 자리 ID는 유효 관계로 만들지 않고 `UNSUPPORTED_REFERENCE`로 보고한다. 코드 안 ID는 무시한다. REQ ID가 전혀 없는 근거는 `TASK_WITHOUT_REQUIREMENT` 정보로 보고한다. 상위 요구 관계가 없는 문서 작업도 있으므로 오류로 단정하지 않는다.
+
+관계의 방향은 TASK → REQ이다. `(projectId, snapshotId, itemId)`로 이름 공간을 구분한다. 근거에 같은 ID가 여러 번 있으면 관계는 하나로 합치고 최초 근거 위치를 남긴다. 링크에 경로가 있으면 정규화한 대상 문서가 같은 snapshot에서 해당 REQ 정의를 갖는지도 확인한다. 경로 밖 이동·외부 URL은 링크를 요청하지 않는다. GitHub URL은 첫 범위에서 ID 관계만 해소하고 URL 목적지는 검증하지 않는다.
+
+중복 REQ/TASK는 `DUPLICATE_ITEM_ID`, 없는 REQ는 `MISSING_REQUIREMENT`, 로컬 링크 경로와 ID가 다른 문서에 대응하면 `REFERENCE_TARGET_MISMATCH`다. 링크 fragment 도달성은 첫 범위의 검사 대상이 아니다. 이동 링크에는 렌더러가 생성한 실제 heading id를 사용한다.
+
+#### 진단과 상태
+
+보고서 상태는 `complete`(전 범위 분석), `partial`(해석 불가 입력 포함), `unchecked`(분석 전)다. 상태는 요구 충족이나 승인 여부를 뜻하지 않는다. 진단은 code/severity/documentId/path/line/itemId/targetId/message를 갖고 원문 전체는 포함하지 않는다. 동일 code·위치·대상은 중복 제거한다.
+
+중복 ID, 깨진 구조·메타데이터, 해석 불가 참조로 전체 관계를 신뢰할 수 없으면 partial이다. 근거 라벨이 없거나 비어 있어도 partial이며 `TASK_EVIDENCE_UNREADABLE`로 표시한다. 부분 분석에서는 연결이 확인된 요구만 `linked`로 표시하고 나머지는 `unknown`으로 둔다. complete에서만 관계가 없는 요구를 `unlinked`로 판정한다. 없는 ID와 명백한 경로 불일치는 완전하게 확인한 오류이므로 그 자체로 partial을 만들지는 않는다.
+
+확정 요구 문서가 없으면 보고서는 `unchecked`, 이유는 `NO_CONFIRMED_REQUIREMENTS`다. 확정 작업 문서가 없으면 `unchecked`/`NO_CONFIRMED_TASKS`로 표시하고 요구는 unknown이다. 기존 체크리스트의 필수 문서 누락과 별도다. REQ/TASK 대상 종류를 선언한 문서의 status가 빠졌거나 허용 값이 아니면 의도적 초안 제외로 처리하지 않고 partial 진단을 남긴다.
+
+### 저장과 게시
+
+migration은 `V8__spec_traceability.sql`이다. document_snapshots에 nullable `traceability_json`을 추가한다. NULL은 기존 게시본의 미분석이고, 새 보고서는 schemaVersion=1을 포함한다.
+
+보고서는 requirements, tasks, edges, findings, analysisStatus, uncheckedReason를 담는다. 항목은 itemId/title/documentId/path/anchor/line, 관계는 taskId/requirementId/sourceLocation을 갖는다. projectId/snapshotId/sourceRevision은 snapshot 정본에서 읽고 JSON에 중복 저장하지 않는다.
+
+관계 계산은 모든 원문을 읽은 뒤, 현재 checklist 저장과 snapshot 완료·원자적 게시 전 수행한다. 문서의 참조 오류는 진단 결과로 게시할 수 있지만 분석기 예외·직렬화 실패는 수집 실패로 처리해 마지막 정상 게시본을 유지한다. 회수·삭제 시 snapshot과 함께 지워지며 별도 정리가 필요하지 않다.
+
+분석 버전이 바뀌면 DocumentVersions의 기존 정책 버전을 올려 같은 commit도 새 분석 게시본을 만들도록 한다. 기존 게시본을 조회하면서 소급 수정하지 않는다. 현재 최대 문서 수·파일 크기 제한을 유지한다.
+
+
+중복 TASK는 작업 매핑에서 임의 선택하지 않는다. 수집된 전체 원문에서 분석한 뒤 유일한 TASK 정의만 기존 tasks 테이블에 담는다. 따라서 중복 작업은 관계 진단에 남고 Issue 상태는 합성하지 않는다.

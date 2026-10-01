@@ -1,3 +1,4 @@
+import TraceabilityPanel from "./TraceabilityPanel";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiGet, isApiError } from "../../shared/api/client";
@@ -55,12 +56,12 @@ export default function ChecklistPage() {
   const documents = list.state === "ready" ? list.list.items : [];
 
   return (
-    <AppShell project={project} documents={documents} active="checklist"
+    <AppShell project={project} documents={documents} documentSnapshotId={list.state === "ready" ? list.list.snapshotId : null} active="checklist"
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}>
       {checklist.state === "loading" && <p className="centered">불러오는 중입니다.</p>}
       {checklist.state === "waiting" && <FirstSyncWaiting />}
       {checklist.state === "gone" && <SnapshotGone projectId={project.id} />}
-      {checklist.state === "ready" && <Body projectId={project.id} view={checklist.checklist} />}
+      {checklist.state === "ready" && <><Body projectId={project.id} view={checklist.checklist} /><TraceabilityPanel projectId={project.id} fullName={project.fullName} snapshotId={checklist.checklist.snapshotId}/></>}
     </AppShell>
   );
 }

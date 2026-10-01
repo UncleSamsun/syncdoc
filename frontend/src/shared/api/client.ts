@@ -14,9 +14,10 @@ export function isApiError(value: unknown): value is ApiError {
   return typeof value === "object" && value !== null && "status" in value && "code" in value;
 }
 
-export async function apiGet<T>(path: string): Promise<T> {
+export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     method: "GET",
+    signal,
     credentials: "same-origin",
     headers: { Accept: "application/json" },
   });

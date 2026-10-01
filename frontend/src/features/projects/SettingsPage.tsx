@@ -118,6 +118,7 @@ export default function SettingsPage() {
     <AppShell
       project={project}
       documents={documents}
+      documentSnapshotId={list.state === "ready" ? list.list.snapshotId : null}
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}
     >
       <section className="settings">

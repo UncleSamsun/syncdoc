@@ -11,6 +11,7 @@ import io.github.unclesamsun.syncdoc.document.MarkdownRenderService;
 import io.github.unclesamsun.syncdoc.spec.ApplySpecTable;
 import io.github.unclesamsun.syncdoc.spec.ChecklistChecker;
 import io.github.unclesamsun.syncdoc.spec.SpecChecklist;
+import io.github.unclesamsun.syncdoc.spec.TraceabilityAnalyzer;
 import io.github.unclesamsun.syncdoc.spec.SpecFormat;
 import io.github.unclesamsun.syncdoc.spec.SpecFormatReader;
 import io.github.unclesamsun.syncdoc.document.domain.AssetContentEntity;
@@ -82,6 +83,7 @@ public class SyncWorker {
     private final SyncProperties properties;
     private final ObjectMapper json;
     private final Clock clock;
+    private final TraceabilityAnalyzer traceability;
 
     public SyncWorker(SyncQueue queue, ProjectRepository projects, InstallationRepository installations,
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
@@ -89,7 +91,7 @@ public class SyncWorker {
                       AssetContentRepository assetContents, MarkdownRenderService renderer,
                       TaskRepository tasks, IssueCollector issueCollector,
                       SpecFormatReader specFormats, ChecklistChecker checklistChecker,
-                      SyncProperties properties, ObjectMapper json, Clock clock) {
+                      SyncProperties properties, ObjectMapper json, Clock clock, TraceabilityAnalyzer traceability) {
         this.queue = queue;
         this.projects = projects;
         this.installations = installations;
@@ -106,6 +108,7 @@ public class SyncWorker {
         this.properties = properties;
         this.json = json;
         this.clock = clock;
+        this.traceability = traceability;
     }
 
     /** @return 실행할 작업이 있었으면 true */
@@ -224,6 +227,8 @@ public class SyncWorker {
         // 규약 판정은 원문을 봐야 한다. 게시본에는 변환 결과만 남으므로 지금 모아 둔다.
         List<ChecklistChecker.SourceDocument> forChecklist = new ArrayList<>();
 
+        List<TraceabilityAnalyzer.Source> forTraceability = new ArrayList<>();
+        Map<UUID, MarkdownRenderService.RenderedDocument> taskDocuments = new LinkedHashMap<>();
         int stored = 0;
         for (RepositoryContentGateway.SourceFile file : files) {
             if (file.size() > properties.maxDocumentSize()) {
@@ -238,8 +243,9 @@ public class SyncWorker {
             forChecklist.add(new ChecklistChecker.SourceDocument(documentId.toString(), file.path(), text));
             // 작업계획 문서의 제목이 작업 목록의 정본이다. 다른 종류의 문서에서는 뽑지 않는다.
             if (TASKS_DOCUMENT_KIND.equals(rendered.kind())) {
-                saveTasks(snapshot.getId(), documentId, rendered);
+                taskDocuments.put(documentId, rendered);
             }
+            forTraceability.add(new TraceabilityAnalyzer.Source(documentId.toString(), file.path(), text, rendered.headings()));
             stored++;
             if (stored % 20 == 0 && !queue.renew(lease.jobId(), lease.token())) {
                 // 임대를 잃었다. 다른 worker가 같은 작업을 다시 하고 있으므로 여기서 멈춘다.
@@ -249,6 +255,12 @@ public class SyncWorker {
         }
         SpecChecklist checklist = checklist(repository, revision, forChecklist);
         snapshot.checklist(json.writeValueAsString(checklist));
+        snapshot.traceability(json.writeValueAsString(traceability.analyze(forTraceability)));
+        // Do not choose one definition of a duplicate TASK or violate its unique constraint.
+        Map<String, Long> taskCounts = taskDocuments.values().stream()
+            .flatMap(doc -> TaskIds.fromHeadings(doc.headings(), TASK_HEADING_LEVEL).stream())
+            .collect(java.util.stream.Collectors.groupingBy(TaskIds.ExtractedTask::taskSpecId, java.util.stream.Collectors.counting()));
+        taskDocuments.forEach((id, doc) -> saveTasks(snapshot.getId(), id, doc, taskCounts));
         snapshots.save(snapshot);
 
         Map<String, Object> summary = new LinkedHashMap<>();
@@ -357,8 +369,9 @@ public class SyncWorker {
      * 조회 시점에 한다. 수집 때 붙여 두면 Issue 상태가 바뀌어도 옛 연결이 남는다.
      */
     private void saveTasks(UUID snapshotId, UUID documentId,
-                           MarkdownRenderService.RenderedDocument rendered) {
+                           MarkdownRenderService.RenderedDocument rendered, Map<String, Long> counts) {
         for (TaskIds.ExtractedTask task : TaskIds.fromHeadings(rendered.headings(), TASK_HEADING_LEVEL)) {
+            if (counts.getOrDefault(task.taskSpecId(), 0L) != 1L) continue;
             tasks.save(new TaskEntity(snapshotId, task.taskSpecId(), documentId, task.anchor(),
                     task.title(), true));
         }

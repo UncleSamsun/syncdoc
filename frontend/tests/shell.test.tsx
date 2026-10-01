@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OverviewPage from "../src/features/dashboard/OverviewPage";
+import AppShell from "../src/features/shell/AppShell";
 import { forgetChecklist } from "../src/features/spec/useChecklist";
 
 type Handler = (url: string, init?: RequestInit) => Response;
@@ -168,5 +169,27 @@ describe("UI-000 공통 셸의 조작", () => {
 
     // 브랜치를 바꾼 직후 이전 게시본을 보는 사람이 무엇을 기다리는지 알 수 있어야 한다.
     await waitFor(() => expect(screen.getByText(/main 수집 중/)).toBeInTheDocument());
+  });
+
+  it("does not present zero checklist errors as zero deliverables", async () => {
+    stubApi(api());
+    render(<MemoryRouter><AppShell project={project()} documents={[]} checklistErrors={0}>
+      <p>본문</p>
+    </AppShell></MemoryRouter>);
+    expect(screen.getByRole("link", { name: /^산출물$/ })).not.toHaveTextContent("0");
+  });
+
+  it("keeps folder navigation and historical document links without a view switch", async () => {
+    stubApi(api());
+    render(<MemoryRouter><AppShell project={project({ currentSnapshotId: "s2" })}
+      documentSnapshotId="s1" documents={[{ id: "old", path: "docs/01-prd/old.md", title: "이전 문서", kind: "custom" }]}>
+      <p>본문</p>
+    </AppShell></MemoryRouter>);
+    expect(screen.getByRole("button", { name: /01-prd/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^docs / })).toBeNull();
+    expect(screen.queryByRole("button", { name: "종류별" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "폴더별" })).toBeNull();
+    expect(screen.getByRole("link", { name: "이전 문서" })).toHaveAttribute("href", "/projects/p1/documents/old?snapshotId=s1");
+    expect(calls.some(call => call.url.includes("spec-checklist"))).toBe(false);
   });
 });

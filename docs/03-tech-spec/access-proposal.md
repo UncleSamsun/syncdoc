@@ -4,7 +4,7 @@ type: proposal
 status: 검토
 ---
 
-# GitHub 로그인과 접근 범위
+# GitHub 로그인과 접근 범위 검토
 
 ## 방향
 

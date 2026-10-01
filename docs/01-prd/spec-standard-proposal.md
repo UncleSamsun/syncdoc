@@ -4,7 +4,7 @@ type: proposal
 status: 검토
 ---
 
-# 공통 Spec 템플릿 구성안
+# 공통 Spec 구성 검토
 
 ## 목적
 

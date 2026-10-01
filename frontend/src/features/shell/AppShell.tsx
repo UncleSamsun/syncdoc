@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useSession } from "../auth/useSession";
 import DocumentTree from "../documents/DocumentTree";
@@ -7,11 +7,14 @@ import type { ProjectItem, SyncStatus } from "../projects/types";
 import { formatMoment, syncLabelOf, syncToneOf } from "../sync/syncLabels";
 import AccountMenu from "./AccountMenu";
 import BranchSwitcher from "./BranchSwitcher";
+import ResizableShellBody from "./ResizableShellBody";
 
 type Props = {
   project: ProjectItem;
   status?: SyncStatus;
   documents: DocumentItem[];
+  /** Historical document links retain the displayed snapshot. */
+  documentSnapshotId?: string | null;
   currentDocumentId?: string;
   currentPath?: string;
   /** 사이드바 `작업` 항목의 건수. 현황을 아직 읽지 않았으면 비운다. */
@@ -34,6 +37,7 @@ export default function AppShell({
   project,
   status,
   documents,
+  documentSnapshotId,
   currentDocumentId,
   currentPath,
   taskCount,
@@ -42,6 +46,7 @@ export default function AppShell({
   children,
 }: Props) {
   const session = useSession();
+  const shownSnapshotId = documentSnapshotId === undefined ? project.currentSnapshotId : documentSnapshotId;
   const syncState = status?.state ?? project.syncState;
   const label = syncLabelOf({ syncState, currentSnapshotId: project.currentSnapshotId });
   // 수집 중에는 어느 브랜치를 모으는 중인지 함께 보인다. 브랜치를 바꾼 직후 이전 게시본을
@@ -54,14 +59,14 @@ export default function AppShell({
         <Link className="brand" to="/">
           SyncDoc
         </Link>
-        <span className="sw" title="연결한 저장소">
+        <span className="sw" title={`연결한 저장소: ${project.fullName}`}>
           {project.fullName}
         </span>
         <BranchSwitcher
           project={project}
           csrfToken={session.state === "signed-in" ? session.me.csrfToken : ""}
         />
-        <span className="rootpath">{project.docsRoot}</span>
+        <span className="rootpath" title={project.docsRoot}>{project.docsRoot}</span>
         <span className={`syncpill ${syncToneOf(syncState) === "fail" ? "stale" : ""}`}>
           <span className={`dot dot--${syncToneOf(syncState)}`} aria-hidden="true" />
           {pill}
@@ -75,8 +80,7 @@ export default function AppShell({
         )}
       </header>
 
-      <div className="shell-body">
-        <nav className="sh-side" aria-label="프로젝트">
+      <ResizableShellBody sidebar={<nav id="project-sidebar" className="sh-side" aria-label="프로젝트">
           <NavLink
             className="nav-a"
             to={`/projects/${project.id}`}
@@ -99,7 +103,9 @@ export default function AppShell({
             aria-current={active === "checklist" ? "page" : undefined}
           >
             산출물
-            {checklistErrors !== undefined && <span className="cnt">{checklistErrors}</span>}
+            {checklistErrors !== undefined && checklistErrors > 0 && (
+              <span className="cnt">오류 {checklistErrors}</span>
+            )}
           </NavLink>
           <NavLink
             className="nav-a"
@@ -115,13 +121,15 @@ export default function AppShell({
           </div>
           <DocumentTree
             projectId={project.id}
+            rootPath={project.docsRoot}
+            snapshotId={shownSnapshotId && shownSnapshotId !== project.currentSnapshotId ? shownSnapshotId : undefined}
             items={documents}
             currentDocumentId={currentDocumentId}
             currentPath={currentPath}
           />
-        </nav>
+        </nav>}>
         <main className="shell-main">{children}</main>
-      </div>
+      </ResizableShellBody>
     </div>
   );
 }
