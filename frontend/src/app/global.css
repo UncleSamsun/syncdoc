@@ -280,6 +280,10 @@ main {
   border-left: 1px solid var(--line);
 }
 
+.tree > .fold-b {
+  border-left: 0;
+}
+
 .fold-b a {
   display: block;
   padding: 6px 8px;
