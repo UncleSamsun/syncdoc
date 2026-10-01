@@ -1467,3 +1467,14 @@ main {
   color: var(--ink3);
   cursor: not-allowed;
 }
+
+.traceability { margin: 24px; min-width: 0; }
+.panel.traceability h2 { margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 20px; font-weight: 600; }
+.traceability .mdtbl td { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.traceability ul { padding-left: 20px; }
+.traceability li { margin-bottom: 8px; }
+.traceability select { max-width: 100%; padding: 6px 10px; }
+.trace-pages { display: flex; gap: 12px; align-items: center; margin: 12px 0 24px; flex-wrap: wrap; }
+.trace-pages button { padding: 6px 10px; }
+
+@media (max-width: 720px) { .traceability .mdtbl { min-width: 640px; } }

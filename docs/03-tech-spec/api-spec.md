@@ -30,7 +30,7 @@ HTML과 검색 결과는 `Cache-Control: private, no-store`로 제공한다. 사
 
 ## 계약 일람
 
-MVP가 구현할 계약 26개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
+MVP가 구현할 계약 28개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
 
 | ID | 메서드·경로 | 연결 요구 | 입력 | 응답·조건 |
 |---|---|---|---|---|
@@ -60,6 +60,8 @@ MVP가 구현할 계약 26개 전부다. 이 표에 없는 엔드포인트는 �
 | API-024 | `GET /github/repositories/{githubRepositoryId}/branches` | REQ-002, REQ-007 | 없음 | 앱과 사용자 모두 접근 가능한 저장소의 브랜치 `{items:[{name,isDefault}]}`. 볼 수 없으면 404 |
 | API-025 | `GET /projects/{id}/spec-checklist` | REQ-008 | snapshotId 선택 | `{snapshotId,sourceRevision,status,uncheckedReason,truncated,findings,types}`. 조건은 [API-025](#api-025-산출물-체크리스트) |
 | API-026 | `DELETE /projects/{id}` | REQ-002 | `{fullName}` 확인 값 | 204 연결 해제와 수집 자료 삭제. 조건은 [API-026](#api-026-연결-해제) |
+| API-027 | `GET /projects/{id}/spec-traceability` | REQ-009 | snapshotId, page, size, coverage | 요구별 작업 관계. 상세는 API-027 |
+| API-028 | `GET /projects/{id}/spec-traceability/findings` | REQ-009 | snapshotId, page, size | 참조 진단. 상세는 API-028 |
 
 API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 브랜치 스위처와 [UI-001](../02-ui-spec/ui-screens.md)의 연결 양식이 브랜치를 목록에서 고르는데 그 목록을 주는 계약이 없었다. 저장소 목록(API-008)에 브랜치를 함께 담지 않은 이유는 목록을 열 때마다 저장소 수만큼 GitHub를 더 부르게 되기 때문이다.
 
@@ -173,3 +175,35 @@ API-017 ~ API-020에 함께 적용된다.
 - 실패한 snapshot의 문서를 정상 문서 목록에 섞지 않는다. 이전 정상 snapshot이 있으면 실패한 갱신 대신 그것을 유지한다.
 - 최초 수집이 실패하면 빈 문서 목록과 sync 오류(API-014)를 함께 보여준다. 파일별 검증 오류는 sync 진단에 보관한다.
 - 서로 다른 revision의 문서를 한 snapshot에 섞어 게시하지 않는다.
+
+## API-027 요구별 작업 관계
+
+**연결 요구:** REQ-009.
+
+**입력:** 선택 snapshotId, page=0, size=50(1~100), coverage=all/linked/unlinked/unknown. 잘못된 값은 400이다.
+
+**출력:** snapshotId/sourceRevision/analysisVersion(schemaVersion)/analysisStatus/uncheckedReason, requirements(item,coverage,tasks(item,execution 기존 TaskView)), totalElements/page/size. REQ ID·경로 순 정렬. JSON NULL인 기존 게시본은 analysisVersion=null, unchecked/NOT_COMPUTED다.
+
+**오류:** 기존 프로젝트와 snapshot 열람 계약을 따른다. 첫 수집 전 409, 프로젝트 열람 불가 404, 지정 게시본 없음·다른 프로젝트·미완성 게시본 410. 인증 없음은 공통 인증 정책이다.
+
+**접근 조건:** 매 요청 ProjectService.view와 snapshotFor를 거친다. 사용자 권한을 생략하는 캐시는 두지 않고 private/no-store를 반환한다.
+
+**부작용:** 없음. 관계는 불변 JSON, 실행 상태는 조회 시 기존 TaskMappingService 관찰 결과를 합성한다.
+
+**재시도:** 동일 snapshot 관계는 동일하다. Issue 관찰 결과는 이후 변경될 수 있다.
+
+## API-028 참조 진단
+
+**연결 요구:** REQ-009.
+
+**입력:** 선택 snapshotId, page=0, size=50(1~100).
+
+**출력:** API-027의 기준 메타데이터와 findings, totalElements/page/size. 진단은 code/severity/documentId/path/line/itemId/targetId/message, path/line/code/targetId 순으로 정렬한다.
+
+**오류:** API-027과 같다.
+
+**접근 조건:** API-027과 같다.
+
+**부작용:** 없음. C0/C1/C2 체크리스트를 변경하지 않는다.
+
+**재시도:** 동일 snapshot 진단은 동일하다.

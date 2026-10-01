@@ -46,6 +46,12 @@ public class DocumentSnapshotEntity {
     @Column(name = "checklist_json", nullable = false)
     private String checklistJson;
 
+    @Column(name = "traceability_json")
+    private String traceabilityJson;
+
+    public String getTraceabilityJson() { return traceabilityJson; }
+    public void traceability(String json) { this.traceabilityJson = json; }
+
     protected DocumentSnapshotEntity() {
     }
 
