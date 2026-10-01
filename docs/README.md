@@ -4,7 +4,7 @@ type: guide
 status: 확정
 ---
 
-# 문서와 산출물의 진입점
+# 문서와 산출물 진입 안내
 
 대상은 SyncDoc을 사용하는 사람과 문서를 작성하는 에이전트다. 먼저 [프로젝트 개요 (DOC-016)](01-prd/overview.md)와 [작성 하네스](../rules/project-harness.md)를 읽는다. 폴더의 모든 문서를 현재 명세로 간주하지 않는다.
 
@@ -26,7 +26,7 @@ status: 확정
 
 ## 다음 구현 준비
 
-2026-10-01 SDD 레퍼런스 조사 후 첫 확장 후보는 REQ–TASK 관계·요구별 연결 표·참조 진단이다. [설계 제안 (DOC-025)](03-tech-spec/traceability-proposal.md) → [구현 준비 계획 (DOC-026)](04-tasks/traceability-plan.md) 순서로 읽는다. 두 문서는 `status: 검토`이며 확정 MVP와 구분한다. 설계·작업계획 확인 후 정본 승격과 TASK Issue 등록부터 진행한다.
+2026-10-01 사용자가 REQ–TASK 관계·요구별 연결 표·참조 진단을 첫 후속 범위로 확정했다. [TASK-016](https://github.com/UncleSamsun/syncdoc/issues/70)의 별도 기능 브랜치에서 정본 승격·구현·검증을 진행한다. 검토 자료의 경로와 활성 구현 기준은 해당 기능 PR에서 함께 제공한다.
 
 ## 기준과 자료를 구분하기
 

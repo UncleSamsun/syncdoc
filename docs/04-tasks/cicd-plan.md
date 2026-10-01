@@ -4,7 +4,7 @@ type: tasks
 status: 확정
 ---
 
-# GitHub Actions와 회사 서버 테스트 배포 작업계획
+# 작업 정의 — 회사 서버 테스트 배포
 
 [회사 서버 테스트 CI/CD](../03-tech-spec/cicd.md)를 구현한다. 기존 기능과 GitHub 협업 규칙을 유지하며 작업은 현재 세션에서 순서대로 수행한다.
 

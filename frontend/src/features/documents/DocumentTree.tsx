@@ -118,6 +118,7 @@ function Folder({
       {folder.documents.map((document) => (
         <Link
           key={document.id}
+          title={document.path}
           to={`/projects/${projectId}/documents/${document.id}${snapshotId ? `?snapshotId=${encodeURIComponent(snapshotId)}` : ""}`}
           aria-current={document.id === currentDocumentId ? "page" : undefined}
         >

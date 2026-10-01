@@ -4,7 +4,7 @@ type: proposal
 status: 검토
 ---
 
-# GitHub 지원 매트릭스
+# GitHub 지원 범위 검토
 
 TASK-001의 산출물이다. MVP가 GitHub에서 무엇을 읽어야 하고, 그것이 실제로 되는지 확인했는지를 한 표로 관리한다. 확인한 행은 확인 일자를 적고, 전부 확인되면 이 문서를 `record`로 바꾼다.
 
