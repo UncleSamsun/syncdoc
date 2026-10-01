@@ -150,7 +150,8 @@ test.describe("로그인한 사용자의 한 흐름", () => {
   });
 
   test("연결 설정에서 바꿀 수 있는 것과 없는 것이 갈린다 (UI-015)", async ({ page }) => {
-    await open(page);
+    const projectId = await open(page);
+    const project = await (await page.request.get(`${API}/projects/${projectId}`)).json();
     await page.getByRole("link", { name: "설정", exact: true }).click();
     await expect(page.getByRole("heading", { name: "연결 설정" })).toBeVisible();
 
@@ -159,9 +160,22 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     await expect(page.locator(".settings .fixed")).toContainText("상단바에서 바꿉니다");
     await expect(page.locator("#docsRoot")).toHaveValue(/\S/);
 
-    // 연결을 끊는 수단을 두지 않는다. 그 계약이 없다.
-    const labels = await page.locator(".settings button").allTextContents();
-    expect(labels.some((label) => /해제|끊기|삭제/.test(label))).toBe(false);
+    // API-026: 연결자/관리자는 전체이름이 정확히 맞아야 해제할 수 있다.
+    // 이 시험에서는 현재 연결을 지우지 않고 실행 전 확인 경계만 본다.
+    const disconnect = page.getByRole("button", { name: "연결 끊기", exact: true });
+    if (project.manageable) {
+      await expect(disconnect).toBeVisible();
+      await expect(disconnect).toBeDisabled();
+      await page.locator("#confirmName").fill(`${project.fullName}-wrong`);
+      await expect(disconnect).toBeDisabled();
+      await page.locator("#confirmName").fill(project.fullName);
+      await expect(disconnect).toBeEnabled();
+      await page.locator("#confirmName").fill("");
+      await expect(disconnect).toBeDisabled();
+    } else {
+      await expect(disconnect).toHaveCount(0);
+      await expect(page.locator("#docsRoot")).toHaveAttribute("readonly", "");
+    }
     await expectNoSideScroll(page);
   });
 
