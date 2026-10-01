@@ -1,0 +1,30 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: syncdoc-test
+  namespace: syncdoc-cd
+spec:
+  interval: 1m
+  timeout: 30s
+  url: https://github.com/UncleSamsun/syncdoc
+  ref:
+    branch: syncdoc-test-deploy
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: syncdoc-test
+  namespace: syncdoc-cd
+spec:
+  suspend: true
+  interval: 1m
+  timeout: 5m
+  retryInterval: 30s
+  path: ./kubernetes
+  prune: false
+  wait: true
+  targetNamespace: syncdoc-test
+  serviceAccountName: syncdoc-deployer
+  sourceRef:
+    kind: GitRepository
+    name: syncdoc-test
