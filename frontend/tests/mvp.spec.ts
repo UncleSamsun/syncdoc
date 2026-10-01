@@ -314,3 +314,28 @@ async function findDocuments(page: Page, projectId: string) {
   }
   return { withTable, withDiagram };
 }
+
+// TASK-016: run against an actually deployed revision, never convert unavailable analysis to pass.
+test("요구–작업 관계와 동일 게시본 원문 이동 (UI-016)", async ({ page, request }) => {
+  const projectsResponse = await request.get(`${API}/projects`);
+  test.skip(projectsResponse.status() === 401, "로그인 세션이 없습니다.");
+  expect(projectsResponse.ok()).toBeTruthy();
+  const projects = await projectsResponse.json();
+  const project = projects.items?.find((item: {currentSnapshotId:string|null})=>item.currentSnapshotId);
+  test.skip(!project, "게시본이 있는 프로젝트가 없습니다.");
+  const response = await request.get(`${API}/projects/${project.id}/spec-traceability`);
+  test.skip(response.status() === 404, "이 배포에는 추적성 API가 없습니다.");
+  expect(response.ok()).toBeTruthy();
+  const report = await response.json();
+  test.skip(report.analysisStatus === "unchecked", "이 게시본은 아직 분석하지 않았습니다.");
+  const linked = report.requirements.find((row: {coverage:string})=>row.coverage === "linked");
+  test.skip(!linked, "연결 관계가 있는 시험 데이터가 없습니다.");
+  await page.goto(`/projects/${project.id}/checklist`);
+  const panel = page.getByRole("region",{name:"요구와 작업"});
+  await expect(panel).toBeVisible();
+  const link = panel.getByRole("link", {name: new RegExp(linked.item.itemId)});
+  await expect(link).toHaveAttribute("href",new RegExp(`snapshotId=${report.snapshotId}`));
+  await link.click();
+  await expect(page.locator(".doc")).toBeVisible();
+  expect(new URL(page.url()).searchParams.get("snapshotId")).toBe(report.snapshotId);
+});

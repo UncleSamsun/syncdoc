@@ -184,7 +184,7 @@ API-017 ~ API-020에 함께 적용된다.
 
 **출력:** snapshotId/sourceRevision/analysisVersion(schemaVersion)/analysisStatus/uncheckedReason, requirements(item,coverage,tasks(item,execution 기존 TaskView)), totalElements/page/size. REQ ID·경로 순 정렬. JSON NULL인 기존 게시본은 analysisVersion=null, unchecked/NOT_COMPUTED다.
 
-**오류:** 기존 프로젝트와 snapshot 열람 계약을 따른다. 첫 수집 전 409, 열람 불가·다른 프로젝트·미완성 게시본 404, 회수 410. 인증 없음은 공통 인증 정책이다.
+**오류:** 기존 프로젝트와 snapshot 열람 계약을 따른다. 첫 수집 전 409, 프로젝트 열람 불가 404, 지정 게시본 없음·다른 프로젝트·미완성 게시본 410. 인증 없음은 공통 인증 정책이다.
 
 **접근 조건:** 매 요청 ProjectService.view와 snapshotFor를 거친다. 사용자 권한을 생략하는 캐시는 두지 않고 private/no-store를 반환한다.
 

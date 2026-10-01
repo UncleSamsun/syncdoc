@@ -22,7 +22,7 @@ public class SpecMetadataParser {
     /**
      * @param specId 문서 ID. `DOC-014` 같은 값이며 같은 게시본 안에서 유일해야 한다
      * @param kind   문서 종류. 규칙 파일이 정의한 `tasks`·`tech-interface` 같은 값이다
-     * @param status 작성 상태. 지금은 보관만 한다
+     * @param status 작성 상태. 추적성 분석이 확정 명세를 구분할 때 사용한다
      */
     public record SpecMetadata(String specId, String kind, String status) {
 

@@ -22,8 +22,10 @@ public final class DocumentVersions {
     /**
      * 허용 목록 정화 3판. 접기와 서비스 첨부 그림은 허용하고, 바깥 주소 그림과 script는 버린다.
      * 3판에서 블록 중첩 깊이 상한을 더했다.
+     * 추적성 1판은 같은 revision도 새 관계 보고서를 가진 게시본으로 다시 수집한다.
+     * 기존 완료 게시본의 NULL 보고서는 조회 중 소급 갱신하지 않는다.
      */
-    public static final String POLICY = "allowlist+3";
+    public static final String POLICY = "allowlist+3-traceability1";
 
     private DocumentVersions() {
     }
