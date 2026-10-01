@@ -12,11 +12,15 @@ SDD 방식으로 작성한 명세와 GitHub 협업 현황을 연결하는 프로
 
 명세와 규칙을 먼저 쓰고 그에 맞춰 구현한다. MVP 구현은 [구현계획](docs/04-tasks/implementation-plan.md)의 작업 단위로 진행한다.
 
+후속 구현: [TASK-016 요구–작업 연결 표와 참조 진단](https://github.com/UncleSamsun/syncdoc/issues/70)은 별도 기능 브랜치에서 진행한다. 준비 중인 기능을 현재 배포 범위로 간주하지 않는다.
+
 ## 문서
 
-- [MVP 기능과 인수 기준](docs/01-prd/mvp-scope.md)
-- [API 계약](docs/03-tech-spec/api-spec.md) · [데이터 모델](docs/03-tech-spec/data-model.md)
-- [구현 작업계획](docs/04-tasks/implementation-plan.md)
+- [산출물별 현재 기준](docs/README.md) · [새 프로젝트 작성 하네스](rules/project-harness.md) · [작성 템플릿](templates/README.md)
+
+- [기능·품질 요구](docs/01-prd/mvp-scope.md)
+- [인터페이스 계약](docs/03-tech-spec/api-spec.md) · [데이터 설계](docs/03-tech-spec/data-model.md)
+- [작업 정의](docs/04-tasks/implementation-plan.md)
 - [회사 서버 테스트 CI/CD](docs/03-tech-spec/cicd.md) · [배포 작업계획](docs/04-tasks/cicd-plan.md)
 
 - [새 MVP 요구](docs/01-prd/brief.md)

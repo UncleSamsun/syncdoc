@@ -87,6 +87,7 @@ export default function OverviewPage({ csrfToken }: Props) {
       project={project}
       status={status}
       documents={documents}
+      documentSnapshotId={list.state === "ready" ? list.list.snapshotId : null}
       taskCount={overview.taskTotal}
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}
       active="overview"

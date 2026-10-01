@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/api": { target: "http://localhost:8080", changeOrigin: false },
+      "/api": { target: process.env.SYNCDOC_API_PROXY ?? "http://localhost:8080", changeOrigin: false },
     },
   },
   test: {

@@ -4,7 +4,7 @@ type: tech-ops
 status: 확정
 ---
 
-# 실행과 운영
+# 실행·운영
 
 회사 AI 서버의 GitHub Actions·K3s/Flux 테스트 배포는 [CI/CD](cicd.md)에서 관리한다. 아래 로컬 구성과 별도 테스트 DB·Secret을 사용한다.
 

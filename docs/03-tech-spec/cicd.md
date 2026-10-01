@@ -4,7 +4,7 @@ type: tech-ops
 status: 확정
 ---
 
-# 회사 서버 테스트 CI/CD
+# 실행·운영 — 회사 서버 테스트 CI/CD
 
 GitHub Actions로 검증·이미지를 만들고 회사 K3s의 Flux가 배포 전용 Git 브랜치를 읽는다. Jenkins는 사용하지 않는다. [실행과 운영](ops.md)의 로컬 구성에 추가되는 회사 서버 테스트 환경이다.
 

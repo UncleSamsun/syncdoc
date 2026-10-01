@@ -18,9 +18,9 @@
 | [GitHub 협업](github-collaboration.md) | 2026-09-09 | 활성 |
 | [ID와 문서 참조](identity-and-references.md) | 2026-09-09 | 활성 (ID 발급 형식·메타데이터 스키마 미확정) |
 | [SDD 역할과 승인 범위](sdd-workflow.md) | 2026-09-09 | 활성 |
-| [공통 UI 규칙](../docs/02-ui-spec/ui-conventions.md) | 2026-09-10 | 활성 |
+| [공통 UI 규칙](../docs/02-ui-spec/ui-conventions.md) | 2026-10-01 | 활성 |
 | [화면 명세](../docs/02-ui-spec/ui-screens.md) | 2026-09-10 | 활성 |
-| [문서 작성 규칙](spec-writing.md) | 2026-09-10 | 활성 |
+| [문서 작성 규칙](spec-writing.md) | 2026-10-01 | 활성 |
 | [포맷 정의](spec-format.json) | 2026-09-10 | 활성 (검사기와 SyncDoc이 읽는 기계 정본) |
 | [검증 규칙](validation.md) | 2026-09-10 | 활성 (검증기 [`tools/spec-validator/`](../tools/spec-validator/README.md) 구현) |
 

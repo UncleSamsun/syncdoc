@@ -98,6 +98,7 @@ export default function TaskListPage() {
     <AppShell
       project={project}
       documents={documents}
+      documentSnapshotId={list.state === "ready" ? list.list.snapshotId : null}
       taskCount={all.total}
       checklistErrors={checklist.state === "ready" ? errorCountOf(checklist.checklist) : undefined}
       active="tasks"

@@ -313,8 +313,13 @@ describe("UI-004 검색", () => {
     openSearch();
 
     await waitFor(() => expect(screen.getByLabelText("검색어")).toBeInTheDocument());
-    await userEvent.type(screen.getByLabelText("검색어"), "가".repeat(201));
+    const user = userEvent.setup();
+    const input = screen.getByLabelText("검색어");
+    const query = "가".repeat(201);
+    await user.click(input);
+    await user.paste(query);
 
+    expect(input).toHaveValue(query);
     expect(screen.getByRole("alert")).toHaveTextContent("200자까지입니다");
   });
 });

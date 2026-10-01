@@ -4,7 +4,7 @@ type: prd-requirements
 status: 확정
 ---
 
-# MVP 기능과 인수 기준
+# 기능·품질 요구
 
 이 문서는 첫 구현 기준이다. 아직 구현하지 않았다.
 
