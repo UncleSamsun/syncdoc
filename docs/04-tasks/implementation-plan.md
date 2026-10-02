@@ -310,3 +310,19 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 **검증:** 임시 Git fixture의 실패/불변·실제 SyncDoc C0/C1/C2·출처 점검과 독립 리뷰. 마지막 통합 배포 후 서버 context/pin·기존/신규 E2E 한 번을 수행한다.
 
 **완료:** local 인수·리뷰/CI·dev PR 병합을 충족하고 전체 배포/E2E 결과를 별도 근거로 남긴다.
+
+## TASK-021 공용 HTTPS 하위 경로 배포
+
+**목적:** SyncDoc 화면·API·첨부·OAuth callback을 `/syncdoc/`에 모으고 공인 IP `/`는 Grafana로 보낸다.
+
+**근거:** 사용자 승인(2026-10-02), [실행과 운영](../03-tech-spec/ops.md), [TASK-014](cicd-plan.md#task-014-검증된-revision을-회사-k3s에-배포), Issue #83.
+
+**범위:** Vite base와 React basename, API·로그인·로그아웃·문서 URL, 서버 로그인 복귀 prefix, CI web build argument, Traefik strip/redirect와 Flux 환경 패치. 로컬 `/` 기본값과 기존 저장된 문서 게시본을 유지한다.
+
+**선행:** 기존 공인 IP HTTPS·개인 인증 Grafana 공개 완료.
+
+**산출물:** 앱 코드·회귀 시험·[하위 경로 배포 절차](../../deploy/subpath/README.md).
+
+**검증:** root/subpath 컴포넌트·인증 복귀 시험, 전체 회귀, subpath production build, 실제 API·OAuth·문서/첨부·새로고침·Grafana 비영향 확인.
+
+**완료:** dev PR 검증 후 선택한 전체 dev revision을 승인받아 main 배포하고 실제 새 경로를 확인한다. 배포 전 시험은 운영 완료 근거로 대체하지 않는다.

@@ -6,6 +6,10 @@ on:
       component:
         required: true
         type: string
+      base-path:
+        required: false
+        type: string
+        default: /
     outputs:
       digest:
         description: Published immutable image digest
@@ -43,6 +47,8 @@ jobs:
         id: build
         with:
           context: ${{ steps.name.outputs.context }}
+          build-args: |
+            SYNCDOC_BASE_PATH=${{ inputs.base-path }}
           push: true
           tags: ${{ steps.name.outputs.image }}:sha-${{ github.sha }}
           labels: |
