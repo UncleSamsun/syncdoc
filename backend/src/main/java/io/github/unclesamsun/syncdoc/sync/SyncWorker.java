@@ -12,6 +12,7 @@ import io.github.unclesamsun.syncdoc.spec.ApplySpecTable;
 import io.github.unclesamsun.syncdoc.spec.ChecklistChecker;
 import io.github.unclesamsun.syncdoc.spec.SpecChecklist;
 import io.github.unclesamsun.syncdoc.spec.TraceabilityAnalyzer;
+import io.github.unclesamsun.syncdoc.spec.ComparisonIndexer;
 import io.github.unclesamsun.syncdoc.spec.SpecFormat;
 import io.github.unclesamsun.syncdoc.spec.SpecFormatReader;
 import io.github.unclesamsun.syncdoc.document.domain.AssetContentEntity;
@@ -84,6 +85,7 @@ public class SyncWorker {
     private final ObjectMapper json;
     private final Clock clock;
     private final TraceabilityAnalyzer traceability;
+    private final ComparisonIndexer comparisonIndexer;
 
     public SyncWorker(SyncQueue queue, ProjectRepository projects, InstallationRepository installations,
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
@@ -91,7 +93,7 @@ public class SyncWorker {
                       AssetContentRepository assetContents, MarkdownRenderService renderer,
                       TaskRepository tasks, IssueCollector issueCollector,
                       SpecFormatReader specFormats, ChecklistChecker checklistChecker,
-                      SyncProperties properties, ObjectMapper json, Clock clock, TraceabilityAnalyzer traceability) {
+                      SyncProperties properties, ObjectMapper json, Clock clock, TraceabilityAnalyzer traceability, ComparisonIndexer comparisonIndexer) {
         this.queue = queue;
         this.projects = projects;
         this.installations = installations;
@@ -109,6 +111,7 @@ public class SyncWorker {
         this.json = json;
         this.clock = clock;
         this.traceability = traceability;
+        this.comparisonIndexer = comparisonIndexer;
     }
 
     /** @return 실행할 작업이 있었으면 true */
@@ -166,11 +169,11 @@ public class SyncWorker {
         boolean issuesComplete = collectIssues(project.getId(), repository);
 
         Optional<DocumentSnapshotEntity> existing = snapshots
-                .findByProjectIdAndSourceRevisionAndRendererVersionAndPolicyVersion(
-                        project.getId(), revision, DocumentVersions.RENDERER, DocumentVersions.POLICY);
+                .findByProjectIdAndSourceRevisionAndRendererVersionAndPolicyVersionAndCollectionBranchAndCollectionDocsRoot(
+                        project.getId(), revision, DocumentVersions.RENDERER, DocumentVersions.POLICY, project.getBranch(), project.getDocsRoot());
         if (existing.isPresent() && existing.get().isComplete()) {
             // 같은 revision을 같은 규칙으로 이미 만들었다. 다시 변환하지 않는다.
-            if (revision.equals(currentRevision(project))) {
+            if (existing.get().getId().equals(project.getCurrentSnapshotId())) {
                 queue.succeedUnchanged(lease, revision,
                         diagnostics(Map.of("unchanged", true, "issuesComplete", issuesComplete)));
             } else {
@@ -182,7 +185,7 @@ public class SyncWorker {
 
         DocumentSnapshotEntity snapshot = existing.orElseGet(() -> snapshots.saveAndFlush(
                 new DocumentSnapshotEntity(project.getId(), revision, DocumentVersions.RENDERER,
-                        DocumentVersions.POLICY, clock.instant())));
+                        DocumentVersions.POLICY, clock.instant(), project.getBranch(), project.getDocsRoot())));
         if (existing.isPresent()) {
             // 앞선 시도가 중간에 멈춘 게시본이다. 절반만 남은 문서와 첨부를 지우고 처음부터 채운다.
             tasks.deleteBySnapshotId(snapshot.getId());
@@ -255,7 +258,9 @@ public class SyncWorker {
         }
         SpecChecklist checklist = checklist(repository, revision, forChecklist);
         snapshot.checklist(json.writeValueAsString(checklist));
-        snapshot.traceability(json.writeValueAsString(traceability.analyze(forTraceability)));
+        var traceReport = traceability.analyze(forTraceability);
+        snapshot.traceability(json.writeValueAsString(traceReport));
+        snapshot.comparison(json.writeValueAsString(comparisonIndexer.index(forTraceability, traceReport)));
         // Do not choose one definition of a duplicate TASK or violate its unique constraint.
         Map<String, Long> taskCounts = taskDocuments.values().stream()
             .flatMap(doc -> TaskIds.fromHeadings(doc.headings(), TASK_HEADING_LEVEL).stream())

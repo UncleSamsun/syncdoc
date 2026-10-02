@@ -11,6 +11,9 @@ public interface DocumentSnapshotRepository extends JpaRepository<DocumentSnapsh
     Optional<DocumentSnapshotEntity> findByProjectIdAndSourceRevisionAndRendererVersionAndPolicyVersion(
             UUID projectId, String sourceRevision, String rendererVersion, String policyVersion);
 
+    Optional<DocumentSnapshotEntity> findByProjectIdAndSourceRevisionAndRendererVersionAndPolicyVersionAndCollectionBranchAndCollectionDocsRoot(
+        UUID projectId,String revision,String renderer,String policy,String branch,String docsRoot);
+
     List<DocumentSnapshotEntity> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 
     /** 연결 해제(API-026). */

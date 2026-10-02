@@ -1,3 +1,4 @@
+import ComparisonPage from "../features/spec/ComparisonPage";
 import { Route, Routes } from "react-router-dom";
 import LoginPage from "../features/auth/LoginPage";
 import UninvitedPage from "../features/auth/UninvitedPage";
@@ -38,6 +39,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<ProjectHomePage csrfToken={session.me.csrfToken} />} />
       <Route path="/projects/:projectId" element={<OverviewPage csrfToken={session.me.csrfToken} />} />
+      <Route path="/projects/:projectId/comparison" element={<ComparisonPage />} />
       <Route path="/projects/:projectId/checklist" element={<ChecklistPage />} />
       <Route path="/projects/:projectId/tasks" element={<TaskListPage />} />
       <Route path="/projects/:projectId/settings" element={<SettingsPage />} />

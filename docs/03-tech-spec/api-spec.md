@@ -6,7 +6,7 @@ status: 확정
 
 # 인터페이스 계약
 
-아직 서버가 없다. 이 계약은 구현 대상이며 동작하는 엔드포인트가 아니다.
+이 문서는 API 구현 계약이다. 계약의 존재와 특정 환경의 검증은 구분하며, 실제 검증 근거와 제한은 [실제 흐름 검증 기록](../04-tasks/mvp-verification-record.md)과 PR·CI에서 확인한다.
 
 [기능과 인수 기준](../01-prd/mvp-scope.md)의 요구를 API 경계로 옮긴 문서다. 계약마다 어느 요구에서 나왔는지는 계약 일람의 `연결 요구` 열에 있다. 다른 문서에서 계약을 가리킬 때는 메서드·경로가 아니라 `API-NNN`을 쓴다. 경로는 구현 중에 바뀔 수 있고 ID는 바뀌지 않으므로, ID로 참조하면 경로가 변해도 참조가 끊기지 않는다. ID 발급 규칙은 [문서 작성 규칙](../../rules/spec-writing.md) §6에 있다.
 
@@ -30,7 +30,7 @@ HTML과 검색 결과는 `Cache-Control: private, no-store`로 제공한다. 사
 
 ## 계약 일람
 
-MVP가 구현할 계약 28개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
+MVP가 구현할 계약 33개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
 
 | ID | 메서드·경로 | 연결 요구 | 입력 | 응답·조건 |
 |---|---|---|---|---|
@@ -68,6 +68,11 @@ API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 
 `연결 요구`가 `없음`인 계약은 MVP 요구에서 나오지 않은 계약이다. 근거 문서가 생기면 그때 채운다. 비워 두면 빠뜨린 것과 구분할 수 없어 사유를 적는다.
 
 반대 방향도 하나 비어 있다. REQ-001 ~ REQ-007은 위 계약이 덮지만 **REQ-008 공통 작성 규칙에는 아직 계약이 없다.** 산출물 체크리스트 조회 계약은 [구현계획](../04-tasks/implementation-plan.md) TASK-001 이후에 추가한다. 지금 그 계약을 미리 적으면 구현하지 않을 계약이 확정 문서에 남는다.
+| API-029 | `GET /projects/{id}/snapshots` | REQ-010 | 비교ID·페이지·필터 (상세절) | 완료 게시본 목록 |
+| API-030 | `GET /projects/{id}/snapshot-comparison` | REQ-010 | 비교ID·페이지·필터 (상세절) | 비교 요약 |
+| API-031 | `GET /projects/{id}/snapshot-comparison/documents` | REQ-010 | 비교ID·페이지·필터 (상세절) | 문서 변화 |
+| API-032 | `GET /projects/{id}/snapshot-comparison/items` | REQ-010 | 비교ID·페이지·필터 (상세절) | 항목 변화 |
+| API-033 | `GET /projects/{id}/snapshot-comparison/impacts` | REQ-010 | 비교ID·페이지·필터 (상세절) | 재검토 후보 |
 
 ## API-002 로그인 콜백
 
@@ -207,3 +212,19 @@ API-017 ~ API-020에 함께 적용된다.
 **부작용:** 없음. C0/C1/C2 체크리스트를 변경하지 않는다.
 
 **재시도:** 동일 snapshot 진단은 동일하다.
+
+## API-029 ~ API-033 게시본 비교
+
+**연결 요구:** REQ-010.
+
+**입력:** API-029는page=0,size=20(1~100). 나머지는필수fromSnapshotId/toSnapshotId. API-031~033은page=0,size=50(1~100),change=all/added/removed/modified/moved/moved_modified/unchanged/unknown. API-032는kind=all/req/task.
+
+**출력:** API-029 완료snapshot ID/revision/createdAt/renderer/policy/branch/docsRoot/current/comparisonReadiness와페이지정보. API-030은양쪽기준/status/reason/counts(nullable)/coverage/findings. API-031/032는변경행before/after/change/reason과페이지정보,API-033은REQ/TASK/reason/현재TaskView와페이지정보. 각비교응답은동일from/to기준과status를보낸다.
+
+**오류:** 기존project404·snapshot410·인증정책을유지한다. 잘못된ID/필터/page/size400,다른scope409 COMPARISON_SCOPE_MISMATCH. 자료부족/미지원버전은200unchecked,counts=null이다. 완료목록이없는것은빈목록이지비교통과가아니다.
+
+**접근 조건:** 매요청ProjectService.view와양쪽snapshotFor를거친다. private/no-store,권한검증생략캐시없음.
+
+**부작용:** 없음. 원문/GitHub상태/이전보고서를변경하지않는다.
+
+**재시도:** 관계와원문변화는두불변snapshot기준이다. 현재Issue관찰결과만이후변할수있다. 정렬은문서식별키/경로,항목kind/ID,영향REQ/TASK순이며큰page는long으로계산한다.
