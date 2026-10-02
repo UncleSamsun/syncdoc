@@ -294,3 +294,19 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 **검증:** raw 코드/라벨·규칙 hash·수집/회복·HTTP 권한·과거/현재 분리·컴포넌트·전체 회귀/독립 리뷰. E2E는 세 단계 통합 후 한 번.
 
 **완료:** 인수 조건·리뷰/CI 통과와 dev PR 병합. 전체 서버 확인은 마지막 통합 단계다.
+
+## TASK-020 SyncDoc 작성 하네스 실전 적용
+
+**목적:** 실제 프로젝트의 작업 재개·문서 작성·검사·출처 확인 흐름을 재현한다.
+
+**근거:** [REQ-013](../01-prd/mvp-scope.md#req-013-작성-하네스-실전-적용과-출처-점검), [DOC-029](../03-tech-spec/harness-development-design.md).
+
+**범위:** 읽기 전용 dogfood 도구·가이드·CI 단위 시험과 SyncDoc 실제 적용. 규칙/템플릿/검사기 정본 재사용.
+
+**선행:** TASK-018, TASK-019 dev 병합.
+
+**산출물:** tools/harness/dogfood.py와 [DOC-033 실전 가이드](../03-tech-spec/harness-dogfood-guide.md), [DOC-032 계획](harness-dogfood-plan.md).
+
+**검증:** 임시 Git fixture의 실패/불변·실제 SyncDoc C0/C1/C2·출처 점검과 독립 리뷰. 마지막 통합 배포 후 서버 context/pin·기존/신규 E2E 한 번을 수행한다.
+
+**완료:** local 인수·리뷰/CI·dev PR 병합을 충족하고 전체 배포/E2E 결과를 별도 근거로 남긴다.
