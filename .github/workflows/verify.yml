@@ -88,5 +88,8 @@ jobs:
       - name: 문서 검사
         run: python tools/spec-validator/validate.py
 
+      - name: 하네스 적용 도구 시험
+        run: python -m unittest discover -s tools/harness -v
+
       - name: 배포 renderer 회귀 시험
         run: python -m unittest discover -s tools/deployment -v
