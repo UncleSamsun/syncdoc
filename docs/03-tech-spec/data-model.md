@@ -150,4 +150,3 @@ added/modified/removed/moved_modified REQ에 대해 이전·현재 traceability�
 후보에는 이유가 된 요구 ID·변경 종류·이전/현재 원문 위치·현재 관찰한 TaskView를 제공한다. 없어진 TASK는 이전 원문으로 연결하고 현재 실행 상태를 추정하지 않는다. 순수 문서/서식 변화로 관련 요구를 특정할 수 없으면 문서 변경만 표시한다. 관계의 추가/제거 자체를 새 영향 분석 범위로 늘리지 않는다.
 
 양쪽 관계 분석이 complete일 때 알려진 영향 범위를 complete로 표시한다. partial이면 알려진 후보만 표시하고 coverage=incomplete를 명시한다. unchecked/해석 불가이면 unknown이다. 양쪽 인덱스가 완전하고 양쪽 모두 확정 요구가 없는 경우에만 not_applicable로 구분한다. 한쪽 요구가 없어졌더라도 이전 관계의 알려진 후보는 보존하며, 반대편 관계가 unchecked이면 coverage는 unknown으로 남긴다. 후보 0을 ‘영향 없음’이나 ‘구현 정상’의 보증으로 쓰지 않는다. Issue/PR 변화는 원문 변경이나 비교 결과를 바꾸지 않는다.
-
