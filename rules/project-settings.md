@@ -57,7 +57,7 @@
 | 문서 검증기 | `python tools/spec-validator/validate.py` (Python 3.11, 표준 라이브러리만) |
 | 화면 흐름 시험 | `cd frontend && npm run e2e` (Playwright, Chromium만 내려받음) |
 
-셸의 기본 `java`는 Temurin 17이다. Gradle toolchain이 JDK 25를 요구하므로 `JAVA_HOME`을 JDK 25로 두고 실행한다. TASK-001에서 확인했다.
+Gradle toolchain은 JDK 25를 요구한다. 환경의 기본 `java` 버전을 확인하고 필요하면 `JAVA_HOME`을 위 JDK 25 경로로 지정한다. 로컬 환경값을 모든 이용자의 기본값으로 가정하지 않는다.
 
 이 PC의 Windows Application Control 정책이 서명·평판이 없는 네이티브 Node 모듈의 로드를 차단한다. `frontend/package.json`은 `overrides`로 `rolldown`을 1.2.6에 고정한다. 1.2.8 바인딩은 차단되어 Vite와 Vitest가 시작하지 못한다. 다른 PC에서 이 고정이 필요 없다면 그때 조정한다. Playwright는 같은 정책에 걸리지 않았다(2026-09-21 설치·실행 확인).
 
@@ -93,20 +93,20 @@
 
 ### 확정 기술 구성
 
-2026-09-09 최신 확정: React + TypeScript, Spring Boot 4 + Java 25, commonmark-java + GFM 표 확장, 브라우저 Mermaid, PostgreSQL, 컨테이너 호스팅. VitePress는 Java 대안 논의 후 제품 렌더러에서 대체했다. 문서별 Node.js 빌드는 사용하지 않으며 React 앱 빌드 환경은 별개다. 상세는 [구현 구조](../docs/03-tech-spec/architecture-proposal.md)를 참조한다. 세부 버전과 ORM은 후속 설계 대상이다.
+2026-09-09 최신 확정: React + TypeScript, Spring Boot 4 + Java 25, commonmark-java + GFM 표 확장, 브라우저 Mermaid, PostgreSQL, 컨테이너 호스팅. VitePress는 Java 대안 논의 후 제품 렌더러에서 대체했다. 문서별 Node.js 빌드는 사용하지 않으며 React 앱 빌드 환경은 별개다. 상세는 [구현 구조](../docs/03-tech-spec/architecture-proposal.md)를 참조한다. 세부 버전은 위 표와 lock 파일, 영속 구현은 Spring Data JPA를 따른다.
 
 화면 흐름은 프로젝트 선택 → 현황·문서 목록 → 문서 선택 시 React 문서 화면으로 유지한다. VitePress 비교 화면은 읽기 스타일 참고이며 제품 기능으로 그대로 이식하지 않는다. 추가 목업은 요청하지 않았다.
 
-빌드·테스트가 도는 실행 골격까지 만든 단계다. GitHub App 연동, GitHub Project, 보호 규칙, 배포 파이프라인은 아직 구성하지 않았다. 검증 명령을 임의로 만들거나 검증 통과로 표시하지 않는다.
+GitHub App 연동·초대·수집·문서 렌더·현황·추적성과 GitHub Actions→GHCR→Flux→회사 K3s 테스트 배포가 구현됐다. Project node ID 연결 입력 구현과 선택 UI·조직 Project의 실제 접근 검증, 문서상 협업 정책과 저장소 보호 설정의 적용 여부는 구분한다. 검증하지 않은 환경을 완료로 표시하지 않는다.
 
 검증기 CI 연결은 2026-09-21에 끝났다. `dev`·`main`으로 가는 PR과 `dev` push에서 [`.github/workflows/verify.yml`](../.github/workflows/verify.yml)이 백엔드 테스트·프런트 테스트와 빌드·문서 검사를 돌린다. 실제 흐름 검증에서 확인한 사실과 남은 제한은 [MVP 실제 흐름 검증 기록](../docs/04-tasks/mvp-verification-record.md)에 있다.
 
 ## 추가로 정할 설정
 
-- 로그인·초대·저장소 접근 방식
+- 조직 정책·SSO 아래 GitHub 접근 검증
 - 기준 GitHub Project와 담당 영역
 - 세션 수명과 `state` 쿠키 수명 (TASK-002에서 12시간·10분으로 채택. 운영 기준은 미확정)
-- 클라우드/사내 서버 배포 환경과 릴리스 절차
+- 회사 테스트 환경 이후 공용 HTTPS·운영 환경의 별도 기준
 
 공통 동작은 [GitHub 협업 규칙](github-collaboration.md)을 참조한다. 저장소의 공개 여부와 향후 호스팅 서비스의 공개 가입 여부는 별개다.
 

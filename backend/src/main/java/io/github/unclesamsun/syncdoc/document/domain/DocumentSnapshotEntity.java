@@ -52,6 +52,22 @@ public class DocumentSnapshotEntity {
     public String getTraceabilityJson() { return traceabilityJson; }
     public void traceability(String json) { this.traceabilityJson = json; }
 
+    @Column(name="collection_branch",updatable=false)
+    private String collectionBranch;
+    @Column(name="collection_docs_root",updatable=false)
+    private String collectionDocsRoot;
+    @Column(name="comparison_json")
+    private String comparisonJson;
+    public String getCollectionBranch(){return collectionBranch;}
+    public String getCollectionDocsRoot(){return collectionDocsRoot;}
+    public String getComparisonJson(){return comparisonJson;}
+    public void comparison(String value){comparisonJson=value;}
+    public DocumentSnapshotEntity(UUID projectId,String revision,String renderer,String policy,Instant createdAt,String branch,String docsRoot){
+        this(projectId,revision,renderer,policy,createdAt);
+        this.collectionBranch=java.util.Objects.requireNonNull(branch);
+        this.collectionDocsRoot=java.util.Objects.requireNonNull(docsRoot);
+    }
+
     protected DocumentSnapshotEntity() {
     }
 

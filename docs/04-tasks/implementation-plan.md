@@ -82,7 +82,7 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 
 **완료:** 관리 가능한 저장소를 연결하고 첫 동기화 대기를 목록에 표시한다. 다른 사용자 데이터로 권한 우회 불가.
 
-## TASK-004 문서 규약과 검증 — 다음 작업
+## TASK-004 문서 규약과 검증
 
 **근거:** REQ-008.
 
@@ -246,3 +246,19 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 **검증:** [실행 계획 (DOC-026)](traceability-plan.md)의 순수 분석·게시·권한·UI 회귀와 전체 테스트·빌드·문서 검사를 실행한다. 실제 서비스 시험과 fixture 시험을 구분한다.
 
 **완료:** 동일 게시본 원문 이동, 중복/없는 참조/부분 분석 진단, 권한과 마지막 정상 게시본 보존이 검증되고 dev PR이 검토 가능하다. 배포 완료는 별도다.
+
+## TASK-017 게시본 비교와 변경 영향
+
+**목적:** 원문 변화와재검토후보를같은게시본쌍으로읽는다.
+
+**근거:** REQ-010·UI-017·API-029~033·[데이터 설계](../03-tech-spec/data-model.md).
+
+**범위:** scope/항목해시수집·불변파생자료·비교/영향계산·권한조회·산출물진입비교화면. UI/API/코드추적·자동판정·AI·에이전트실행은제외한다.
+
+**선행:** TASK-005/006/007/016. 기존traceability v1·검사·완료율유지.
+
+**산출물:** migration/저장/분석기/API/화면/자동시험·검증PR.
+
+**검증:** [DOC-028 실행계획](snapshot-comparison-plan.md)의순수/수집/HTTP권한/UI/전체회귀·브라우저검증. 실제서버시험은최종병합/배포후별도.
+
+**완료:** 승인범위가구현·검증되고dev대상PR이검토가능하다. dev병합·main배포는사람의최종판단이다.

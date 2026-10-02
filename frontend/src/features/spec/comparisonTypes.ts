@@ -1,0 +1,10 @@
+import type {TaskView} from "../dashboard/types";
+export type SnapshotInfo={snapshotId:string;sourceRevision:string;createdAt:string;rendererVersion:string;policyVersion:string;branch:string|null;docsRoot:string|null;current:boolean;comparisonReadiness:"ready"|"partial"|"legacy"};
+export type SnapshotPage={items:SnapshotInfo[];totalElements:number;page:number;size:number};
+export type Change="all"|"added"|"removed"|"modified"|"moved"|"moved_modified"|"unchanged"|"unknown";
+export type PairMeta={from:SnapshotInfo;to:SnapshotInfo;status:"complete"|"partial"|"unchecked";reason:string|null;coverage:string;findings:string[]};
+export type Summary=PairMeta&{counts:Record<string,Record<string,number>>|null};
+export type Ref={documentId:string;specId:string|null;path:string;title:string;kind:string;itemId:string|null;anchor:string|null;line:number;status:string|null};
+export type Row={key:string;kind:string;change:Exclude<Change,"all">;reason:string|null;before:Ref|null;after:Ref|null};
+export type Impact={requirementId:string;taskId:string;requirementChange:string;beforeRequirement:Ref|null;afterRequirement:Ref|null;beforeTask:Ref|null;afterTask:Ref|null;taskPresence:string;execution:TaskView|null};
+export type ResultPage=PairMeta&{items:(Row|Impact)[];totalElements:number;page:number;size:number};

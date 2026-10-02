@@ -12,7 +12,7 @@ SDD 방식으로 작성한 명세와 GitHub 협업 현황을 연결하는 프로
 
 명세와 규칙을 먼저 쓰고 그에 맞춰 구현한다. MVP 구현은 [구현계획](docs/04-tasks/implementation-plan.md)의 작업 단위로 진행한다.
 
-후속 구현: [TASK-016 요구–작업 연결 표와 참조 진단](https://github.com/UncleSamsun/syncdoc/issues/70)은 별도 기능 브랜치에서 진행한다. 준비 중인 기능을 현재 배포 범위로 간주하지 않는다.
+[TASK-016 요구–작업 연결 표와 참조 진단](https://github.com/UncleSamsun/syncdoc/issues/70)은 구현·배포·실제 서버 검증을 마쳤다. 사용자 승인 후 [게시본 비교 실행 계획](docs/04-tasks/snapshot-comparison-plan.md)에 따라 TASK-017을 구현하고 [dev PR #76](https://github.com/UncleSamsun/syncdoc/pull/76)에서 검증한다. 회사 서버의 새 기능 배포는 최종 병합 후 단계다.
 
 ## 문서
 
@@ -41,7 +41,7 @@ main은 릴리스 기준, dev는 개발 통합 브랜치다. 작업 브랜치는
 
 확정 규칙은 rules/, 명세는 docs/에 둔다. 초대·로그인, 저장소 연결, 수집·게시본, 문서·표·다이어그램·첨부, 현황·검색·작업 매핑, 산출물 체크리스트가 동작한다. 컨테이너 구성과 CI가 있고 실행·검증 명령은 아래 절에 있다.
 
-아직 하지 않은 것: 외부 서버 배포, 웹 편집, 공개 가입, GitHub Project 연결 화면. 확인하지 못한 제한은 [MVP 실제 흐름 검증 기록](docs/04-tasks/mvp-verification-record.md)에 있다.
+2026-10-01 회사 K3s 테스트 환경에 GitHub Actions·Flux로 배포하고 실제 서버 흐름을 검증했다. 검증 근거는 [릴리스 PR #74](https://github.com/UncleSamsun/syncdoc/pull/74)와 [배포 CI](https://github.com/UncleSamsun/syncdoc/actions/runs/36840981541)다. 웹 편집·공개 가입은 현재 범위 밖이며, 공용 HTTPS·본격 부하 시험·GitHub Project 선택 UI·조직 권한의 실제 검증은 남아 있다. 확인하지 못한 제한은 [MVP 실제 흐름 검증 기록](docs/04-tasks/mvp-verification-record.md)에 있다.
 
 2026-09-08 전면 재시작 후 작성한 자료만 Git으로 관리한다. 이전 작업 보관본은 게시 대상에서 제외한다.
 
