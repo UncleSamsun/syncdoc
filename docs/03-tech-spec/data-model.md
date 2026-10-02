@@ -114,3 +114,40 @@ migration은 `V8__spec_traceability.sql`이다. document_snapshots에 nullable `
 
 
 중복 TASK는 작업 매핑에서 임의 선택하지 않는다. 수집된 전체 원문에서 분석한 뒤 유일한 TASK 정의만 기존 tasks 테이블에 담는다. 따라서 중복 작업은 관계 진단에 남고 Issue 상태는 합성하지 않는다.
+
+## 게시본 비교 파생 자료
+
+REQ-010의 저장·비교 규약이다.
+
+### 수집과 저장
+
+V9__snapshot_comparison.sql migration을 적용한다. nullable `collection_branch`, `collection_docs_root`, `comparison_json`을 snapshot에 추가한다. NULL은 기존 게시본의 자료 부족이다. 새 수집은 실제로 사용한 branch/docsRoot를 처음부터 고정한다.
+
+`document_snapshots_identity_key`는 projectId/revision/renderer/policy/collectionBranch/collectionDocsRoot로 확장하고 repository 조회도 같은 값을 쓴다. 기존 project/currentSnapshot 복합 FK는 유지한다. policy 버전을 올려 새 수집부터 scope·비교 자료를 채운다. 이전 완료 게시본은 그대로 둔다. 새 필드가 한쪽만 비거나 잘못되면 미확인이지 같은 범위로 간주하지 않는다.
+
+comparison_json은 schemaVersion=1, fingerprintAlgorithm=`markdown-section-lf-v1`, indexStatus=complete/partial, 문서의 작성 상태, 항목 목록과 진단을 담는다. 항목은 kind=req/task, itemId, documentId, title, anchor, line, sectionHash다. project/revision/scope는 snapshot에서, 문서의 specId/path/kind/title/sourceHash는 documents에서 읽어 이중 기록하지 않는다. 기존 traceability_json v1의 저장 형식과 API-027/028은 유지한다.
+
+항목 해시는 확정 prd-requirements와 tasks의 실제 AST H2 정의 구간을 대상으로 한다. 정의 제목 시작부터 다음 H1/H2 직전 또는 문서 끝까지의 원문을 LF로 통일해 UTF-8 SHA-256을 만든다. 코드·HTML도 원문 변화로서 해시에 포함한다. 코드 안의 가짜 제목은 AST 정의가 아니므로 구간을 나누지 않는다. 줄 끝 공백·서식 차이도 변경이다. 의미적 동등성을 주장하지 않는다.
+
+제목·본문을 포함한 sectionHash가 달라지면 원문 변경이다. 메타데이터만 바뀌면 문서 해시 변화로 표시하고, 확정에서 검토로 바뀌어 항목 대상에서 빠지면 ‘확정 정의에서 제외’로 설명한다. H1/서론처럼 항목 밖의 변화는 문서 변경으로 남기고 특정 REQ 변화로 추정하지 않는다.
+
+중복 ID·누락/잘못된 작성 상태·해시/구간을 만들 수 없는 정의는 partial 진단을 남긴다. 알려진 항목은 표시하되, 부분 인덱스에서 항목이 없다는 이유로 추가/제외를 확정하지 않는다. 분석기·직렬화 예외는 수집 실패이며 현재 게시본 전환 전에 중단한다. 임대·원자적 게시·마지막 정상 게시본 유지 원칙을 보존한다.
+
+### 비교 규약
+
+문서는 활성 규칙의 DOC-NNN 형식을 만족하는 양쪽의 유일한 specId로 맞춘다. 잘못된 ID는 진단을 남기고 안정된 ID로 사용하지 않는다. 양쪽 모두 ID가 없을 때만 같은 정확한 경로로 맞추며 이 경우 파일 이동을 판정하지 않는다. 같은 경로에서 DOC ID가 바뀌거나 한쪽만 ID가 생긴 경우는 추가/제외 행과 identity_changed 진단을 함께 보여주고 동일 문서라고 추정하지 않는다. 경로만 같은 다른 DOC를 합치지 않는다.
+
+항목은 같은 프로젝트·kind·itemId로 맞춘다. 양쪽에서 유일해야 한다. 항목의 documentId UUID로 맞추지 않는다. 문서를 옮기거나 항목을 다른 문서로 옮겨도 ID가 유지되면 위치 변화로 표시한다. 양쪽에서 중복된 항목은 임의 대응시키지 않고 unknown이다.
+
+변경 값은 added/removed/modified/moved/moved_modified/unchanged/unknown이다. 위치와 해시는 독립적으로 비교한다. 문서 원문 해시는 renderer 변경으로 생긴 HTML 차이와 구분한다. 항목 hash algorithm이 다르면 unknown이며 unchanged로 표시하지 않는다. 불완전 인덱스의 미존재 항목도 unknown이다.
+
+두 게시본의 범위 필드가 알려져 있고 branch/docsRoot가 같아야 한다. 서로 다르면 409 COMPARISON_SCOPE_MISMATCH로 선택을 바로잡게 한다. NULL 비교 자료/범위/지원하지 않는 보고서 버전이면 200 unchecked와 reason, counts=null, 빈 결과를 제공한다. 빈 결과를 ‘변경 없음’으로 표시하지 않는다. 같은 유효 게시본끼리는 전부 unchanged이고 재검토 후보가 없다. 정상적으로 수집한 빈 문서 집합은 자료 부족과 별도다.
+
+### 변경 영향 규약
+
+added/modified/removed/moved_modified REQ에 대해 이전·현재 traceability의 TASK→REQ 관계를 합쳐 역참조한다. 이동만 있고 원문이 같으면 위치 변화 안내와 현재 참조 진단을 보여주며 내용 변경 대상으로 세지 않는다. TASK 원문 자체가 달라졌다는 사실과 REQ 변화로 재검토 후보가 됐다는 사실을 별도 표시한다.
+
+후보에는 이유가 된 요구 ID·변경 종류·이전/현재 원문 위치·현재 관찰한 TaskView를 제공한다. 없어진 TASK는 이전 원문으로 연결하고 현재 실행 상태를 추정하지 않는다. 순수 문서/서식 변화로 관련 요구를 특정할 수 없으면 문서 변경만 표시한다. 관계의 추가/제거 자체를 새 영향 분석 범위로 늘리지 않는다.
+
+양쪽 관계 분석이 complete일 때 알려진 영향 범위를 complete로 표시한다. partial이면 알려진 후보만 표시하고 coverage=incomplete를 명시한다. unchecked/해석 불가이면 unknown이다. 양쪽 인덱스가 완전하고 양쪽 모두 확정 요구가 없는 경우에만 not_applicable로 구분한다. 한쪽 요구가 없어졌더라도 이전 관계의 알려진 후보는 보존하며, 반대편 관계가 unchecked이면 coverage는 unknown으로 남긴다. 후보 0을 ‘영향 없음’이나 ‘구현 정상’의 보증으로 쓰지 않는다. Issue/PR 변화는 원문 변경이나 비교 결과를 바꾸지 않는다.
+
