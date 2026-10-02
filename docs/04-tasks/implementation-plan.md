@@ -278,3 +278,19 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 **검증:** 순수·수집·HTTP/Postgres·컴포넌트·전체 회귀와 독립 리뷰. E2E는 세 후속 작업 통합 후 한 번 수행한다.
 
 **완료:** 위 인수 조건·리뷰/CI 통과와 dev PR 병합. 서버 통합 검증은 전체 작업 뒤 별도다.
+
+## TASK-019 작업별 컨텍스트 묶음
+
+**목적:** 작업 시작·재개에 필요한 정본과 규칙을 모아 제공한다.
+
+**근거:** [REQ-012](../01-prd/mvp-scope.md#req-012-작업별-컨텍스트-묶음), [DOC-029](../03-tech-spec/harness-development-design.md).
+
+**범위:** TaskContextIndex1·V11 nullable 저장/규칙 pin·API036·UI019와 복사. 자동 실행/승인 제외.
+
+**선행:** TASK-018 dev 병합.
+
+**산출물:** 읽기 API/화면과 [DOC-031](task-context-plan.md).
+
+**검증:** raw 코드/라벨·규칙 hash·수집/회복·HTTP 권한·과거/현재 분리·컴포넌트·전체 회귀/독립 리뷰. E2E는 세 단계 통합 후 한 번.
+
+**완료:** 인수 조건·리뷰/CI 통과와 dev PR 병합. 전체 서버 확인은 마지막 통합 단계다.

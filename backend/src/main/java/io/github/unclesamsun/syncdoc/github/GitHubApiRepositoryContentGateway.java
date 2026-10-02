@@ -152,6 +152,30 @@ public class GitHubApiRepositoryContentGateway implements RepositoryContentGatew
 
     @Override
     public byte[] readBytes(RepositoryRef repository, String blobSha, int maxBytes) {
+        return readBlobBytes(repository, blobSha, maxBytes);
+    }
+
+    @Override
+    public Optional<String> readRuleTextAt(RepositoryRef repository, String revision, String path, int maxBytes) {
+        String token = tokens.accessToken(repository.githubInstallationId()); Map<String,Object> file;
+        try {
+            file = client.get().uri(properties.apiBaseUrl() + "/repos/" + repository.fullName() + "/contents/" + path + "?ref=" + revision)
+                    .headers(headers -> applyHeaders(headers, token)).retrieve().body(JSON_OBJECT);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 404) return Optional.empty();
+            throw translate(e);
+        } catch (RestClientException e) {
+            throw new GitHubLookupFailedException("규칙 원문을 읽지 못했다");
+        }
+        if (file == null || !"base64".equals(String.valueOf(file.get("encoding")))) throw new GitHubLookupFailedException("지원하는 규칙 원문이 아니다");
+        byte[] decoded;
+        try { decoded = Base64.getMimeDecoder().decode(String.valueOf(file.get("content"))); }
+        catch (IllegalArgumentException e) { throw new GitHubLookupFailedException("규칙 원문을 해석하지 못했다"); }
+        if (decoded.length > maxBytes) throw new DocumentTooLargeException(path, maxBytes);
+        return Optional.of(new String(decoded, StandardCharsets.UTF_8));
+    }
+
+    private byte[] readBlobBytes(RepositoryRef repository, String blobSha, int maxBytes) {
         String token = tokens.accessToken(repository.githubInstallationId());
         Map<String, Object> blob = getObject(
                 properties.apiBaseUrl() + "/repos/" + repository.fullName() + "/git/blobs/" + blobSha, token);

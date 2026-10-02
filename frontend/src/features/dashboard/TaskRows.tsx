@@ -19,7 +19,7 @@ const TONE: Record<TaskView["status"], string> = {
  * <p>Issue가 없는 작업이 목록에서 사라지지 않는다. 취소는 완료와 다른 표시를 쓰고 분모 제외를
  * 밝힌다. PR이 여럿이면 번호를 모두 적는다 — PR 개수를 완료 건수로 읽히게 두지 않는다.
  */
-export default function TaskRows({ projectId, tasks }: { projectId: string; tasks: TaskView[] }) {
+export default function TaskRows({ projectId, tasks, snapshotId }: { projectId: string; tasks: TaskView[]; snapshotId?: string|null }) {
   return (
     <div className="tblwrap">
       <table className="mdtbl tasks">
@@ -38,9 +38,10 @@ export default function TaskRows({ projectId, tasks }: { projectId: string; task
             <tr key={task.taskSpecId} className={task.status === "canceled" ? "row--canceled" : ""}>
               <td className="mono">{task.taskSpecId}</td>
               <td>
-                <Link to={`/projects/${projectId}/documents/${task.documentId}#${task.anchor}`}>
+                <Link to={`/projects/${projectId}/documents/${task.documentId}${snapshotId?`?snapshotId=${encodeURIComponent(snapshotId)}`:''}#${encodeURIComponent(task.anchor)}`}>
                   {task.title}
                 </Link>
+                <div><Link className="n" to={`/projects/${projectId}/tasks/${encodeURIComponent(task.taskSpecId)}/context${snapshotId?`?snapshotId=${encodeURIComponent(snapshotId)}`:''}`}>컨텍스트</Link></div>
               </td>
               <td className="mono">{task.issueNumber ? `#${task.issueNumber}` : "—"}</td>
               <td>

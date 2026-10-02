@@ -30,7 +30,7 @@ HTML과 검색 결과는 `Cache-Control: private, no-store`로 제공한다. 사
 
 ## 계약 일람
 
-MVP가 구현할 계약 35개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
+MVP가 구현할 계약 36개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
 
 | ID | 메서드·경로 | 연결 요구 | 입력 | 응답·조건 |
 |---|---|---|---|---|
@@ -69,6 +69,7 @@ MVP가 구현할 계약 35개 전부다. 이 표에 없는 엔드포인트는 �
 | API-033 | `GET /projects/{id}/snapshot-comparison/impacts` | REQ-010 | 비교ID·페이지·필터 (상세절) | 재검토 후보 |
 | API-034 | `GET /projects/{id}/spec-relations` | REQ-011 | snapshotId?, page=0, size=50 | 같은 게시본의 요구별 UI/API/TASK와 실행 관찰·관계 진단. legacy unchecked, private/no-store |
 | API-035 | `GET /projects/{id}/snapshot-comparison/design-impacts` | REQ-010, REQ-011 | fromSnapshotId, toSnapshotId, page=0, size=50 | 변경 요구의 old/new UI/API 합집합. scope409·legacy unchecked·권한404/401·snapshot410 |
+| API-036 | `GET /projects/{id}/tasks/{taskId}/context` | REQ-012 | snapshotId?, format=json/markdown | 고정 원문·규칙 pin·작업 필드와 현재 실행 관찰. private/no-store, input400/중복409/없음404/snapshot410 |
 
 API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 브랜치 스위처와 [UI-001](../02-ui-spec/ui-screens.md)의 연결 양식이 브랜치를 목록에서 고르는데 그 목록을 주는 계약이 없었다. 저장소 목록(API-008)에 브랜치를 함께 담지 않은 이유는 목록을 열 때마다 저장소 수만큼 GitHub를 더 부르게 되기 때문이다.
 
@@ -235,3 +236,8 @@ API-017 ~ API-020에 함께 적용된다.
 ## API-034/035 설계 관계와 재검토
 
 관계·진단은 수집 revision과 snapshot에 고정하고 실행 상태는 현재 관찰 시점으로 구분한다. page>=0·size1..100, 잘못된 조건400. UI/API 적용 여부나 충족을 추정하지 않는다. nullable SpecRelations v1과 V10을 사용하며 과거 자료는 소급 수정하지 않는다. [DOC-030](../04-tasks/ui-api-relations-plan.md)의 계약을 따른다.
+
+
+## API-036 작업 컨텍스트
+
+TASK-001..999만 허용한다. [DOC-031](../04-tasks/task-context-plan.md)의 JSON과 text/markdown 계약을 따른다. legacy/지원하지 않는 schema는unchecked이고 필드 잘림·누락 규칙·부분 관계는partial이다. 자격증명·임의 파일·자동 실행은 없다.

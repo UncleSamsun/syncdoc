@@ -138,6 +138,7 @@ export default function OverviewPage({ csrfToken }: Props) {
 
           <TaskTable
             projectId={project.id}
+            snapshotId={overview.snapshotId}
             tasks={overview.tasks}
             total={overview.taskTotal}
             unmatched={overview.unmatchedIssueTasks}
