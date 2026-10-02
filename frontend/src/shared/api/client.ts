@@ -1,4 +1,5 @@
-export const API_BASE = "/api/v1";
+import { appPath } from "../appPath";
+export const API_BASE = appPath("/api/v1");
 
 /** API 계약 `## 공통`의 오류 형식. */
 export type ApiErrorBody = {

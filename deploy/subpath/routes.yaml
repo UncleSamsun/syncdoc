@@ -1,0 +1,67 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: syncdoc-strip-prefix
+  namespace: syncdoc-test
+spec:
+  stripPrefix:
+    prefixes: [/syncdoc]
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: syncdoc-trailing-slash
+  namespace: syncdoc-test
+spec:
+  redirectRegex:
+    regex: '^https://211\.45\.127\.56/syncdoc(\?.*)?$'
+    replacement: 'https://211.45.127.56/syncdoc/${1}'
+    permanent: false
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: syncdoc-public-ip
+  namespace: syncdoc-test
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`211.45.127.56`) && (Path(`/syncdoc`) || PathPrefix(`/syncdoc/`))
+      priority: 100
+      kind: Rule
+      middlewares:
+        - name: syncdoc-trailing-slash
+        - name: syncdoc-strip-prefix
+      services:
+        - name: web
+          port: 80
+  tls: {}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: public-root-grafana
+  namespace: ai-edge
+spec:
+  redirectRegex:
+    regex: '^https://211\.45\.127\.56/(\?.*)?$'
+    replacement: 'https://211.45.127.56/grafana/'
+    permanent: false
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: public-root
+  namespace: ai-edge
+spec:
+  entryPoints: [websecure]
+  routes:
+    - match: Host(`211.45.127.56`) && Path(`/`)
+      priority: 100
+      kind: Rule
+      middlewares:
+        - name: public-root-grafana
+      services:
+        - name: grafana-host
+          port: 80
+  tls: {}

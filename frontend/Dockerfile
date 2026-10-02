@@ -8,7 +8,8 @@ RUN npm ci
 COPY tsconfig*.json vite.config.ts index.html ./
 COPY src ./src
 COPY public ./public
-RUN npm run build
+ARG SYNCDOC_BASE_PATH=/
+RUN SYNCDOC_BASE_PATH="$SYNCDOC_BASE_PATH" npm run build
 
 FROM nginx:1.27-alpine AS runtime
 COPY --from=build /src/dist /usr/share/nginx/html

@@ -1,6 +1,6 @@
 import ComparisonPage from "../features/spec/ComparisonPage";
 import TaskContextPage from "../features/spec/TaskContextPage";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "../features/auth/LoginPage";
 import UninvitedPage from "../features/auth/UninvitedPage";
 import { useSession } from "../features/auth/useSession";
@@ -19,8 +19,8 @@ import SettingsPage from "../features/projects/SettingsPage";
  */
 export default function App() {
   const session = useSession();
-  const path = window.location.pathname;
-  const error = new URLSearchParams(window.location.search).get("error") ?? undefined;
+  const { pathname: path, search } = useLocation();
+  const error = new URLSearchParams(search).get("error") ?? undefined;
 
   if (path === "/uninvited") {
     return <UninvitedPage />;
