@@ -36,3 +36,9 @@ it("navigates stored document links within the basename", async () => {
   await user.click(screen.getByRole("link", {name:"Document"}));
   expect(screen.getByRole("heading", {name:"Target document"})).toBeInTheDocument();
 });
+const { default: ProjectHomePage } = await import("../src/features/projects/ProjectHomePage");
+it("keeps project home entry links under the application prefix", async () => {
+  vi.stubGlobal("fetch", vi.fn((url: string) => Promise.resolve(new Response(JSON.stringify({items: String(url).endsWith("/projects") ? [{id:"p1",fullName:"owner/repo",branch:"main",docsRoot:"docs",syncState:"succeeded",documentCount:1}] : []}),{headers:{"Content-Type":"application/json"}}))));
+  render(<MemoryRouter basename="/syncdoc" initialEntries={["/syncdoc/"]}><ProjectHomePage csrfToken="test" /></MemoryRouter>);
+  expect(await screen.findByRole("link",{name:"열기"})).toHaveAttribute("href","/syncdoc/projects/p1");
+});
