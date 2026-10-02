@@ -25,7 +25,7 @@ public final class DocumentVersions {
      * 추적성 1판은 같은 revision도 새 관계 보고서를 가진 게시본으로 다시 수집한다.
      * 기존 완료 게시본의 NULL 보고서는 조회 중 소급 갱신하지 않는다.
      */
-    public static final String POLICY = "allowlist+3-traceability1-comparison1";
+    public static final String POLICY = "allowlist+3-traceability1-comparison1-relations1";
 
     private DocumentVersions() {
     }
