@@ -82,7 +82,7 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 
 **완료:** 관리 가능한 저장소를 연결하고 첫 동기화 대기를 목록에 표시한다. 다른 사용자 데이터로 권한 우회 불가.
 
-## TASK-004 문서 규약과 검증 — 다음 작업
+## TASK-004 문서 규약과 검증
 
 **근거:** REQ-008.
 

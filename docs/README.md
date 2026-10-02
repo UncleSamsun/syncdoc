@@ -16,17 +16,21 @@ status: 확정
 | 어떤 동작·품질이 필요한가 | 기능·품질 요구 | [기능·품질 요구 (DOC-002)](01-prd/mvp-scope.md) |
 | 공통 화면 표현 | 공통 UI 규칙 | [UI 규칙 (DOC-005)](02-ui-spec/ui-conventions.md) |
 | 화면에서 무엇을 하는가 | 화면 명세 | [화면 명세 (DOC-006)](02-ui-spec/ui-screens.md) |
-| 경계와 모듈 책임 | 기술 개요 | [구현 구조 (DOC-009)](03-tech-spec/architecture-proposal.md) |
+| 경계와 모듈 책임 | 기술 개요 | [기술 선택 검토 (DOC-009)](03-tech-spec/architecture-proposal.md) |
 | 경계를 오가는 계약 | 인터페이스 계약 | [API 계약 (DOC-010)](03-tech-spec/api-spec.md) |
 | 저장하는 정보와 수명 | 데이터 설계 | [데이터 모델 (DOC-011)](03-tech-spec/data-model.md) |
 | 배포·복구·관측 | 실행·운영 | [운영 (DOC-020)](03-tech-spec/ops.md), [회사 서버 CI/CD (DOC-022)](03-tech-spec/cicd.md) |
 | 무엇을 어떻게 구현·검증하는가 | 작업 정의 | [구현계획 (DOC-014)](04-tasks/implementation-plan.md), [배포 계획 (DOC-023)](04-tasks/cicd-plan.md) |
 
+DOC-009는 `status: 검토`인 기술 선택 자료이며 상세 구현 계약은 확정 API·데이터·작업 명세에서 확인한다.
+
 기계 정본은 [포맷 정의](../rules/spec-format.json)이며 이 표는 SyncDoc 프로젝트의 실제 문서로 가는 안내다. 종류별 필수 내용은 [작성 규칙](../rules/spec-writing.md), 적용 여부·버전은 [프로젝트 설정](../rules/project-settings.md)에서 읽는다.
 
-## 다음 구현 준비
+## 구현 범위와 다음 검토
 
-2026-10-01 사용자가 REQ–TASK 관계·요구별 연결 표·참조 진단을 첫 후속 범위로 확정했다. [TASK-016](https://github.com/UncleSamsun/syncdoc/issues/70)의 별도 기능 브랜치에서 정본 승격·구현·검증을 진행한다. 검토 자료의 경로와 활성 구현 기준은 해당 기능 PR에서 함께 제공한다.
+REQ–TASK 관계·요구별 연결 표·참조 진단(TASK-016)은 구현·배포·실제 서버 검증을 마쳤다. 구현 계약은 REQ-009·UI-016·API-027/028와 데이터 설계이고 검증 근거는 [PR #74](https://github.com/UncleSamsun/syncdoc/pull/74)다. DOC-025/026은 준비 경위를 남기는 검토 자료다.
+
+다음 제안은 [게시본 비교·변경 영향 (DOC-027)](03-tech-spec/snapshot-comparison-proposal.md)이다. 문서·REQ/TASK 변경과 재검토 후보를 읽는 범위이며 아직 활성 요구나 구현 계약이 아니다. 설계 확인 후 실행 계획과 정본 승격을 준비한다.
 
 ## 기준과 자료를 구분하기
 
