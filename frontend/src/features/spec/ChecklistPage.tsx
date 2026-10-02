@@ -75,6 +75,7 @@ function Body({ projectId, view }: { projectId: string; view: ChecklistView }) {
     <section className="chk">
       <header className="chk-h">
         <h1>산출물 체크리스트</h1>
+        <Link to={`/projects/${projectId}/comparison`}>게시본 비교</Link>
         <span className="mono">
           {view.snapshotId.slice(0, 8)} · {view.sourceRevision.slice(0, 10)}
         </span>

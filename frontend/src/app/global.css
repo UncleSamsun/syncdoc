@@ -1478,3 +1478,18 @@ main {
 .trace-pages button { padding: 6px 10px; }
 
 @media (max-width: 720px) { .traceability .mdtbl { min-width: 640px; } }
+
+.comparison-page { padding: 26px 24px; min-width: 0; }
+.comparison-page header, .comparison-tabs, .comparison-selectors { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.comparison-selectors label { flex: 1; min-width: 0; }
+.comparison-selectors select { display: block; width: 100%; margin-top: 6px; }
+.comparison-page select, .comparison-page button { padding: 6px 10px; max-width: 100%; }
+.comparison-tabs { margin: 18px 0; }
+.comparison-tabs button[aria-pressed=true] { border-color: var(--ink); color: var(--ink); }
+.comparison-page .mdtbl { margin-top: 16px; min-width: 640px; }
+.comparison-page .mdtbl td { vertical-align: top; white-space: normal; overflow-wrap: anywhere; }
+.comparison-page .mdtbl td .n { display: block; }
+.comparison-page h2 { margin-top: 28px; }
+@media (max-width:720px) { .comparison-selectors { display: block; } .comparison-selectors label { display: block; margin: 12px 0; } }
+
+.comparison-page h1 { font-size: 24px; font-weight: 600; }
