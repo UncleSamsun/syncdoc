@@ -16,6 +16,12 @@ function mock(legacy=false){vi.stubGlobal("fetch",vi.fn((url:string)=>{
 }));}
 function open(search="?fromSnapshotId=a&toSnapshotId=b"){return render(<MemoryRouter initialEntries={["/projects/p1/comparison"+search]}><Routes><Route path="/projects/:projectId/comparison" element={<ComparisonPage/>}/></Routes></MemoryRouter>);}
 afterEach(()=>vi.unstubAllGlobals());
+it("pins design impact sources and shows missing relation data as unchecked",async()=>{
+ mock();const original=vi.mocked(fetch).getMockImplementation()!;
+ vi.mocked(fetch).mockImplementation((u,...args)=>String(u).includes('/design-impacts')?Promise.resolve(new Response(JSON.stringify({...meta,items:[{requirementId:'REQ-001',requirementChange:'modified',kind:'ui',itemId:'UI-001',before:{...ref('old-ui'),kind:'ui',itemId:'UI-001'},after:{...ref('new-ui'),kind:'ui',itemId:'UI-001'},presence:'present'}],totalElements:1,page:0,size:50}))):original(u,...args));
+ open();await screen.findByText('전 범위 비교');await userEvent.click(screen.getByRole('button',{name:'설계 재검토'}));
+ const links=await screen.findAllByRole('link',{name:/UI-001/});expect(links[0]).toHaveAttribute('href','/projects/p1/documents/old-ui?snapshotId=a#real-anchor');expect(links[1]).toHaveAttribute('href','/projects/p1/documents/new-ui?snapshotId=b#real-anchor');
+});
 it("pins both source links and filter requests to the same pair",async()=>{
  mock();open();await screen.findByText("전 범위 비교");
  const links=screen.getAllByRole("link",{name:/REQ-001/});

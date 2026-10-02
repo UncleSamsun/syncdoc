@@ -30,7 +30,7 @@ DOC-009는 `status: 검토`인 기술 선택 자료이며 상세 구현 계약�
 
 REQ–TASK 관계·요구별 연결 표·참조 진단(TASK-016)은 구현·배포·실제 서버 검증을 마쳤다. 구현 계약은 REQ-009·UI-016·API-027/028와 데이터 설계이고 검증 근거는 [PR #74](https://github.com/UncleSamsun/syncdoc/pull/74)다. DOC-025/026은 준비 경위를 남기는 검토 자료다.
 
-게시본 비교·변경 영향(TASK-017)은 사용자 승인 후 [실행 계획 (DOC-028)](04-tasks/snapshot-comparison-plan.md)에 따라 구현하고 [dev PR #76](https://github.com/UncleSamsun/syncdoc/pull/76)에서 검증한다. 활성 계약은 REQ-010·UI-017·API-029~033와 데이터 설계다. [DOC-027](03-tech-spec/snapshot-comparison-proposal.md)은 검토 경위를 보존하며 새 기능의 회사 서버 검증은 병합·배포 후 단계다.
+게시본 비교·변경 영향(TASK-017)은 사용자 승인 후 [실행 계획 (DOC-028)](04-tasks/snapshot-comparison-plan.md)에 따라 구현하고 [dev PR #76](https://github.com/UncleSamsun/syncdoc/pull/76)에서 검증한다. 활성 계약은 REQ-010·UI-017·API-029~033와 데이터 설계다. [DOC-027](03-tech-spec/snapshot-comparison-proposal.md)은 검토 경위를 보존한다. PR #77의 main71d5218을 회사 서버에 배포해 실제 비교를 검증했다.
 
 ## 기준과 자료를 구분하기
 
@@ -41,3 +41,5 @@ SyncDoc 화면은 원문의 폴더 계층으로 탐색한다. 폴더 묶음과 �
 ## 문서 이름을 정하는 기준
 
 명세는 문서 종류를 H1에 쓰고 여러 문서가 필요하면 `종류 — 주제`로 구분한다. 폴더는 영역을, 제목은 산출물 역할을, frontmatter는 ID·종류·작성 상태를 나타낸다. 원문 폴더 계층 하나로 탐색하며 제목과 작성 형식은 [작성 규칙](../rules/spec-writing.md)의 정본을 따른다.
+
+UI/API 관계 확장은 [후속 설계 DOC-029](03-tech-spec/harness-development-design.md)와 [실행 계획 DOC-030](04-tasks/ui-api-relations-plan.md)의 TASK-018에서 구현·검증한다. 작업 컨텍스트와 SyncDoc 자체 하네스 적용은 그 다음 단계이며 전체 E2E는 세 단계 통합 뒤 수행한다.

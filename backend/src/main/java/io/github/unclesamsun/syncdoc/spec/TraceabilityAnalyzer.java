@@ -18,8 +18,9 @@ import org.springframework.stereotype.Component;
 public class TraceabilityAnalyzer {
     public record Source(String documentId, String path, String markdown, List<DocumentHeading> headings) {}
     private record Definition(SpecTraceability.Item item, List<Node> body) {}
-    private record LinkSpan(int start, int end, String target) {}
-    private record Evidence(String text, List<LinkSpan> links, int line) {}
+    record LinkSpan(int start, int end, String target) {}
+    record Evidence(String text, List<LinkSpan> links, int line) {}
+    record LabelEvidence(String label, Evidence payload) {}
     private static final Pattern DEFINITION = Pattern.compile("^(REQ|TASK)-(\\d{3})(?:\\s+(.+))?$");
     private static final Pattern REFERENCES = Pattern.compile("(?<![A-Za-z0-9_-])(?:[A-Za-z]+-[A-Za-z0-9]+\\s*[~～]\\s*[^\\s,;·)\\]<>]*|REQ-[A-Za-z0-9]+)(?![A-Za-z0-9_-])");
     private final Parser parser = Parser.builder().extensions(List.of(YamlFrontMatterExtension.create()))
@@ -163,7 +164,7 @@ public class TraceabilityAnalyzer {
         if (first > last) return List.of();
         return java.util.stream.IntStream.rangeClosed(first, last).mapToObj(i -> "REQ-%03d".formatted(i)).toList();
     }
-    private static Optional<String> targetPath(String source, String target) {
+    static Optional<String> targetPath(String source, String target) {
         if (target.matches("^[a-zA-Z][a-zA-Z0-9+.-]*:.*") || target.startsWith("//")) return Optional.empty();
         try {
             String path = URLDecoder.decode(target.split("[?#]", 2)[0].replace("+", "%2B"), StandardCharsets.UTF_8);
@@ -172,7 +173,7 @@ public class TraceabilityAnalyzer {
             return Optional.of(Objects.requireNonNullElse(Path.of(source).getParent(), Path.of("" )).resolve(path).normalize().toString().replace('\\', '/'));
         } catch (RuntimeException e) { return Optional.of("<invalid>"); }
     }
-    private static int line(Node node) { return node.getSourceSpans().isEmpty() ? 1 : node.getSourceSpans().getFirst().getLineIndex() + 1; }
+    static int line(Node node) { return node.getSourceSpans().isEmpty() ? 1 : node.getSourceSpans().getFirst().getLineIndex() + 1; }
     private static String plainPayload(Paragraph paragraph) {
         StringBuilder text = new StringBuilder();
         for (Node n = paragraph.getFirstChild().getNext(); n != null; n = n.getNext()) {
@@ -180,10 +181,31 @@ public class TraceabilityAnalyzer {
         }
         return text.toString();
     }
-    private static Evidence visible(Node node) {
+    static Evidence visible(Node node) {
         StringBuilder text = new StringBuilder(); List<LinkSpan> links = new ArrayList<>();
         append(node, text, links, new int[]{0});
         return new Evidence(text.toString(), links, line(node));
+    }
+    static Evidence between(Node first, Node stop, int sourceLine) {
+        StringBuilder text = new StringBuilder(); List<LinkSpan> links = new ArrayList<>();
+        int[] htmlDepth = {0};
+        for (Node child = first; child != null && child != stop; child = child.getNext()) append(child, text, links, htmlDepth);
+        return new Evidence(text.toString(), links, sourceLine);
+    }
+    /** Field discovery and payload extraction share visibility state, including across inline HTML. */
+    static List<LabelEvidence> labels(Paragraph paragraph) {
+        List<LabelEvidence> result = new ArrayList<>();
+        String label = null; StringBuilder text = new StringBuilder(); List<LinkSpan> links = new ArrayList<>();
+        int[] htmlDepth = {0};
+        for (Node child = paragraph.getFirstChild(); child != null; child = child.getNext()) {
+            String candidate = child instanceof StrongEmphasis && htmlDepth[0] == 0 ? visible(child).text().trim() : "";
+            if (candidate.endsWith(":")) {
+                if (label != null) result.add(new LabelEvidence(label, new Evidence(text.toString(), List.copyOf(links), line(paragraph))));
+                label = candidate; text.setLength(0); links.clear();
+            } else append(child, text, links, htmlDepth);
+        }
+        if (label != null) result.add(new LabelEvidence(label, new Evidence(text.toString(), List.copyOf(links), line(paragraph))));
+        return result;
     }
     private static void append(Node node, StringBuilder text, List<LinkSpan> links, int[] htmlDepth) {
         if (node instanceof Code || node instanceof FencedCodeBlock || node instanceof IndentedCodeBlock || node instanceof HtmlBlock) { text.append(' '); return; }

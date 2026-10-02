@@ -30,7 +30,7 @@ HTML과 검색 결과는 `Cache-Control: private, no-store`로 제공한다. 사
 
 ## 계약 일람
 
-MVP가 구현할 계약 33개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
+MVP가 구현할 계약 35개 전부다. 이 표에 없는 엔드포인트는 구현 대상이 아니다. 조건이 많은 계약은 아래에 같은 ID의 절을 두고, 표의 `응답·조건` 칸에서 그 절을 가리킨다.
 
 | ID | 메서드·경로 | 연결 요구 | 입력 | 응답·조건 |
 |---|---|---|---|---|
@@ -62,17 +62,19 @@ MVP가 구현할 계약 33개 전부다. 이 표에 없는 엔드포인트는 �
 | API-026 | `DELETE /projects/{id}` | REQ-002 | `{fullName}` 확인 값 | 204 연결 해제와 수집 자료 삭제. 조건은 [API-026](#api-026-연결-해제) |
 | API-027 | `GET /projects/{id}/spec-traceability` | REQ-009 | snapshotId, page, size, coverage | 요구별 작업 관계. 상세는 API-027 |
 | API-028 | `GET /projects/{id}/spec-traceability/findings` | REQ-009 | snapshotId, page, size | 참조 진단. 상세는 API-028 |
-
-API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 브랜치 스위처와 [UI-001](../02-ui-spec/ui-screens.md)의 연결 양식이 브랜치를 목록에서 고르는데 그 목록을 주는 계약이 없었다. 저장소 목록(API-008)에 브랜치를 함께 담지 않은 이유는 목록을 열 때마다 저장소 수만큼 GitHub를 더 부르게 되기 때문이다.
-
-`연결 요구`가 `없음`인 계약은 MVP 요구에서 나오지 않은 계약이다. 근거 문서가 생기면 그때 채운다. 비워 두면 빠뜨린 것과 구분할 수 없어 사유를 적는다.
-
-반대 방향도 하나 비어 있다. REQ-001 ~ REQ-007은 위 계약이 덮지만 **REQ-008 공통 작성 규칙에는 아직 계약이 없다.** 산출물 체크리스트 조회 계약은 [구현계획](../04-tasks/implementation-plan.md) TASK-001 이후에 추가한다. 지금 그 계약을 미리 적으면 구현하지 않을 계약이 확정 문서에 남는다.
 | API-029 | `GET /projects/{id}/snapshots` | REQ-010 | 비교ID·페이지·필터 (상세절) | 완료 게시본 목록 |
 | API-030 | `GET /projects/{id}/snapshot-comparison` | REQ-010 | 비교ID·페이지·필터 (상세절) | 비교 요약 |
 | API-031 | `GET /projects/{id}/snapshot-comparison/documents` | REQ-010 | 비교ID·페이지·필터 (상세절) | 문서 변화 |
 | API-032 | `GET /projects/{id}/snapshot-comparison/items` | REQ-010 | 비교ID·페이지·필터 (상세절) | 항목 변화 |
 | API-033 | `GET /projects/{id}/snapshot-comparison/impacts` | REQ-010 | 비교ID·페이지·필터 (상세절) | 재검토 후보 |
+| API-034 | `GET /projects/{id}/spec-relations` | REQ-011 | snapshotId?, page=0, size=50 | 같은 게시본의 요구별 UI/API/TASK와 실행 관찰·관계 진단. legacy unchecked, private/no-store |
+| API-035 | `GET /projects/{id}/snapshot-comparison/design-impacts` | REQ-010, REQ-011 | fromSnapshotId, toSnapshotId, page=0, size=50 | 변경 요구의 old/new UI/API 합집합. scope409·legacy unchecked·권한404/401·snapshot410 |
+
+API-024는 2026-09-11에 추가했다. [UI-000](../02-ui-spec/ui-screens.md)의 브랜치 스위처와 [UI-001](../02-ui-spec/ui-screens.md)의 연결 양식이 브랜치를 목록에서 고르는데 그 목록을 주는 계약이 없었다. 저장소 목록(API-008)에 브랜치를 함께 담지 않은 이유는 목록을 열 때마다 저장소 수만큼 GitHub를 더 부르게 되기 때문이다.
+
+`연결 요구`가 `없음`인 계약은 MVP 요구에서 나오지 않은 계약이다. 근거 문서가 생기면 그때 채운다. 비워 두면 빠뜨린 것과 구분할 수 없어 사유를 적는다.
+
+REQ-008 공통 작성 규칙의 산출물 체크리스트 조회는 API-025가 담당한다. 관계·비교 조회는 각 연결 요구의 별도 계약을 따른다.
 
 ## API-002 로그인 콜백
 
@@ -228,3 +230,8 @@ API-017 ~ API-020에 함께 적용된다.
 **부작용:** 없음. 원문/GitHub상태/이전보고서를변경하지않는다.
 
 **재시도:** 관계와원문변화는두불변snapshot기준이다. 현재Issue관찰결과만이후변할수있다. 정렬은문서식별키/경로,항목kind/ID,영향REQ/TASK순이며큰page는long으로계산한다.
+
+
+## API-034/035 설계 관계와 재검토
+
+관계·진단은 수집 revision과 snapshot에 고정하고 실행 상태는 현재 관찰 시점으로 구분한다. page>=0·size1..100, 잘못된 조건400. UI/API 적용 여부나 충족을 추정하지 않는다. nullable SpecRelations v1과 V10을 사용하며 과거 자료는 소급 수정하지 않는다. [DOC-030](../04-tasks/ui-api-relations-plan.md)의 계약을 따른다.

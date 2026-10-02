@@ -56,6 +56,15 @@ public class SnapshotComparisonService {
   var result=engine.compare(documentData(a,old),old,trace(a),documentData(b,now),now,trace(b));
   return new Evaluation(left,right,null,result);
  }
+ public ResultPage<DesignImpactCalculator.Impact> designImpacts(CurrentUser user,UUID projectId,UUID from,UUID to,int page,int size){
+  validate(page,size);var e=evaluate(user,projectId,from,to);if(e.result()==null)return empty(e,page,size);
+  var old=RelationService.read(snapshots.findById(from).orElseThrow(),json);var now=RelationService.read(snapshots.findById(to).orElseThrow(),json);
+  if(old.analysisStatus().equals("unchecked")||now.analysisStatus().equals("unchecked"))return new ResultPage<>(e.from(),e.to(),"unchecked","RELATIONS_NOT_COMPUTED","unknown",List.of(),List.of(),0,page,size);
+  var rows=new DesignImpactCalculator().compute(e.result().items(),old,now);
+  var findings=new ArrayList<>(e.result().findings());for(var graph:List.of(old,now))for(var finding:graph.findings())findings.add(finding.code()+" "+finding.path()+":"+finding.line()+" "+finding.message());
+  boolean partial=e.result().status().equals("partial")||old.analysisStatus().equals("partial")||now.analysisStatus().equals("partial");
+  return new ResultPage<>(e.from(),e.to(),partial?"partial":"complete",null,partial?"incomplete":e.result().coverage(),findings.stream().distinct().toList(),slice(rows,page,size),rows.size(),page,size);
+ }
  private List<ComparisonEngine.Document> documentData(DocumentSnapshotEntity snapshot,ComparisonIndex index){
   Map<String,String> states=new HashMap<>();index.documents().forEach(d->states.put(d.documentId(),d.status()));
   return stored.findBySnapshotIdOrderByPath(snapshot.getId()).stream().map(d->new ComparisonEngine.Document(d.getId().toString(),d.getSpecId(),d.getPath(),d.getTitle(),d.getKind(),d.getSourceHash(),states.get(d.getId().toString()))).toList();
