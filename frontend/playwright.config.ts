@@ -11,6 +11,10 @@ import { defineConfig } from "@playwright/test";
  * 세션을 파일로 남기고, 그 파일이 있을 때만 로그인 이후 흐름을 돌린다. 파일이 없으면 해당
  * 시험은 건너뛴 것으로 보고한다. 통과로 적지 않는다.
  */
+export const E2E_BASE_URL = process.env.SYNCDOC_E2E_BASE_URL ?? "http://localhost:8081";
+const E2E_PREFIX = new URL(E2E_BASE_URL).pathname.replace(/\/$/, "");
+export function e2ePath(path: string): string { return `${E2E_PREFIX}${path}`; }
+
 export const SESSION_STATE = "tests/.auth/session.json";
 
 export default defineConfig({
@@ -23,7 +27,7 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"]],
   use: {
-    baseURL: process.env.SYNCDOC_E2E_BASE_URL ?? "http://localhost:8081",
+    baseURL: E2E_BASE_URL,
     locale: "ko-KR",
     storageState: existsSync(SESSION_STATE) ? SESSION_STATE : undefined,
     trace: "retain-on-failure",
