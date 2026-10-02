@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import DiagramView, { DIAGRAM_LIMITS } from "./DiagramView";
+import { APP_BASE, appPath } from "../../shared/appPath";
 import type { DocumentDiagram } from "./types";
 
 type Props = {
@@ -35,6 +36,14 @@ export default function DocumentBody({ html, diagrams, title }: Props) {
       return;
     }
     root.innerHTML = html;
+    // Stored snapshots keep application-relative URLs. Rebase at display time.
+    root.querySelectorAll("a[href], img[src]").forEach((node) => {
+      const attr = node.tagName === "IMG" ? "src" : "href";
+      const url = node.getAttribute(attr) ?? "";
+      if (url.startsWith("/projects/") || url.startsWith("/api/v1/projects/")) {
+        node.setAttribute(attr, appPath(url));
+      }
+    });
 
     // 문서의 첫 제목이 화면 제목과 같으면 본문에서 뺀다. 같은 제목을 두 번 읽게 하지 않는다.
     // 다만 그 제목을 가리키는 앵커는 남긴다. 검색 결과·목차·문서 간 링크가 그 id로 찾아온다.
@@ -96,9 +105,11 @@ export default function DocumentBody({ html, diagrams, title }: Props) {
       document.getElementById(decodeURIComponent(href.slice(1)))?.scrollIntoView({ block: "start" });
       return;
     }
-    if (href.startsWith("/projects/")) {
+    const internal = APP_BASE && href.startsWith(`${APP_BASE}/`) ? href.slice(APP_BASE.length) : href;
+    if (internal.startsWith("/projects/") && event.button === 0 && !event.ctrlKey && !event.metaKey
+        && !event.shiftKey && !event.altKey && !anchor.target) {
       event.preventDefault();
-      navigate(href);
+      navigate(internal);
     }
   };
 

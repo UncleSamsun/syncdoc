@@ -31,15 +31,17 @@ public class OAuthController {
     private final LoginService logins;
     private final SessionCookies sessionCookies;
     private final OAuthStateCookie stateCookie;
+    private final PublicPath publicPath;
     private final SecureRandom random = new SecureRandom();
 
     public OAuthController(GitHubOAuthGateway oauth, GitHubIdentityGateway identity, LoginService logins,
-                           SessionCookies sessionCookies, OAuthStateCookie stateCookie) {
+                           SessionCookies sessionCookies, OAuthStateCookie stateCookie, PublicPath publicPath) {
         this.oauth = oauth;
         this.identity = identity;
         this.logins = logins;
         this.sessionCookies = sessionCookies;
         this.stateCookie = stateCookie;
+        this.publicPath = publicPath;
     }
 
     /** API-001. */
@@ -88,7 +90,7 @@ public class OAuthController {
 
     private ResponseEntity<Void> redirect(String location, String sessionCookieHeader) {
         ResponseEntity.BodyBuilder builder = ResponseEntity.status(302)
-                .header(HttpHeaders.LOCATION, location)
+                .header(HttpHeaders.LOCATION, publicPath.resolve(location))
                 // state 쿠키는 한 번만 쓴다.
                 .header(HttpHeaders.SET_COOKIE, stateCookie.expired().toString());
         if (sessionCookieHeader != null) {

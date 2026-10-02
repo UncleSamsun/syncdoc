@@ -12,6 +12,7 @@ spring:
   flyway:
     locations: classpath:db/migration
 syncdoc:
+  public-base-path: ${SYNCDOC_PUBLIC_BASE_PATH:}
   auth:
     admin-github-user-id: ${SYNCDOC_ADMIN_GITHUB_USER_ID:}
     session-ttl: ${SYNCDOC_SESSION_TTL:12h}
