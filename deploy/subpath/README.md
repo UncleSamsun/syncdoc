@@ -1,10 +1,10 @@
 # Public subpath deployment
 
-SyncDoc uses `/syncdoc/`; `/` redirects to `/grafana/`. Existing local builds default to `/`.
+After activation, SyncDoc uses `/syncdoc/` and `/` redirects to `/grafana/`. This branch prepares the change; the public deployment has not switched yet. Existing local builds default to `/`.
 
 ## Configuration
 
-- Frontend build: `SYNCDOC_BASE_PATH=/syncdoc/` (Docker build argument). The company publish workflow supplies this value.
+- Frontend build: `SYNCDOC_BASE_PATH=/syncdoc/` (Docker build argument). After this change reaches main, [the publish workflow](../../.github/workflows/publish.yml) supplies this value for every web image, including manual main runs. The reusable build workflow and local Docker builds default to `/`; changing the runtime environment cannot change an already built web image.
 - Backend runtime: `SYNCDOC_PUBLIC_BASE_PATH=/syncdoc` (no trailing slash).
 - OAuth runtime: `SYNCDOC_GITHUB_REDIRECT_URI=https://211.45.127.56/syncdoc/api/v1/auth/github/callback`.
 - GitHub App must allow that exact callback before activation. Retain localhost callback entries for development.

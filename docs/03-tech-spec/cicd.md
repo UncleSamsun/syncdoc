@@ -12,7 +12,7 @@ GitHub Actions로 검증·이미지를 만들고 회사 K3s의 Flux가 배포 �
 
 GitHub-hosted Ubuntu runner에서 Java 25·Node 22·Python 3.12 검증과 Docker 이미지 빌드를 수행한다. 회사 K3s에는 `syncdoc-test` namespace와 PostgreSQL 17·backend·web을 둔다. Flux v2.9.5의 source/kustomize controller만 사용한다. CI 실행 코드는 회사 서버에서 실행하지 않는다.
 
-웹은 ClusterIP로만 제공한다. 서버에서 `kubectl -n syncdoc-test port-forward --address 127.0.0.1 service/web 8081:80`을 실행하고 PC에서 `ssh -L 8081:127.0.0.1:8081 ai-server`로 접속한다. OAuth redirect는 `http://localhost:8081/api/v1/auth/github/callback`이다. 이 터널 테스트에서는 cookie secure를 끈다. 공용 HTTPS·Ingress는 범위 밖이다.
+웹 Service는 ClusterIP다. 기존 루트 경로 이미지의 터널 테스트는 서버에서 `kubectl -n syncdoc-test port-forward --address 127.0.0.1 service/web 8081:80`을 실행하고 PC에서 `ssh -L 8081:127.0.0.1:8081 ai-server`로 접속한다. OAuth redirect는 `http://localhost:8081/api/v1/auth/github/callback`이며 이 로컬 HTTP 테스트에서는 cookie secure를 끈다. 공용 HTTPS는 Secure cookie를 유지하고, [TASK-021](../04-tasks/implementation-plan.md#task-021-공용-https-하위-경로-배포)의 `/syncdoc/` 전환은 [별도 배포 절차](../../deploy/subpath/README.md)를 따른다. 하위 경로 이미지의 화면 검증에는 prefix를 제거하는 공용 Ingress가 필요하다.
 
 ## 설정·비밀값 주입
 
@@ -26,7 +26,7 @@ Flux Kustomization은 `syncdoc-deployer` ServiceAccount를 impersonate한다. na
 
 1. PR에서는 기존 검증과 배포 renderer 회귀 시험만 수행한다. 이미지를 게시하거나 배포하지 않는다.
 2. main push 또는 main에서 수동 실행하면 같은 revision의 검증을 먼저 수행한다.
-3. backend/web 이미지를 GHCR에 `sha-<commit>` 태그로 게시하고 각각 digest를 받는다.
+3. backend/web 이미지를 GHCR에 `sha-<commit>` 태그로 게시하고 각각 digest를 받는다. TASK-021 변경을 포함한 main은 web을 `SYNCDOC_BASE_PATH=/syncdoc/`로 빌드한다. backend의 `SYNCDOC_PUBLIC_BASE_PATH`와 OAuth callback은 기존 Flux Kustomization 패치로 설정하며, 이미지 게시만으로 공용 경로 전환이 끝나지 않는다.
 4. renderer가 두 digest를 `deploy/kubernetes` manifest에 넣고, `syncdoc-test-deploy` 브랜치의 `kubernetes/`에 한 commit으로 반영한다. main/dev를 수정하지 않는다. 게시 실패 시 배포 브랜치를 갱신하지 않는다.
 5. Flux가 그 브랜치를 1분 주기로 가져와 적용한다. 리소스에는 source revision을 annotation으로 남긴다. 오래된 실행이 뒤늦게 배포하는 것을 막기 위해 main HEAD 일치 여부를 게시 직전에 확인하고 CI/CD 실행을 직렬화한다.
 
@@ -35,6 +35,8 @@ Flux Kustomization은 `syncdoc-deployer` ServiceAccount를 impersonate한다. na
 ## 상태 확인
 
 `kubectl -n syncdoc-cd get gitrepositories,kustomizations`와 `kubectl -n syncdoc-test get deployments,pods,pvc`로 source revision과 Ready 조건을 확인한다. Kustomization은 세 Deployment의 readiness를 기다린다. `bash deploy/flux/check.sh <Actions summary의 배포 commit>`은 source/applied revision이 그 commit과 같은지 기다린 뒤 Ready와 rollout을 확인하고 port-forward로 웹·live·ready 200 및 미인증 `/api/v1/me`의 401을 검사한다. GitHub 실제 로그인·수집·그림·권한·E2E는 [검증 기록](../04-tasks/mvp-verification-record.md)의 절차로 추가 수행한다. Actions의 성공은 이미지와 배포 요청 게시 성공이며 서버 배포 성공과 별개다.
+
+이 스크립트의 내부 `/` 200은 HTML 응답만 확인한다. `/syncdoc/` 자산·API·OAuth·문서와 첨부, 루트의 Grafana 이동은 [공용 경로 검증 절차](../../deploy/subpath/README.md#rollout-order)로 별도 확인한다.
 
 ### 최초 준비 명령
 
