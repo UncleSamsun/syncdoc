@@ -262,3 +262,19 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 **검증:** [DOC-028 실행계획](snapshot-comparison-plan.md)의순수/수집/HTTP권한/UI/전체회귀·브라우저검증. 실제서버시험은최종병합/배포후별도.
 
 **완료:** 승인범위가구현·검증되고dev대상PR이검토가능하다. dev병합·main배포는사람의최종판단이다.
+
+## TASK-018 UI·API 관계 확장
+
+**목적:** 요구에서 설계와 작업을 연결하고 설계 재검토 후보를 제공한다.
+
+**근거:** [REQ-011](../01-prd/mvp-scope.md#req-011-요구설계작업-관계), [DOC-029 설계](../03-tech-spec/harness-development-design.md).
+
+**범위:** SpecRelations v1 AST 분석·V10 nullable 저장/정책·API-034/035·UI-018. 기존 v1·완료율 보존.
+
+**선행:** TASK-016/017 구현·배포.
+
+**산출물:** 관계·설계 영향 API/화면과 [DOC-030 계획](ui-api-relations-plan.md).
+
+**검증:** 순수·수집·HTTP/Postgres·컴포넌트·전체 회귀와 독립 리뷰. E2E는 세 후속 작업 통합 후 한 번 수행한다.
+
+**완료:** 위 인수 조건·리뷰/CI 통과와 dev PR 병합. 서버 통합 검증은 전체 작업 뒤 별도다.
