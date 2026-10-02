@@ -22,6 +22,7 @@ SDD 방식으로 작성한 명세와 GitHub 협업 현황을 연결하는 프로
 - [인터페이스 계약](docs/03-tech-spec/api-spec.md) · [데이터 설계](docs/03-tech-spec/data-model.md)
 - [작업 정의](docs/04-tasks/implementation-plan.md)
 - [회사 서버 테스트 CI/CD](docs/03-tech-spec/cicd.md) · [배포 작업계획](docs/04-tasks/cicd-plan.md)
+- [공용 `/syncdoc/` 경로 전환과 복구](deploy/subpath/README.md): main 게시 이미지의 경로 설정과 실제 서버 전환 절차
 
 - [새 MVP 요구](docs/01-prd/brief.md)
 - [공통 Spec 구성안](docs/01-prd/spec-standard-proposal.md)

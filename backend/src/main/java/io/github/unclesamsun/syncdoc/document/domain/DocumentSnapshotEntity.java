@@ -62,6 +62,14 @@ public class DocumentSnapshotEntity {
     public String getCollectionDocsRoot(){return collectionDocsRoot;}
     public String getComparisonJson(){return comparisonJson;}
     public void comparison(String value){comparisonJson=value;}
+    @Column(name = "relations_json")
+    private String relationsJson;
+    public String getRelationsJson() { return relationsJson; }
+    public void relations(String value) { relationsJson = value; }
+    @Column(name = "context_json")
+    private String contextJson;
+    public String getContextJson() { return contextJson; }
+    public void context(String value) { contextJson = value; }
     public DocumentSnapshotEntity(UUID projectId,String revision,String renderer,String policy,Instant createdAt,String branch,String docsRoot){
         this(projectId,revision,renderer,policy,createdAt);
         this.collectionBranch=java.util.Objects.requireNonNull(branch);

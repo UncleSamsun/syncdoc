@@ -86,6 +86,8 @@ public class SyncWorker {
     private final Clock clock;
     private final TraceabilityAnalyzer traceability;
     private final ComparisonIndexer comparisonIndexer;
+    private final io.github.unclesamsun.syncdoc.spec.RelationAnalyzer relations;
+    private final io.github.unclesamsun.syncdoc.spec.TaskContextIndexer contexts;
 
     public SyncWorker(SyncQueue queue, ProjectRepository projects, InstallationRepository installations,
                       RepositoryContentGateway contents, DocumentSnapshotRepository snapshots,
@@ -93,7 +95,9 @@ public class SyncWorker {
                       AssetContentRepository assetContents, MarkdownRenderService renderer,
                       TaskRepository tasks, IssueCollector issueCollector,
                       SpecFormatReader specFormats, ChecklistChecker checklistChecker,
-                      SyncProperties properties, ObjectMapper json, Clock clock, TraceabilityAnalyzer traceability, ComparisonIndexer comparisonIndexer) {
+                      SyncProperties properties, ObjectMapper json, Clock clock, TraceabilityAnalyzer traceability, ComparisonIndexer comparisonIndexer,
+                      io.github.unclesamsun.syncdoc.spec.RelationAnalyzer relations,
+                      io.github.unclesamsun.syncdoc.spec.TaskContextIndexer contexts) {
         this.queue = queue;
         this.projects = projects;
         this.installations = installations;
@@ -112,6 +116,8 @@ public class SyncWorker {
         this.clock = clock;
         this.traceability = traceability;
         this.comparisonIndexer = comparisonIndexer;
+        this.relations = relations;
+        this.contexts = contexts;
     }
 
     /** @return 실행할 작업이 있었으면 true */
@@ -261,6 +267,14 @@ public class SyncWorker {
         var traceReport = traceability.analyze(forTraceability);
         snapshot.traceability(json.writeValueAsString(traceReport));
         snapshot.comparison(json.writeValueAsString(comparisonIndexer.index(forTraceability, traceReport)));
+        snapshot.relations(json.writeValueAsString(relations.analyze(forTraceability, traceReport)));
+        List<io.github.unclesamsun.syncdoc.spec.TaskContextIndexer.RuleInput> ruleInputs = new ArrayList<>();
+        for (String path : io.github.unclesamsun.syncdoc.spec.TaskContextIndexer.RULE_PATHS) {
+            ruleInputs.add(new io.github.unclesamsun.syncdoc.spec.TaskContextIndexer.RuleInput(path,
+                    contents.readRuleTextAt(repository, revision, path, properties.maxDocumentSize()).orElse(null)));
+            if (!queue.renew(lease.jobId(), lease.token())) return;
+        }
+        snapshot.context(json.writeValueAsString(contexts.index(forTraceability, traceReport, ruleInputs)));
         // Do not choose one definition of a duplicate TASK or violate its unique constraint.
         Map<String, Long> taskCounts = taskDocuments.values().stream()
             .flatMap(doc -> TaskIds.fromHeadings(doc.headings(), TASK_HEADING_LEVEL).stream())

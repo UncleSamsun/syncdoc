@@ -1,3 +1,4 @@
+import { appPath } from "../../shared/appPath";
 import { useState } from "react";
 import { apiPost } from "../../shared/api/client";
 import { forgetSession } from "../auth/useSession";
@@ -25,7 +26,7 @@ export default function AccountMenu({ login, csrfToken }: { login: string; csrfT
       // 이미 끊긴 세션일 수 있다. 어느 쪽이든 로그인 화면으로 보낸다.
     } finally {
       forgetSession();
-      window.location.assign("/login");
+      window.location.assign(appPath("/login"));
     }
   };
 

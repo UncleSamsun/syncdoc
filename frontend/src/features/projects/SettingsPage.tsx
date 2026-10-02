@@ -1,3 +1,4 @@
+import { appPath } from "../../shared/appPath";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiDelete, apiGet, apiPatch, isApiError } from "../../shared/api/client";
@@ -107,7 +108,7 @@ export default function SettingsPage() {
     try {
       await apiDelete(`/projects/${project.id}`, { fullName: confirmName }, csrfToken);
       // 없는 프로젝트의 주소에 남겨 두지 않는다.
-      window.location.assign("/");
+      window.location.assign(appPath("/"));
     } catch (error) {
       setDisconnecting(false);
       setDisconnectError(isApiError(error) ? error.message : "연결을 끊지 못했습니다.");

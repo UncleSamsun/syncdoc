@@ -59,6 +59,10 @@ public interface RepositoryContentGateway {
      * @return 그 revision에 파일이 없거나 읽을 수 없으면 비어 있다
      */
     Optional<String> readTextAt(RepositoryRef repository, String revision, String path, int maxBytes);
+    /** Pinned rule provenance: adapters must distinguish genuine absence from operational failure. */
+    default Optional<String> readRuleTextAt(RepositoryRef repository, String revision, String path, int maxBytes) {
+        return readTextAt(repository, revision, path, maxBytes);
+    }
 
     /**
      * 문서 경로 아래의 첨부 후보를 모은다. 어떤 형식을 받아들일지는 부르는 쪽이 정한다.

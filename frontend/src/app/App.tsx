@@ -1,5 +1,6 @@
 import ComparisonPage from "../features/spec/ComparisonPage";
-import { Route, Routes } from "react-router-dom";
+import TaskContextPage from "../features/spec/TaskContextPage";
+import { Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "../features/auth/LoginPage";
 import UninvitedPage from "../features/auth/UninvitedPage";
 import { useSession } from "../features/auth/useSession";
@@ -18,8 +19,8 @@ import SettingsPage from "../features/projects/SettingsPage";
  */
 export default function App() {
   const session = useSession();
-  const path = window.location.pathname;
-  const error = new URLSearchParams(window.location.search).get("error") ?? undefined;
+  const { pathname: path, search } = useLocation();
+  const error = new URLSearchParams(search).get("error") ?? undefined;
 
   if (path === "/uninvited") {
     return <UninvitedPage />;
@@ -42,6 +43,7 @@ export default function App() {
       <Route path="/projects/:projectId/comparison" element={<ComparisonPage />} />
       <Route path="/projects/:projectId/checklist" element={<ChecklistPage />} />
       <Route path="/projects/:projectId/tasks" element={<TaskListPage />} />
+      <Route path="/projects/:projectId/tasks/:taskId/context" element={<TaskContextPage />} />
       <Route path="/projects/:projectId/settings" element={<SettingsPage />} />
       <Route path="/projects/:projectId/search" element={<SearchPage />} />
       <Route path="/projects/:projectId/documents" element={<DocumentPage />} />

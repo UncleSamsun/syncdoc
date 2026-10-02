@@ -262,3 +262,52 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 **검증:** [DOC-028 실행계획](snapshot-comparison-plan.md)의순수/수집/HTTP권한/UI/전체회귀·브라우저검증. 실제서버시험은최종병합/배포후별도.
 
 **완료:** 승인범위가구현·검증되고dev대상PR이검토가능하다. dev병합·main배포는사람의최종판단이다.
+
+## TASK-018 UI·API 관계 확장
+
+**목적:** 요구에서 설계와 작업을 연결하고 설계 재검토 후보를 제공한다.
+
+**근거:** [REQ-011](../01-prd/mvp-scope.md#req-011-요구설계작업-관계), [DOC-029 설계](../03-tech-spec/harness-development-design.md).
+
+**범위:** SpecRelations v1 AST 분석·V10 nullable 저장/정책·API-034/035·UI-018. 기존 v1·완료율 보존.
+
+**선행:** TASK-016/017 구현·배포.
+
+**산출물:** 관계·설계 영향 API/화면과 [DOC-030 계획](ui-api-relations-plan.md).
+
+**검증:** 순수·수집·HTTP/Postgres·컴포넌트·전체 회귀와 독립 리뷰. E2E는 세 후속 작업 통합 후 한 번 수행한다.
+
+**완료:** 위 인수 조건·리뷰/CI 통과와 dev PR 병합. 서버 통합 검증은 전체 작업 뒤 별도다.
+
+## TASK-019 작업별 컨텍스트 묶음
+
+**목적:** 작업 시작·재개에 필요한 정본과 규칙을 모아 제공한다.
+
+**근거:** [REQ-012](../01-prd/mvp-scope.md#req-012-작업별-컨텍스트-묶음), [DOC-029](../03-tech-spec/harness-development-design.md).
+
+**범위:** TaskContextIndex1·V11 nullable 저장/규칙 pin·API036·UI019와 복사. 자동 실행/승인 제외.
+
+**선행:** TASK-018 dev 병합.
+
+**산출물:** 읽기 API/화면과 [DOC-031](task-context-plan.md).
+
+**검증:** raw 코드/라벨·규칙 hash·수집/회복·HTTP 권한·과거/현재 분리·컴포넌트·전체 회귀/독립 리뷰. E2E는 세 단계 통합 후 한 번.
+
+**완료:** 인수 조건·리뷰/CI 통과와 dev PR 병합. 전체 서버 확인은 마지막 통합 단계다.
+
+
+## TASK-021 공용 HTTPS 하위 경로 배포
+
+**목적:** SyncDoc 화면·API·첨부·OAuth callback을 `/syncdoc/`에 모으고 공인 IP `/`는 Grafana로 보낸다.
+
+**근거:** 사용자 승인(2026-10-02), [실행과 운영](../03-tech-spec/ops.md), [TASK-014](cicd-plan.md#task-014-검증된-revision을-회사-k3s에-배포), Issue #83.
+
+**범위:** Vite base와 React basename, API·로그인·로그아웃·문서 URL, 서버 로그인 복귀 prefix, CI web build argument, Traefik strip/redirect와 Flux 환경 패치. 로컬 `/` 기본값과 기존 저장된 문서 게시본을 유지한다.
+
+**선행:** 기존 공인 IP HTTPS·개인 인증 Grafana 공개 완료.
+
+**산출물:** 앱 코드·회귀 시험·[하위 경로 배포 절차](../../deploy/subpath/README.md).
+
+**검증:** root/subpath 컴포넌트·인증 복귀 시험, 전체 회귀, subpath production build, 실제 API·OAuth·문서/첨부·새로고침·Grafana 비영향 확인.
+
+**완료:** dev PR 검증 후 선택한 전체 dev revision을 승인받아 main 배포하고 실제 새 경로를 확인한다. 배포 전 시험은 운영 완료 근거로 대체하지 않는다.

@@ -22,7 +22,7 @@ SQL migration은 아직 구현하지 않았다. 이 문서는 구현 대상 스�
 | projects | id, github_repository_id, full_name, installation_id, created_by, branch, docs_root, github_project_node_id?, current_snapshot_id?, issues_observed_at?, issues_complete, version, created_at | repository ID unique, installation_id→github_installations, created_by→users. snapshot 복합 FK 아래 참고 |
 | sync_jobs | id, project_id, kind, state, attempt, due_at, lease_until?, lease_token?, target_revision?, rerun_requested, last_error_code?, created_at | project_id→projects. queued/running 활성 kind별 partial unique(project_id,kind). state CHECK |
 | sync_runs | id, project_id, job_id, started_at, finished_at?, outcome, source_revision?, error_code?, diagnostics_json | project_id→projects, job_id→sync_jobs. latest attempt와 latest success를 구분. diagnostics는 오류 경로/코드만 보존 |
-| document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete, checklist_json, traceability_json? | project_id→projects. unique(project_id,source_revision,renderer_version,policy_version), unique(project_id,id). checklist_json은 그 revision의 규칙 파일로 판정한 산출물 체크리스트(API-025) |
+| document_snapshots | id, project_id, source_revision, renderer_version, policy_version, created_at, complete, checklist_json, traceability_json?, collection_branch?, collection_docs_root?, comparison_json?, relations_json? | project_id→projects. 새 scope unique(project_id,source_revision,renderer_version,policy_version,collection_branch,collection_docs_root), legacy NULL scope는 기존 4필드 unique, unique(project_id,id). checklist_json은 그 revision의 규칙 파일로 판정한 산출물 체크리스트(API-025) |
 | documents | id, snapshot_id, path, spec_id?, kind?, title, source_hash, html?, headings_json, diagrams_json, links_json, plain_text, warnings_json, state | snapshot_id→document_snapshots. unique(snapshot_id,path), spec_id not null일 때 unique(snapshot_id,spec_id). invalid 문서는 html null |
 | assets | id, snapshot_id, path, mime, bytes_hash, storage_key, byte_size | snapshot_id→document_snapshots. unique(snapshot_id,path), byte_size>=0. mime은 허용 목록 CHECK |
 | asset_contents | storage_key, bytes, byte_size, created_at | storage_key는 내용 해시다. assets.storage_key→asset_contents. 같은 그림이 여러 게시본에 나와도 바이트는 한 벌만 남는다 |
@@ -150,3 +150,19 @@ added/modified/removed/moved_modified REQ에 대해 이전·현재 traceability�
 후보에는 이유가 된 요구 ID·변경 종류·이전/현재 원문 위치·현재 관찰한 TaskView를 제공한다. 없어진 TASK는 이전 원문으로 연결하고 현재 실행 상태를 추정하지 않는다. 순수 문서/서식 변화로 관련 요구를 특정할 수 없으면 문서 변경만 표시한다. 관계의 추가/제거 자체를 새 영향 분석 범위로 늘리지 않는다.
 
 양쪽 관계 분석이 complete일 때 알려진 영향 범위를 complete로 표시한다. partial이면 알려진 후보만 표시하고 coverage=incomplete를 명시한다. unchecked/해석 불가이면 unknown이다. 양쪽 인덱스가 완전하고 양쪽 모두 확정 요구가 없는 경우에만 not_applicable로 구분한다. 한쪽 요구가 없어졌더라도 이전 관계의 알려진 후보는 보존하며, 반대편 관계가 unchecked이면 coverage는 unknown으로 남긴다. 후보 0을 ‘영향 없음’이나 ‘구현 정상’의 보증으로 쓰지 않는다. Issue/PR 변화는 원문 변경이나 비교 결과를 바꾸지 않는다.
+
+## UI·API 관계 보고서 (TASK-018)
+
+V10__spec_relations.sql은 document_snapshots에 nullable relations_json을 추가한다. NULL/지원하지 않는 schema는 미분석이고 완료 게시본을 소급 변경하지 않는다. 정책은 allowlist+3-traceability1-comparison1-relations1이며 기존 정화·traceability/comparison v1은 그대로다.
+
+SpecRelations v1: schemaVersion, analysisStatus(complete/partial/unchecked), uncheckedReason, nodes(kind,itemId,title,documentId,path,anchor,line), edges(sourceKind,sourceId,targetKind,targetId,relation,sourceLocation), findings. 노드의 kind는 req/ui/api/task, 관계는 requires/uses/related_task/depends_on이다. UI-000은 공통 셸의 유효 정의다. API 표의 정의와 같은 API의 설명 헤더는 중복이 아니다. 최대 제공 노드2000·관계10000 초과는 ANALYSIS_LIMIT/partial이며 제외 부분의 부재를 완료로 판정하지 않는다.
+
+관계 저장은 게시 전 단계이며 실패·임대 상실 시 이전 정상 snapshot을 유지한다. API-034가 같은 snapshot 관계와 현재 TaskMappingService 실행 관찰을 합성하고, API-035는 변경 REQ의 old/new UI/API 역관계를 설계 재검토 후보로 표시한다. UI→API→REQ 경로는 해당 명시적 관계를 통해 도출한다. 코드 의미·요구 충족·적용 제외를 판정하지 않는다.
+
+## 작업 컨텍스트 인덱스 (TASK-019)
+
+V11__task_context.sql은 document_snapshots에 nullable context_json을 추가한다. 정책은 allowlist+3-traceability1-comparison1-relations1-context1이며 동일 revision도 새 자료로 재수집한다. 기존 완료 게시본의 NULL은 소급 갱신하지 않는다.
+
+TaskContextIndex1은 schemaVersion/indexStatus/definitionsComplete/tasks/rules다. 정의 탐색 완전성과 규칙/필드의 자료 완전성을 분리하므로 관련 없는 자료 누락이 없는 TASK의 404를 바꾸지 않는다. TaskBlock은 taskId/documentId/fields(목적·근거·범위·선행·산출물·검증·완료)/truncated/warnings를 담는다. 원문 AST 라벨의 실제 범위로 코드·서식을 보존해 발췌하고 필드당4000 code point를 넘으면 잘림을 명시한다. 누락/중복 라벨은 일부 자료를 임의 선택하지 않는다.
+
+RulePin은 고정 allowlist10개 경로의 available/sourceHash다. 원문 UTF-8 SHA-256이며 수집 revision에서 읽는다. 비밀값 경로·임의 URL을 읽지 않는다. 고정 규칙은 readRuleTextAt의 strict 조회로 404만 파일 없음으로 읽고 네트워크/5xx·해석 불가/과대 원문은 수집 실패로 보존한다. 기존 체크리스트의 soft 조회 계약은 유지한다. 파일 없음은 자료 부족, 원천 읽기 실패/임대 상실은 마지막 정상 게시본 보존으로 처리한다. 조회의 JSON/Markdown은 같은 snapshot task/context/relations/문서/규칙을 합성하고 TaskMappingService의 현재 실행 관찰을 구분한다. 구성 complete는 작성 검사·승인·완료 증명이 아니다.

@@ -23,9 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class SpecTraceabilityController {
 
     private final SpecTraceabilityService traceability;
+    private final RelationService relations;
 
-    public SpecTraceabilityController(SpecTraceabilityService traceability) {
+    public SpecTraceabilityController(SpecTraceabilityService traceability, RelationService relations) {
         this.traceability = traceability;
+        this.relations = relations;
+    }
+
+    @GetMapping("/projects/{id}/spec-relations")
+    public ResponseEntity<RelationService.View> relations(@PathVariable UUID id, @RequestParam(required = false) UUID snapshotId,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "50") int size, HttpServletRequest request) {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore().cachePrivate()).body(relations.view(user(request), id, snapshotId, page, size));
     }
 
     /** API-027. */
