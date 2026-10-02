@@ -1493,3 +1493,5 @@ main {
 @media (max-width:720px) { .comparison-selectors { display: block; } .comparison-selectors label { display: block; margin: 12px 0; } }
 
 .comparison-page h1 { font-size: 24px; font-weight: 600; }
+.task-context textarea { width: 100%; max-width: 100%; box-sizing: border-box; padding: 12px; font: 14px/1.7 "JetBrains Mono", monospace; background: var(--sunk); color: var(--ink); border: 1px solid var(--line); }
+.task-context li { overflow-wrap: anywhere; }

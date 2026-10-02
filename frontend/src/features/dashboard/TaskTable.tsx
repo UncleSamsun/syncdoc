@@ -7,6 +7,7 @@ type Props = {
   tasks: TaskView[];
   total: number;
   unmatched: string[];
+  snapshotId?: string|null;
 };
 
 /**
@@ -15,7 +16,7 @@ type Props = {
  * <p>여기는 현황이 싣는 첫 20건이다. 나머지는 UI-014에서 이어 본다. 표시 규칙은 {@link TaskRows}가
  * 들고 있으며 화면마다 다시 정하지 않는다.
  */
-export default function TaskTable({ projectId, tasks, total, unmatched }: Props) {
+export default function TaskTable({ projectId, tasks, total, unmatched, snapshotId }: Props) {
   return (
     <section className="panel" id="tasks">
       <h2>
@@ -28,7 +29,7 @@ export default function TaskTable({ projectId, tasks, total, unmatched }: Props)
           전체 보기
         </Link>
       </h2>
-      <TaskRows projectId={projectId} tasks={tasks} />
+      <TaskRows projectId={projectId} tasks={tasks} snapshotId={snapshotId} />
       {unmatched.length > 0 && (
         <p className="n">
           명세에 없는 작업 ID를 주장하는 Issue: {unmatched.join(", ")} · 완료율 분모에는 넣지 않습니다.

@@ -160,7 +160,7 @@ export default function TaskListPage() {
               </button>
             </section>
           ) : (
-            <TaskRows projectId={project.id} tasks={shown} />
+            <TaskRows projectId={project.id} tasks={shown} snapshotId={all?.snapshotId} />
           )}
 
           <p className="n">취소된 작업은 완료율 분모에서 빠집니다. 상태는 GitHub가 정본입니다.</p>
