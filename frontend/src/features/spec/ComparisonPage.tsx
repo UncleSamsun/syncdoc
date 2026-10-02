@@ -4,7 +4,7 @@ import {apiGet,isApiError} from "../../shared/api/client";
 import type {ProjectItem} from "../projects/types";
 import {useDocumentList} from "../documents/useDocument";
 import AppShell from "../shell/AppShell";
-import type {SnapshotPage,Summary,ResultPage,Change,Row,Impact,Ref} from "./comparisonTypes";
+import type {SnapshotPage,Summary,ResultPage,Change,Row,Impact,Ref,DesignImpact} from "./comparisonTypes";
 const LABELS:Record<Change,string>={all:"전체",added:"추가",removed:"제외",modified:"원문 변경",moved:"위치 이동",moved_modified:"이동·원문 변경",unchanged:"동일",unknown:"미확인"};
 const REASONS:Record<string,string>={identity_changed:"문서 ID 변경",confirmed_definition_set:"확정 정의 집합 변경",incomplete_index:"불완전한 항목 자료",duplicate_item_id:"중복 항목 ID",invalid_or_duplicate_document_id:"문서 ID 미확인",item_document_missing:"항목 문서 미확인",fingerprint_unavailable:"원문 해시 비교 불가",left_analysis_scope:"확정 분석 대상에서 제외",entered_analysis_scope:"확정 분석 대상으로 추가"};
 const EXECUTION:Record<string,string>={done:"완료",in_progress:"진행 중",unregistered:"Issue 미등록",canceled:"취소",mapping_conflict:"Issue 연결 충돌"};
@@ -22,7 +22,7 @@ function useLoad<T>(url:string|null):Load<T>{
 export default function ComparisonPage(){const {projectId=""}=useParams();return <Comparison key={projectId} projectId={projectId}/>;}
 function Comparison({projectId}:{projectId:string}){
  const [params,setParams]=useSearchParams();const from=params.get("fromSnapshotId")??"",to=params.get("toSnapshotId")??"";
- const [snapshotPage,setSnapshotPage]=useState(0),[tab,setTab]=useState<"documents"|"items"|"impacts">("documents"),[change,setChange]=useState<Change>("all"),[kind,setKind]=useState("all");
+ const [snapshotPage,setSnapshotPage]=useState(0),[tab,setTab]=useState<"documents"|"items"|"impacts"|"design-impacts">("documents"),[change,setChange]=useState<Change>("all"),[kind,setKind]=useState("all");
  const pairIdentity=JSON.stringify([from,to]);
  const [pagination,setPagination]=useState({pair:pairIdentity,value:0});
  const page=pagination.pair===pairIdentity?pagination.value:0;
@@ -72,18 +72,20 @@ function Comparison({projectId}:{projectId:string}){
     {validSummary.status==="unchecked"?<p role="status">이 게시본 쌍에는 지원하는 비교 자료 또는 수집 범위 정보가 없습니다. 다음 수집 자료를 확인하세요. 변경 없음으로 판정하지 않습니다.</p>:<>
      {validSummary.status==="partial"&&<p role="status">불완전한 항목의 미존재·변화는 미확인으로 남깁니다.</p>}
      <p className="n">{Object.entries(validSummary.counts??{}).map(([category,counts])=>`${category==="documents"?"문서":"항목"}: ${Object.entries(counts).filter(([,n])=>n>0).map(([c,n])=>`${LABELS[c as Change]??c} ${n}`).join(" · ")||"0"}`).join(" / ")}</p>
-     <nav className="comparison-tabs" aria-label="비교 결과 종류">{([ ["documents","문서"],["items","REQ·TASK"],["impacts","재검토 후보"] ] as const).map(([value,label])=><button type="button" key={value} aria-pressed={tab===value} onClick={()=>{setTab(value);setPage(0);setChange("all");}}>{label}</button>)}</nav>
-     {tab!=="impacts"&&<label>변경 종류 <select aria-label="변경 종류" value={change} onChange={e=>{setChange(e.target.value as Change);setPage(0);}}>{Object.entries(LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>}
+     <nav className="comparison-tabs" aria-label="비교 결과 종류">{([ ["documents","문서"],["items","REQ·TASK"],["impacts","재검토 후보"],["design-impacts","설계 재검토"] ] as const).map(([value,label])=><button type="button" key={value} aria-pressed={tab===value} onClick={()=>{setTab(value);setPage(0);setChange("all");}}>{label}</button>)}</nav>
+     {tab!=="impacts"&&tab!=="design-impacts"&&<label>변경 종류 <select aria-label="변경 종류" value={change} onChange={e=>{setChange(e.target.value as Change);setPage(0);}}>{Object.entries(LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>}
      {tab==="items"&&<label> 항목 종류 <select aria-label="항목 종류" value={kind} onChange={e=>{setKind(e.target.value);setPage(0);}}><option value="all">전체</option><option value="req">REQ</option><option value="task">TASK</option></select></label>}
      {rows.state==="loading"&&<p role="status">비교 행을 불러오는 중입니다.</p>}{rows.state==="error"&&<Failure error={rows}/>}
-     {validRows&&<>
-      <div className="tblwrap" tabIndex={0} role="region" aria-label="게시본 비교 표"><table className="mdtbl"><thead><tr>{tab==="impacts"?<><th>변경 요구</th><th>재검토 작업</th><th>현재 관찰 정보</th></>:<><th>변경</th><th>기준 원문</th><th>대상 원문</th></>}</tr></thead><tbody>
-       {validRows.items.map((row,index)=>tab==="impacts"?<ImpactRow key={index} row={row as Impact} projectId={projectId} fullName={project.data.fullName} from={from} to={to}/>:<tr key={(row as Row).key}><td>{LABELS[(row as Row).change]}{(row as Row).reason&&<span className="n"> · {REASONS[(row as Row).reason??""]??"항목 식별 정보 확인 필요"}</span>}</td><td><SourceLink projectId={projectId} snapshotId={from} source={(row as Row).before}/></td><td><SourceLink projectId={projectId} snapshotId={to} source={(row as Row).after}/></td></tr>)}
+     {validRows&&validRows.status==="unchecked"&&<p role="status">설계 관계 자료가 없어 비교 미확인입니다. 새 수집 자료를 확인하세요.</p>}
+     {validRows&&validRows.status==="partial"&&tab==="design-impacts"&&<p role="status">설계 관계는 부분 분석입니다. 후보가 없다는 사실은 영향 없음의 보증이 아닙니다.</p>}
+     {validRows&&validRows.status!=="unchecked"&&<>
+      <div className="tblwrap" tabIndex={0} role="region" aria-label="게시본 비교 표"><table className="mdtbl"><thead><tr>{tab==="impacts"?<><th>변경 요구</th><th>재검토 작업</th><th>현재 관찰 정보</th></>:tab==="design-impacts"?<><th>변경 요구·설계</th><th>기준 원문</th><th>대상 원문</th></>:<><th>변경</th><th>기준 원문</th><th>대상 원문</th></>}</tr></thead><tbody>
+       {validRows.items.map((row,index)=>tab==="impacts"?<ImpactRow key={index} row={row as Impact} projectId={projectId} fullName={project.data.fullName} from={from} to={to}/>:tab==="design-impacts"?<tr key={`${(row as DesignImpact).requirementId}:${(row as DesignImpact).kind}:${(row as DesignImpact).itemId}`}><td>{(row as DesignImpact).requirementId} · {(row as DesignImpact).itemId}<span className="n">{(row as DesignImpact).presence==="unknown"?"대상 설계 미확인":(row as DesignImpact).presence==="removed"?"확정 정의에서 제외":"설계 재검토 후보"}</span></td><td><SourceLink projectId={projectId} snapshotId={from} source={(row as DesignImpact).before}/></td><td><SourceLink projectId={projectId} snapshotId={to} source={(row as DesignImpact).after}/></td></tr>:<tr key={(row as Row).key}><td>{LABELS[(row as Row).change]}{(row as Row).reason&&<span className="n"> · {REASONS[(row as Row).reason??""]??"항목 식별 정보 확인 필요"}</span>}</td><td><SourceLink projectId={projectId} snapshotId={from} source={(row as Row).before}/></td><td><SourceLink projectId={projectId} snapshotId={to} source={(row as Row).after}/></td></tr>)}
       </tbody></table></div>
       {validRows.items.length===0&&<p>현재 조건에 표시할 결과가 없습니다.{tab==="impacts"?" 후보가 없다는 사실은 영향 없음의 보증이 아닙니다.":""}</p>}
       <Pager label="비교 결과" page={page} size={50} total={validRows.totalElements} onPage={setPage}/>
      </>}
-     {validSummary.findings.length>0&&<section><h3>비교 진단</h3><ul>{validSummary.findings.map((f,i)=><li key={i}>{f}</li>)}</ul></section>}
+     {(tab==="design-impacts"&&validRows?validRows.findings:validSummary.findings).length>0&&<section><h3>비교 진단</h3><ul>{(tab==="design-impacts"&&validRows?validRows.findings:validSummary.findings).map((f,i)=><li key={i}>{f}</li>)}</ul></section>}
     </>}
    </>}
   </section>

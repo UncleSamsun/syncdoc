@@ -7,4 +7,5 @@ export type Summary=PairMeta&{counts:Record<string,Record<string,number>>|null};
 export type Ref={documentId:string;specId:string|null;path:string;title:string;kind:string;itemId:string|null;anchor:string|null;line:number;status:string|null};
 export type Row={key:string;kind:string;change:Exclude<Change,"all">;reason:string|null;before:Ref|null;after:Ref|null};
 export type Impact={requirementId:string;taskId:string;requirementChange:string;beforeRequirement:Ref|null;afterRequirement:Ref|null;beforeTask:Ref|null;afterTask:Ref|null;taskPresence:string;execution:TaskView|null};
-export type ResultPage=PairMeta&{items:(Row|Impact)[];totalElements:number;page:number;size:number};
+export type DesignImpact={requirementId:string;requirementChange:string;kind:string;itemId:string;before:Ref|null;after:Ref|null;presence:string};
+export type ResultPage=PairMeta&{items:(Row|Impact|DesignImpact)[];totalElements:number;page:number;size:number};
