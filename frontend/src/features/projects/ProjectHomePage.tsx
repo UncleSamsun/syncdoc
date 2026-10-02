@@ -1,3 +1,4 @@
+import { appPath } from "../../shared/appPath";
 import { useCallback, useEffect, useState } from "react";
 import { apiGet, apiPost, isApiError } from "../../shared/api/client";
 import { formatMoment, syncLabelOf, syncToneOf } from "../sync/syncLabels";
@@ -103,7 +104,7 @@ export default function ProjectHomePage({ csrfToken }: Props) {
                 <span className="chip chip--fail">오류 {project.syncErrorCode}</span>
               )}
               {alreadyConnectedId === project.id && <span className="chip">이미 연결됨</span>}
-              <a className="button button--quiet" href={`/projects/${project.id}`}>
+              <a className="button button--quiet" href={appPath(`/projects/${project.id}`)}>
                 열기
               </a>
             </span>
