@@ -22,6 +22,14 @@ import org.springframework.web.client.RestClient;
  * 않는다. 429만 보고 있었다면 이 응답을 평범한 실패로 처리했을 것이다.
  */
 class GitHubApiRepositoryContentGatewayTest {
+    @Test void pinned_rule_read_preserves_operational_failure_and_distinguishes_404() {
+        var repository=new RepositoryContentGateway.RepositoryRef("11","123","owner/repo");
+        server.expect(requestTo(API+"/repos/owner/repo/contents/AGENTS.md?ref=rev-1")).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+        assertThatThrownBy(()->gateway.readRuleTextAt(repository,"rev-1","AGENTS.md",1000)).isInstanceOf(GitHubLookupFailedException.class);
+        server.verify();server.reset();
+        server.expect(requestTo(API+"/repos/owner/repo/contents/AGENTS.md?ref=rev-1")).andRespond(withStatus(HttpStatus.NOT_FOUND));
+        assertThat(gateway.readRuleTextAt(repository,"rev-1","AGENTS.md",1000)).isEmpty();server.verify();
+    }
 
     private static final String API = "https://api.github.test";
     /** 실제 응답의 본문이다. 사용자 IP만 지웠다. */

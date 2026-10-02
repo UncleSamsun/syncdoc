@@ -20,7 +20,7 @@ public class TraceabilityAnalyzer {
     private record Definition(SpecTraceability.Item item, List<Node> body) {}
     record LinkSpan(int start, int end, String target) {}
     record Evidence(String text, List<LinkSpan> links, int line) {}
-    record LabelEvidence(String label, Evidence payload) {}
+    record LabelEvidence(String label, Evidence payload, Node source) {}
     private static final Pattern DEFINITION = Pattern.compile("^(REQ|TASK)-(\\d{3})(?:\\s+(.+))?$");
     private static final Pattern REFERENCES = Pattern.compile("(?<![A-Za-z0-9_-])(?:[A-Za-z]+-[A-Za-z0-9]+\\s*[~～]\\s*[^\\s,;·)\\]<>]*|REQ-[A-Za-z0-9]+)(?![A-Za-z0-9_-])");
     private final Parser parser = Parser.builder().extensions(List.of(YamlFrontMatterExtension.create()))
@@ -195,16 +195,16 @@ public class TraceabilityAnalyzer {
     /** Field discovery and payload extraction share visibility state, including across inline HTML. */
     static List<LabelEvidence> labels(Paragraph paragraph) {
         List<LabelEvidence> result = new ArrayList<>();
-        String label = null; StringBuilder text = new StringBuilder(); List<LinkSpan> links = new ArrayList<>();
+        String label = null; Node labelNode = null; StringBuilder text = new StringBuilder(); List<LinkSpan> links = new ArrayList<>();
         int[] htmlDepth = {0};
         for (Node child = paragraph.getFirstChild(); child != null; child = child.getNext()) {
             String candidate = child instanceof StrongEmphasis && htmlDepth[0] == 0 ? visible(child).text().trim() : "";
             if (candidate.endsWith(":")) {
-                if (label != null) result.add(new LabelEvidence(label, new Evidence(text.toString(), List.copyOf(links), line(paragraph))));
-                label = candidate; text.setLength(0); links.clear();
+                if (label != null) result.add(new LabelEvidence(label, new Evidence(text.toString(), List.copyOf(links), line(paragraph)), labelNode));
+                label = candidate; labelNode = child; text.setLength(0); links.clear();
             } else append(child, text, links, htmlDepth);
         }
-        if (label != null) result.add(new LabelEvidence(label, new Evidence(text.toString(), List.copyOf(links), line(paragraph))));
+        if (label != null) result.add(new LabelEvidence(label, new Evidence(text.toString(), List.copyOf(links), line(paragraph)), labelNode));
         return result;
     }
     private static void append(Node node, StringBuilder text, List<LinkSpan> links, int[] htmlDepth) {
