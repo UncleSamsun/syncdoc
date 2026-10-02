@@ -28,6 +28,8 @@ test('integrated relations, design impact and copied task context stay snapshot-
  await page.goto(e2ePath(`${base}/tasks/${fixture.taskId}/context?snapshotId=${fixture.to}`));
  await expect(page.getByRole('textbox',{name:'컨텍스트 Markdown'})).toHaveValue(bundle.markdown);
  await page.getByRole('button',{name:'컨텍스트 복사',exact:true}).click();await expect(page.getByText('복사했습니다.',{exact:true})).toBeVisible();
- expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe(bundle.markdown);
+ const copied=await page.evaluate(()=>navigator.clipboard.readText());
+ // The Windows native clipboard expands LF to CRLF; all other bytes must match.
+ expect(copied.replace(/\r\n/g,'\n')).toBe(bundle.markdown.replace(/\r\n/g,'\n'));
  await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
 });

@@ -251,7 +251,7 @@ React + TypeScript, Spring Boot 4 + Java 25, PostgreSQL, commonmark-java/GFM 표
 
 **목적:** 원문 변화와재검토후보를같은게시본쌍으로읽는다.
 
-**근거:** REQ-010·UI-017·API-029~033·[데이터 설계](../03-tech-spec/data-model.md).
+**근거:** REQ-010·UI-017·API-029 ~ API-033·[데이터 설계](../03-tech-spec/data-model.md).
 
 **범위:** scope/항목해시수집·불변파생자료·비교/영향계산·권한조회·산출물진입비교화면. UI/API/코드추적·자동판정·AI·에이전트실행은제외한다.
 

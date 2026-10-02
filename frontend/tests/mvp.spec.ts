@@ -85,10 +85,11 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     const total = overview.taskTotal as number;
 
     // 건수를 시험이 정해 두지 않는다. 보고 있는 브랜치에 작업 목록이 없을 수도 있다.
-    // 화면과 집계가 어긋나지 않는지가 검사 대상이다.
+    // 현황 API의 제한된 작업 배열과 같은 행을 보여야 한다. 전체 건수는 별도다.
     const rows = page.locator("table.tasks tbody tr");
     await expect(page.locator("section.panel", { hasText: "작업 · Issue" })).toBeVisible();
-    expect(await rows.count()).toBe(total);
+    await expect(rows).toHaveCount(overview.tasks.length);
+    expect(overview.tasks.length).toBeLessThanOrEqual(total);
     if (total > 0) {
       await expect(rows.first()).toContainText(/TASK-\d{3}/);
     }
