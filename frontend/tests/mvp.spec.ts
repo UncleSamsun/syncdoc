@@ -11,7 +11,9 @@ import { expect, test, type Page } from "@playwright/test";
  * 건너뛴다. 건너뛴 것을 통과로 적지 않는다.
  */
 
-const API = "/api/v1";
+import { e2ePath } from "../playwright.config.ts";
+
+const API = e2ePath("/api/v1");
 
 type DocumentItem = { id: string; path: string; title: string };
 
@@ -26,7 +28,7 @@ test.describe("세션 없이 들어온 경우", () => {
       "/projects/00000000-0000-0000-0000-000000000000/search",
     ];
     for (const path of paths) {
-      await page.goto(path);
+      await page.goto(e2ePath(path));
       await expect(page.getByRole("link", { name: "GitHub로 계속" })).toBeVisible();
       // 경로만 바꿔 들어와도 프로젝트 이름 같은 내용이 새어 나오지 않는다.
       await expect(page.locator("main")).not.toContainText("현황");
@@ -34,7 +36,7 @@ test.describe("세션 없이 들어온 경우", () => {
   });
 
   test("초대되지 않은 계정 화면에는 로그아웃 말고 다른 길이 없다 (UI-006)", async ({ page }) => {
-    await page.goto("/uninvited");
+    await page.goto(e2ePath("/uninvited"));
     await expect(page.getByRole("heading", { name: /초대되지 않았습니다/ })).toBeVisible();
     const links = page.locator("main a");
     await expect(links).toHaveCount(1);
@@ -50,7 +52,7 @@ test.describe("세션 없이 들어온 경우", () => {
 
 test.describe("로그인한 사용자의 한 흐름", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    await page.goto(e2ePath("/"));
     await expect(page.getByRole("heading").first()).toBeVisible();
     const signedOut = await page.getByRole("link", { name: "GitHub로 계속" }).isVisible();
     test.skip(signedOut, "로그인 세션이 없다. `npm run e2e:login`으로 만든 뒤 다시 실행한다.");
@@ -97,7 +99,7 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     const found = await findDocuments(page, projectId);
     test.skip(!found.withTable, "지금 보고 있는 게시본에 표가 든 문서가 없다");
 
-    await page.goto(`/projects/${projectId}/documents/${found.withTable}`);
+    await page.goto(e2ePath(`/projects/${projectId}/documents/${found.withTable}`));
     await expect(page.locator(".doc table").first()).toBeVisible();
     // 목차는 본문에서 뽑은 제목이다. 본문이 비면 목차도 비어 이 확인이 걸린다.
     await expect(page.locator(".toc a").first()).toBeVisible();
@@ -109,7 +111,7 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     const found = await findDocuments(page, projectId);
     test.skip(!found.withDiagram, "지금 보고 있는 게시본에 다이어그램이 든 문서가 없다");
 
-    await page.goto(`/projects/${projectId}/documents/${found.withDiagram}`);
+    await page.goto(e2ePath(`/projects/${projectId}/documents/${found.withDiagram}`));
     const diagram = page.locator("[aria-label^='다이어그램']").first();
     await expect(diagram).toBeVisible();
     // 그려진 결과를 본다. 자리만 잡히고 실패 문구가 남는 경우를 통과로 보지 않는다.
@@ -118,7 +120,7 @@ test.describe("로그인한 사용자의 한 흐름", () => {
 
   test("검색 결과에서 문서의 그 자리로 간다 (UI-004)", async ({ page }) => {
     const projectId = await open(page);
-    await page.goto(`/projects/${projectId}/search`);
+    await page.goto(e2ePath(`/projects/${projectId}/search`));
 
     await page.getByLabel("검색어").fill("수집");
     await page.getByRole("button", { name: "찾기" }).click();
@@ -225,7 +227,7 @@ test.describe("로그인한 사용자의 한 흐름", () => {
     const broken: string[] = [];
     for (const item of items) {
       try {
-        await page.goto(`/projects/${projectId}/documents/${item.id}`, { waitUntil: "load" });
+        await page.goto(e2ePath(`/projects/${projectId}/documents/${item.id}`), { waitUntil: "load" });
         await expect(page.locator(".doc h1")).toBeVisible();
         const overflow = await page.evaluate(
             () => document.body.scrollWidth - window.innerWidth);
@@ -276,7 +278,7 @@ async function expectNoSideScroll(page: Page) {
 
 /** 첫 프로젝트를 열고 그 id를 준다. 어떤 저장소가 연결되어 있든 같은 흐름으로 돈다. */
 async function open(page: Page): Promise<string> {
-  await page.goto("/");
+  await page.goto(e2ePath("/"));
   const openLink = page.locator(".pcard").first().getByRole("link", { name: "열기" });
   await expect(openLink).toBeVisible();
   const href = await openLink.getAttribute("href");
@@ -330,7 +332,7 @@ test("요구–작업 관계와 동일 게시본 원문 이동 (UI-016)", async 
   test.skip(report.analysisStatus === "unchecked", "이 게시본은 아직 분석하지 않았습니다.");
   const linked = report.requirements.find((row: {coverage:string})=>row.coverage === "linked");
   test.skip(!linked, "연결 관계가 있는 시험 데이터가 없습니다.");
-  await page.goto(`/projects/${project.id}/checklist`);
+  await page.goto(e2ePath(`/projects/${project.id}/checklist`));
   const panel = page.getByRole("region",{name:"요구와 작업"});
   await expect(panel).toBeVisible();
   const link = panel.getByRole("link", {name: new RegExp(linked.item.itemId)});
