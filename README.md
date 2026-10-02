@@ -12,7 +12,7 @@ SDD 방식으로 작성한 명세와 GitHub 협업 현황을 연결하는 프로
 
 명세와 규칙을 먼저 쓰고 그에 맞춰 구현한다. MVP 구현은 [구현계획](docs/04-tasks/implementation-plan.md)의 작업 단위로 진행한다.
 
-[TASK-016 요구–작업 연결 표와 참조 진단](https://github.com/UncleSamsun/syncdoc/issues/70)은 구현·배포·실제 서버 검증을 마쳤다. 다음 검토 대상은 [게시본 비교·변경 영향 설계](docs/03-tech-spec/snapshot-comparison-proposal.md)다. 이 설계는 구현 승인 전 제안이다.
+[TASK-016 요구–작업 연결 표와 참조 진단](https://github.com/UncleSamsun/syncdoc/issues/70)은 구현·배포·실제 서버 검증을 마쳤다. 사용자 승인 후 [게시본 비교 실행 계획](docs/04-tasks/snapshot-comparison-plan.md)에 따라 TASK-017을 구현하고 [dev PR #76](https://github.com/UncleSamsun/syncdoc/pull/76)에서 검증한다. 회사 서버의 새 기능 배포는 최종 병합 후 단계다.
 
 ## 문서
 

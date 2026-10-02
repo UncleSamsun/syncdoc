@@ -30,7 +30,7 @@ DOC-009는 `status: 검토`인 기술 선택 자료이며 상세 구현 계약�
 
 REQ–TASK 관계·요구별 연결 표·참조 진단(TASK-016)은 구현·배포·실제 서버 검증을 마쳤다. 구현 계약은 REQ-009·UI-016·API-027/028와 데이터 설계이고 검증 근거는 [PR #74](https://github.com/UncleSamsun/syncdoc/pull/74)다. DOC-025/026은 준비 경위를 남기는 검토 자료다.
 
-다음 제안은 [게시본 비교·변경 영향 (DOC-027)](03-tech-spec/snapshot-comparison-proposal.md)이다. 문서·REQ/TASK 변경과 재검토 후보를 읽는 범위이며 아직 활성 요구나 구현 계약이 아니다. 설계 확인 후 실행 계획과 정본 승격을 준비한다.
+게시본 비교·변경 영향(TASK-017)은 사용자 승인 후 [실행 계획 (DOC-028)](04-tasks/snapshot-comparison-plan.md)에 따라 구현하고 [dev PR #76](https://github.com/UncleSamsun/syncdoc/pull/76)에서 검증한다. 활성 계약은 REQ-010·UI-017·API-029~033와 데이터 설계다. [DOC-027](03-tech-spec/snapshot-comparison-proposal.md)은 검토 경위를 보존하며 새 기능의 회사 서버 검증은 병합·배포 후 단계다.
 
 ## 기준과 자료를 구분하기
 
